@@ -1,0 +1,1004 @@
+{
+	"info": {
+		"_postman_id": "8f5a2b1c-99d8-4f51-b0e2-7634f19b22a0",
+		"name": "Garments ERP & CRM API Collection",
+		"description": "Enterprise Django Monolith REST API for Garments ERP: Authentication, Super Admin, Company Admin, Financial Years, Employees & RBAC, and all Garment Masters (mx_*).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login - Super Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.access) {",
+									"    pm.collectionVariables.set('access_token', jsonData.data.access);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.data.refresh);",
+									"    console.log('Access token saved to collection variables!');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"superadmin@gmail.com\",\n    \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"login",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Login - Company Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.access) {",
+									"    pm.collectionVariables.set('access_token', jsonData.data.access);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.data.refresh);",
+									"    console.log('Company Admin token saved!');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@gmail.com\",\n    \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"login",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Login - Employee User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.access) {",
+									"    pm.collectionVariables.set('access_token', jsonData.data.access);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.data.refresh);",
+									"    console.log('Employee token saved!');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"employee@gmail.com\",\n    \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"login",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Refresh Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.access) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/refresh/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"refresh",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/me/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"me",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Switch Active Financial Year",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"financial_year_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/switch-financial-year/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"switch-financial-year",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "List Available System Modules",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/auth/modules/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"auth",
+								"modules",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Administration & RBAC",
+			"item": [
+				{
+					"name": "Companies - List All (Super Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/companies/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"companies",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Companies - Create Company (Super Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Classic Textiles Pvt Ltd\",\n    \"code\": \"CLASSIC\",\n    \"legal_name\": \"Classic Textiles Private Limited\",\n    \"gst_number\": \"33BBBCB1234B1Z2\",\n    \"pan_number\": \"BBBCB1234B\",\n    \"city\": \"Tirupur\",\n    \"state\": \"Tamil Nadu\",\n    \"phone\": \"+91 9988776655\",\n    \"email\": \"info@classictextiles.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/companies/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"companies",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Financial Years - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/financial-years/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"financial-years",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Financial Years - Create New FY",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"FY 2027-2028\",\n    \"code\": \"2027-2028\",\n    \"start_date\": \"2027-04-01\",\n    \"end_date\": \"2028-03-31\",\n    \"is_current\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/financial-years/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"financial-years",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Financial Years - Set As Current FY",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/financial-years/1/set-current/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"financial-years",
+								"1",
+								"set-current",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin Users - List (Super Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/admin-users/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"admin-users",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Employees - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/employees/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"employees",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Employees - Create Employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"supervisor@gmail.com\",\n    \"username\": \"supervisor_user\",\n    \"password\": \"123456\",\n    \"first_name\": \"Ramesh\",\n    \"last_name\": \"Kumar\",\n    \"employee_code\": \"EMP-002\",\n    \"department\": \"Knitting Department\",\n    \"designation\": \"Knitting Floor Supervisor\",\n    \"phone\": \"+91 9876543222\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/employees/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"employees",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Roles & Privileges - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/roles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"roles",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Roles & Privileges - Create Custom Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Yarn Purchase Manager\",\n    \"code\": \"YARN_MGR\",\n    \"description\": \"Manages Yarn & Fabric Masters and processes\",\n    \"privileges\": [\n        {\n            \"module\": \"masters_yarn\",\n            \"can_create\": true,\n            \"can_read\": true,\n            \"can_update\": true,\n            \"can_delete\": false,\n            \"can_approve\": true,\n            \"can_export\": true\n        },\n        {\n            \"module\": \"masters_party\",\n            \"can_create\": true,\n            \"can_read\": true,\n            \"can_update\": true,\n            \"can_delete\": false,\n            \"can_approve\": false,\n            \"can_export\": true\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/administration/roles/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"administration",
+								"roles",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Garment Masters (mx_*)",
+			"item": [
+				{
+					"name": "UOM (mx_uom) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/uom/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"uom",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "UOM (mx_uom) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"CONE\",\n    \"name\": \"Yarn Cones\",\n    \"symbol\": \"cone\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/uom/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"uom",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Parties (mx_party) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/parties/?search=Mills&party_type=MILL",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"parties",
+								""
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "Mills"
+								},
+								{
+									"key": "party_type",
+									"value": "MILL"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Parties (mx_party) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"party_type\": \"KNITTING_UNIT\",\n    \"code\": \"KNIT-002\",\n    \"name\": \"Sri Murugan Knitting Works\",\n    \"contact_person\": \"K. Murugan\",\n    \"phone\": \"0421-2345678\",\n    \"email\": \"muruganknits@gmail.com\",\n    \"city\": \"Tirupur\",\n    \"state\": \"Tamil Nadu\",\n    \"credit_days\": 15,\n    \"credit_limit\": 200000.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/parties/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"parties",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Yarn Counts (mx_yarn_count) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/yarn-counts/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"yarn-counts",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Yarn Counts (mx_yarn_count) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"count\": \"2/30s\",\n    \"description\": \"2/30s Double Yarn Count\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/yarn-counts/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"yarn-counts",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Yarn Types (mx_yarn_type) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/yarn-types/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"yarn-types",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Color Shades (mx_color_shade) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/colors/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"colors",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Color Shades (mx_color_shade) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"shade_code\": \"ROYAL-005\",\n    \"color_name\": \"Royal Blue\",\n    \"hex_code\": \"#4169E1\",\n    \"pantone_ref\": \"19-4052 TCX\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/colors/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"colors",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Yarns (mx_yarn) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/yarns/?category=GREY",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"yarns",
+								""
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "GREY"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Yarns (mx_yarn) - Create (Grey Yarn)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"yarn_code\": \"YRN-40S-COT-GRY\",\n    \"yarn_type\": 1,\n    \"yarn_count\": 3,\n    \"category\": \"GREY\",\n    \"uom\": 1,\n    \"hsn_code\": \"5205\",\n    \"reorder_level\": 400.00,\n    \"description\": \"40s Combed Cotton Grey Yarn\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/yarns/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"yarns",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Fabric Types (mx_fabric_type) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/fabric-types/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"fabric-types",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Fabrics (mx_fabric) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/fabrics/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"fabrics",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Fabrics (mx_fabric) - Create (Grey Fabric)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fabric_code\": \"FAB-RIB-30S-GRY\",\n    \"fabric_name\": \"1x1 Rib 30s Cotton Grey Fabric\",\n    \"fabric_type\": 2,\n    \"category\": \"GREY\",\n    \"yarn\": 1,\n    \"gsm\": 180,\n    \"dia\": \"30\\\" Open Width\",\n    \"gauge\": \"18 GG\",\n    \"uom\": 1,\n    \"hsn_code\": \"6006\",\n    \"min_stock_alert\": 150.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/fabrics/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"fabrics",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Processes (mx_process) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/processes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"processes",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Processes (mx_process) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"process_code\": \"BIO-01\",\n    \"process_name\": \"Bio-Washing Process\",\n    \"process_type\": \"WASHING\",\n    \"default_loss_percentage\": 1.00,\n    \"standard_rate_per_kg\": 20.00,\n    \"description\": \"Enzyme bio-polish washing\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/processes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"processes",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Warehouses (mx_warehouse) - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/warehouses/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"warehouses",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Warehouses (mx_warehouse) - Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"warehouse_code\": \"WH-ACC-01\",\n    \"name\": \"Central Accessories & Trims Godown\",\n    \"warehouse_type\": \"ACCESSORIES_GODOWN\",\n    \"address\": \"45, Kangeyam Road, Tirupur\",\n    \"contact_person\": \"S. Selvam\",\n    \"phone\": \"0421-2556677\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/masters/warehouses/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"masters",
+								"warehouses",
+								""
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

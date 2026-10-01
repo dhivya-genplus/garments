@@ -1,0 +1,120 @@
+from rest_framework import serializers
+from apps.masters.models import (
+    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
+    ProcessMaster, WarehouseMaster
+)
+
+class UOMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnitOfMeasurement
+        fields = ['id', 'company', 'code', 'name', 'symbol', 'is_active', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class PartyMasterSerializer(serializers.ModelSerializer):
+    party_type_display = serializers.CharField(source='get_party_type_display', read_only=True)
+
+    class Meta:
+        model = PartyMaster
+        fields = [
+            'id', 'company', 'party_type', 'party_type_display', 'code', 'name',
+            'contact_person', 'phone', 'email', 'gst_number', 'pan_number',
+            'address_line1', 'address_line2', 'city', 'state', 'pincode',
+            'credit_days', 'credit_limit', 'opening_balance', 'is_active',
+            'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class YarnCountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YarnCountMaster
+        fields = ['id', 'company', 'count', 'description', 'is_active', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class YarnTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YarnTypeMaster
+        fields = ['id', 'company', 'name', 'code', 'description', 'is_active', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class ColorShadeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ColorShadeMaster
+        fields = ['id', 'company', 'shade_code', 'color_name', 'hex_code', 'pantone_ref', 'description', 'is_active', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class YarnMasterSerializer(serializers.ModelSerializer):
+    yarn_type_name = serializers.CharField(source='yarn_type.name', read_only=True)
+    yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
+    color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    uom_code = serializers.CharField(source='uom.code', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = YarnMaster
+        fields = [
+            'id', 'company', 'yarn_code', 'yarn_type', 'yarn_type_name',
+            'yarn_count', 'yarn_count_name', 'category', 'category_display',
+            'color_shade', 'color_shade_name', 'uom', 'uom_code',
+            'hsn_code', 'reorder_level', 'description', 'is_active',
+            'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class FabricTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FabricTypeMaster
+        fields = ['id', 'company', 'name', 'code', 'description', 'is_active', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class FabricMasterSerializer(serializers.ModelSerializer):
+    fabric_type_name = serializers.CharField(source='fabric_type.name', read_only=True)
+    yarn_code_name = serializers.CharField(source='yarn.yarn_code', read_only=True, default=None)
+    color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    uom_code = serializers.CharField(source='uom.code', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = FabricMaster
+        fields = [
+            'id', 'company', 'fabric_code', 'fabric_name', 'fabric_type',
+            'fabric_type_name', 'category', 'category_display', 'yarn',
+            'yarn_code_name', 'color_shade', 'color_shade_name', 'gsm',
+            'dia', 'gauge', 'uom', 'uom_code', 'hsn_code', 'min_stock_alert',
+            'description', 'is_active', 'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class ProcessMasterSerializer(serializers.ModelSerializer):
+    process_type_display = serializers.CharField(source='get_process_type_display', read_only=True)
+
+    class Meta:
+        model = ProcessMaster
+        fields = [
+            'id', 'company', 'process_code', 'process_name', 'process_type',
+            'process_type_display', 'default_loss_percentage',
+            'standard_rate_per_kg', 'description', 'is_active',
+            'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class WarehouseMasterSerializer(serializers.ModelSerializer):
+    warehouse_type_display = serializers.CharField(source='get_warehouse_type_display', read_only=True)
+
+    class Meta:
+        model = WarehouseMaster
+        fields = [
+            'id', 'company', 'warehouse_code', 'name', 'warehouse_type',
+            'warehouse_type_display', 'address', 'contact_person', 'phone',
+            'is_active', 'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
