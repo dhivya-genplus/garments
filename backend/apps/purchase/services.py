@@ -152,6 +152,27 @@ class YarnPOService(BaseService):
                     )
                 )
             child_po_table.objects.bulk_create(line_objs)
+        elif po.yarn_count_id and po.bag:
+            # Auto-create line item from header for single-count orders
+            child_po_table.objects.create(
+                tm_po=po,
+                yarn_type=po.yarn_type,
+                yarn_count_id=po.yarn_count_id,
+                color_shade_id=po.color_shade_id,
+                bag=po.bag,
+                per_bag=po.per_bag,
+                quantity=po.quantity,
+                gross_wt=po.gross_quantity or po.quantity,
+                actual_rate=po.rate,
+                discount=po.discount,
+                rate=po.net_rate,
+                amount=po.amount,
+                remaining_bag=po.bag,
+                remaining_quantity=po.quantity,
+                remaining_amount=po.amount,
+                is_active=1,
+                status=1,
+            )
 
         # 8. Create Split Delivery Schedules
         if deliveries_data:
