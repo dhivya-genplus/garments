@@ -187,18 +187,47 @@ class YarnInwardService(BaseService):
         user=None
     ) -> parent_yarn_inward_table:
         po_id = data.get("po_id") or data.get("po")
+        outward_id = data.get("outward_id") or data.get("outward")
         po = None
-        if po_id:
+        outward = None
+
+        inward_source = data.get("inward_source")
+        if outward_id:
+            inward_source = "DYEING_RETURN"
+            outward = parent_yarn_outward_table.objects.select_for_update().filter(id=outward_id, company_id=company_id).first()
+            if not outward:
+                raise ResourceNotFound(f"Yarn Outward #{outward_id} not found.")
+            if outward.outward_type != YarnOutwardTypes.DYEING:
+                raise ValidationError("Only 'Yarn Outward for Dyeing' can be received as Dyed Yarn Inward.")
+            if outward.is_complete == 1:
+                raise ValidationError(f"Outward #{outward.outward_number} is already fully received and completed.")
+        elif po_id:
+            inward_source = "PURCHASE_PO"
             po = parent_po_table.objects.select_for_update().filter(id=po_id, company_id=company_id).first()
             if not po:
                 raise ResourceNotFound(f"Yarn Purchase Order #{po_id} not found.")
             if po.is_authorized != 1:
                 raise ValidationError(f"Purchase Order #{po.po_number} is not authorized. Only authorized POs can be received.")
+        else:
+            inward_source = inward_source or "PURCHASE_PO"
 
-        yarn_type = data.get("yarn_type") or (po.yarn_type if po else YarnCategory.GREY)
-        color_shade_id = data.get("color_shade_id") or (po.color_shade_id if po else None)
-        if yarn_type == YarnCategory.DYED and not color_shade_id:
-            raise ValidationError("Color shade is required for Dyed Yarn Inward.")
+        # Yarn type & Color Shade determination
+        if inward_source == "DYEING_RETURN":
+            yarn_type = YarnCategory.DYED  # Dyed yarn returned from processor
+            color_shade_id = data.get("color_shade_id") or outward.color_shade_id
+            if not color_shade_id:
+                raise ValidationError("Color shade is required when receiving dyed yarn from dyeing.")
+            yarn_count_id = data.get("yarn_count_id") or outward.yarn_count_id
+            mill_id = data.get("mill_id") or outward.mill_id
+            party_id = data.get("party_id") or outward.destination_party_id
+        else:
+            yarn_type = data.get("yarn_type") or (po.yarn_type if po else YarnCategory.GREY)
+            color_shade_id = data.get("color_shade_id") or (po.color_shade_id if po else None)
+            if yarn_type == YarnCategory.DYED and not color_shade_id:
+                raise ValidationError("Color shade is required for Dyed Yarn Inward.")
+            yarn_count_id = data.get("yarn_count_id") or (po.yarn_count_id if po else None)
+            mill_id = data.get("mill_id") or (po.mill_id if po else None)
+            party_id = data.get("party_id") or (po.party_id if po else None)
 
         inward_number = data.get("inward_number") or cls.generate_inward_number(company_id)
         bag = int(data.get("bag", 0))
@@ -214,6 +243,24 @@ class YarnInwardService(BaseService):
         lot_no = data.get("lot_no", "GEN")
         warehouse_id = data.get("warehouse_id") or data.get("warehouse")
 
+        # Resolve Financial Year
+        cfyear_id = data.get("cfyear_id") or data.get("cfyear") or (po.cfyear_id if po else (outward.cfyear_id if outward else None))
+        if not cfyear_id:
+            comp_obj = Company.objects.filter(id=company_id).first()
+            cf = comp_obj.current_financial_year if comp_obj else None
+            cfyear_id = cf.id if cf else (FinancialYear.objects.filter(company_id=company_id).first().id if FinancialYear.objects.filter(company_id=company_id).exists() else None)
+
+        # Process Loss calculation for dyeing return
+        process_loss_wt = Decimal(str(data.get("process_loss_wt", "0.000")))
+        dyeing_rate = Decimal(str(data.get("dyeing_rate", "0.00")))
+        dyeing_charges = net_wt * dyeing_rate
+        if inward_source == "DYEING_RETURN" and outward:
+            if not process_loss_wt and (outward.remaining_quantity > net_wt):
+                process_loss_wt = outward.remaining_quantity - net_wt
+            loss_pct = (process_loss_wt / outward.quantity * Decimal("100.00")) if outward.quantity else Decimal("0.00")
+        else:
+            loss_pct = Decimal("0.00")
+
         inward = parent_yarn_inward_table.objects.create(
             inward_number=inward_number,
             inward_date=data.get("inward_date") or timezone.now().date(),
@@ -221,13 +268,15 @@ class YarnInwardService(BaseService):
             dc_date=data.get("dc_date") or timezone.now().date(),
             vehicle_no=data.get("vehicle_no", ""),
             yarn_type=yarn_type,
+            inward_source=inward_source,
             po=po,
+            outward=outward,
             company_id=company_id,
-            cfyear_id=data.get("cfyear_id") or (po.cfyear_id if po else None),
-            party_id=data.get("party_id") or (po.party_id if po else None),
-            mill_id=data.get("mill_id") or (po.mill_id if po else None),
+            cfyear_id=cfyear_id,
+            party_id=party_id,
+            mill_id=mill_id,
             warehouse_id=warehouse_id,
-            yarn_count_id=data.get("yarn_count_id") or (po.yarn_count_id if po else None),
+            yarn_count_id=yarn_count_id,
             color_shade_id=color_shade_id,
             lot_no=lot_no,
             bag=bag,
@@ -237,6 +286,10 @@ class YarnInwardService(BaseService):
             net_wt=net_wt,
             rate=rate,
             amount=amount,
+            process_loss_wt=process_loss_wt,
+            process_loss_percent=loss_pct,
+            dyeing_rate=dyeing_rate,
+            dyeing_charges=dyeing_charges,
             remarks=data.get("remarks", ""),
             is_authorized=1,
             status=1,
@@ -244,7 +297,7 @@ class YarnInwardService(BaseService):
             updated_by=user,
         )
 
-        # 1. Update Live Stock atomically
+        # 1. Update Live Stock atomically (Dyed Yarn Stock gets credited!)
         YarnStockService.add_inward_stock(
             company_id=company_id,
             warehouse_id=warehouse_id,
@@ -257,7 +310,7 @@ class YarnInwardService(BaseService):
             quantity=net_wt
         )
 
-        # 2. Update PO Remaining Balances & Check Completion
+        # 2. Update PO Remaining Balances & Check Completion (for PO inward)
         if po:
             line_item = child_po_table.objects.filter(tm_po=po, yarn_count_id=inward.yarn_count_id).first()
             if line_item:
@@ -267,6 +320,14 @@ class YarnInwardService(BaseService):
                 line_item.save()
 
             YarnPOService.check_and_update_completion(po.id)
+
+        # 3. Update Outward Process Tracking & Completion (for Dyeing return)
+        if outward:
+            outward.received_quantity += net_wt
+            outward.remaining_quantity = max(Decimal("0.000"), outward.remaining_quantity - (net_wt + process_loss_wt))
+            if outward.remaining_quantity <= Decimal("1.000"):
+                outward.is_complete = 1
+            outward.save()
 
         return inward
 

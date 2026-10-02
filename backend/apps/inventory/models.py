@@ -79,6 +79,13 @@ class parent_yarn_inward_table(UppercaseModel):
     vehicle_no = models.CharField(max_length=30, blank=True)
 
     yarn_type = models.CharField(max_length=20, choices=YarnCategory.CHOICES, default=YarnCategory.GREY, db_index=True)
+    inward_source = models.CharField(
+        max_length=20,
+        choices=[("PURCHASE_PO", "Yarn PO Receipt"), ("DYEING_RETURN", "Dyeing Return (Job Work)")],
+        default="PURCHASE_PO",
+        db_index=True,
+        help_text="Source of Yarn Inward"
+    )
     po = models.ForeignKey(
         parent_po_table,
         on_delete=models.SET_NULL,
@@ -88,9 +95,18 @@ class parent_yarn_inward_table(UppercaseModel):
         db_column="po_id",
         help_text="Associated Yarn Purchase Order"
     )
+    outward = models.ForeignKey(
+        "parent_yarn_outward_table",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="inwards",
+        db_column="outward_id",
+        help_text="Associated Yarn Outward for Dyeing"
+    )
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="yarn_inwards")
     cfyear = models.ForeignKey(FinancialYear, on_delete=models.PROTECT, related_name="yarn_inwards")
-    party = models.ForeignKey(PartyMaster, on_delete=models.PROTECT, related_name="yarn_inward_parties", help_text="Supplier / Trader")
+    party = models.ForeignKey(PartyMaster, on_delete=models.PROTECT, related_name="yarn_inward_parties", help_text="Supplier / Trader / Dyeing Unit")
     mill = models.ForeignKey(PartyMaster, on_delete=models.PROTECT, related_name="yarn_inward_mills", help_text="Spinning Mill")
     warehouse = models.ForeignKey(WarehouseMaster, on_delete=models.PROTECT, related_name="yarn_inwards")
 
@@ -106,6 +122,12 @@ class parent_yarn_inward_table(UppercaseModel):
 
     rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"))
     amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+
+    # Dyeing Process Loss & Charges (when received from Dyeing Outward)
+    process_loss_wt = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Dyeing process loss in Kg")
+    process_loss_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"), help_text="Dyeing process loss %")
+    dyeing_rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"), help_text="Dyeing job work rate per Kg")
+    dyeing_charges = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Total dyeing charges")
 
     remarks = models.CharField(max_length=200, blank=True)
     is_authorized = models.IntegerField(default=1, help_text="1 = Authorized & stock posted, 0 = Draft")
@@ -205,6 +227,9 @@ class parent_yarn_outward_table(UppercaseModel):
 
     bag = models.IntegerField(default=0)
     quantity = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Total Outward Weight (Kg)")
+    received_quantity = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Received weight from dyeing/knitting (Kg)")
+    remaining_quantity = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Pending weight at processor (Kg)")
+    is_complete = models.IntegerField(default=0, help_text="0 = In-progress at processor, 1 = Fully received / completed")
 
     vehicle_no = models.CharField(max_length=30, blank=True)
     driver_name = models.CharField(max_length=100, blank=True)
@@ -225,6 +250,15 @@ class parent_yarn_outward_table(UppercaseModel):
 
     def __str__(self):
         return f"{self.outward_number} [{self.get_outward_type_display()}] -> {self.destination_party.name} ({self.quantity} Kg)"
+
+    def clean(self):
+        if not self.pk and not self.remaining_quantity:
+            self.remaining_quantity = self.quantity
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 
 class child_yarn_outward_table(UppercaseModel):

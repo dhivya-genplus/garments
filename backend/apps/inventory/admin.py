@@ -30,12 +30,12 @@ class ChildYarnInwardInline(admin.TabularInline):
 @admin.register(parent_yarn_inward_table)
 class ParentYarnInwardAdmin(admin.ModelAdmin):
     list_display = (
-        'inward_number', 'inward_date', 'yarn_type', 'party', 'mill',
-        'yarn_count', 'bag', 'net_wt', 'rate', 'amount', 'po'
+        'inward_number', 'inward_date', 'inward_source', 'yarn_type', 'color_shade',
+        'party', 'mill', 'yarn_count', 'bag', 'net_wt', 'process_loss_wt', 'po', 'outward'
     )
-    list_filter = ('yarn_type', 'inward_date', 'warehouse', 'mill')
+    list_filter = ('inward_source', 'yarn_type', 'inward_date', 'warehouse', 'mill')
     search_fields = ('inward_number', 'dc_number', 'mill__name', 'party__name')
-    readonly_fields = ('net_wt', 'amount', 'created_on', 'updated_on')
+    readonly_fields = ('net_wt', 'amount', 'process_loss_percent', 'dyeing_charges', 'created_on', 'updated_on')
     inlines = [ChildYarnInwardInline]
 
 
@@ -49,9 +49,11 @@ class ChildYarnOutwardInline(admin.TabularInline):
 class ParentYarnOutwardAdmin(admin.ModelAdmin):
     list_display = (
         'outward_number', 'outward_date', 'outward_type', 'yarn_type',
-        'destination_party', 'yarn_count', 'bag', 'quantity'
+        'destination_party', 'yarn_count', 'bag', 'quantity',
+        'received_quantity', 'remaining_quantity', 'is_complete'
     )
-    list_filter = ('outward_type', 'yarn_type', 'outward_date', 'warehouse')
+    list_filter = ('outward_type', 'yarn_type', 'is_complete', 'outward_date', 'warehouse')
     search_fields = ('outward_number', 'destination_party__name', 'vehicle_no')
-    readonly_fields = ('created_on', 'updated_on')
+    readonly_fields = ('received_quantity', 'remaining_quantity', 'created_on', 'updated_on')
     inlines = [ChildYarnOutwardInline]
+
