@@ -231,3 +231,65 @@ class WarehouseMaster(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.name} [{self.get_warehouse_type_display()}]"
+
+
+class UppercaseModel(models.Model):
+    """Abstract base model to automatically uppercase all CharField & TextField values."""
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if isinstance(field, (models.CharField, models.TextField)):
+                val = getattr(self, field.name)
+                if isinstance(val, str): 
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+
+
+class quality_program_table(UppercaseModel):
+    quality = models.CharField(max_length=50) 
+    style = models.CharField(max_length=50) 
+    fabric_id = models.CharField(max_length=50, null=True, blank=True) 
+    is_active = models.IntegerField(default=1) 
+    status = models.IntegerField(default=1)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+    created_by = models.IntegerField(default=1) 
+    updated_by = models.IntegerField(default=1)
+    
+    class Meta:
+        db_table = "quality_program"
+        verbose_name = "Quality Program"
+        verbose_name_plural = "Quality Programs"
+
+    def __str__(self):
+        return f"{self.style} - {self.quality}"
+
+
+class sub_quality_program_table(UppercaseModel):
+    tm = models.ForeignKey(
+        quality_program_table,
+        on_delete=models.CASCADE,
+        related_name="sizes",
+        db_column="tm_id",
+        verbose_name="Quality Program"
+    )
+    size_id = models.IntegerField() 
+    position = models.IntegerField()
+    per_box = models.IntegerField()
+    is_active = models.IntegerField(default=1)
+    status = models.IntegerField(default=1)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+    created_by = models.IntegerField(default=1) 
+    updated_by = models.IntegerField(default=1)
+     
+    class Meta:
+        db_table = "mx_quality_program_size"
+        verbose_name = "Sub Quality Program Size"
+        verbose_name_plural = "Sub Quality Program Sizes"
+
+    def __str__(self):
+        return f"TM: {self.tm_id} - Size: {self.size_id}"
+

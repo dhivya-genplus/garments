@@ -2,7 +2,7 @@ from django.contrib import admin
 from apps.masters.models import (
     UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster
+    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table
 )
 
 @admin.register(UnitOfMeasurement)
@@ -64,3 +64,25 @@ class WarehouseMasterAdmin(admin.ModelAdmin):
     list_display = ('warehouse_code', 'name', 'warehouse_type', 'contact_person', 'company', 'is_active')
     search_fields = ('warehouse_code', 'name')
     list_filter = ('warehouse_type', 'company', 'is_active')
+
+
+class SubQualityProgramInline(admin.TabularInline):
+    model = sub_quality_program_table
+    extra = 1
+    fields = ('size_id', 'position', 'per_box', 'is_active', 'status')
+
+
+@admin.register(quality_program_table)
+class QualityProgramAdmin(admin.ModelAdmin):
+    list_display = ('id', 'quality', 'style', 'fabric_id', 'is_active', 'status', 'created_on')
+    search_fields = ('quality', 'style', 'fabric_id')
+    list_filter = ('is_active', 'status', 'created_on')
+    inlines = [SubQualityProgramInline]
+
+
+@admin.register(sub_quality_program_table)
+class SubQualityProgramAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tm', 'size_id', 'position', 'per_box', 'is_active', 'status')
+    search_fields = ('size_id',)
+    list_filter = ('is_active', 'status')
+

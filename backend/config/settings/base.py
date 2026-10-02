@@ -33,6 +33,9 @@ INSTALLED_APPS = [
     # Domain apps
     'apps.authentication',
     'apps.masters',
+    'apps.purchase',
+    'apps.inventory',
+    'apps.sales',
 ]
 
 MIDDLEWARE = [

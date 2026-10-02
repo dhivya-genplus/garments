@@ -50,3 +50,18 @@ class SoftDeleteModel(TimeStampedModel):
         self.deleted_by = None
         self.updated_by = user
         self.save(update_fields=["is_deleted", "deleted_on", "deleted_by", "updated_on"])
+
+
+class UppercaseModel(models.Model):
+    """Abstract base model to automatically uppercase all CharField & TextField values."""
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if isinstance(field, (models.CharField, models.TextField)):
+                val = getattr(self, field.name)
+                if isinstance(val, str):
+                    setattr(self, field.name, val.upper())
+        super().save(*args, **kwargs)
+

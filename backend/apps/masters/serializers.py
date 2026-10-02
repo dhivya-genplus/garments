@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.masters.models import (
     UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster
+    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table
 )
 
 class UOMSerializer(serializers.ModelSerializer):
@@ -118,3 +118,28 @@ class WarehouseMasterSerializer(serializers.ModelSerializer):
             'is_active', 'created_on', 'updated_on'
         ]
         read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
+
+class SubQualityProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = sub_quality_program_table
+        fields = [
+            'id', 'tm', 'size_id', 'position', 'per_box',
+            'is_active', 'status', 'created_on', 'updated_on',
+            'created_by', 'updated_by'
+        ]
+        read_only_fields = ['id', 'created_on', 'updated_on']
+
+
+class QualityProgramSerializer(serializers.ModelSerializer):
+    sizes = SubQualityProgramSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = quality_program_table
+        fields = [
+            'id', 'quality', 'style', 'fabric_id', 'is_active',
+            'status', 'sizes', 'created_on', 'updated_on',
+            'created_by', 'updated_by'
+        ]
+        read_only_fields = ['id', 'created_on', 'updated_on']
+

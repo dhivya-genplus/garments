@@ -27,6 +27,18 @@ class ModulePermissions:
     MASTERS_COLOR = "masters_color"
     MASTERS_WAREHOUSE = "masters_warehouse"
 
+    # Purchase
+    PURCHASE_YARN_PO = "purchase_yarn_po"
+
+    # Inventory
+    INVENTORY_YARN_INWARD = "inventory_yarn_inward"
+    INVENTORY_YARN_OUTWARD = "inventory_yarn_outward"
+    INVENTORY_YARN_STOCK = "inventory_yarn_stock"
+
+    # Sales
+    SALES_YARN = "sales_yarn"
+    SALES_YARN_RETURN = "sales_yarn_return"
+
     # All Modules List
     ALL_MODULES = [
         (COMPANY_MANAGEMENT, "Company Management"),
@@ -41,6 +53,24 @@ class ModulePermissions:
         (MASTERS_UOM, "Unit of Measurement"),
         (MASTERS_COLOR, "Color / Shade Master"),
         (MASTERS_WAREHOUSE, "Warehouse / Location Master"),
+        (PURCHASE_YARN_PO, "Yarn Purchase Order"),
+        (INVENTORY_YARN_INWARD, "Yarn Inward (GRN)"),
+        (INVENTORY_YARN_OUTWARD, "Yarn Outward (Knitting/Dyeing/Return)"),
+        (INVENTORY_YARN_STOCK, "Yarn Stock Ledger"),
+        (SALES_YARN, "Yarn Sales"),
+        (SALES_YARN_RETURN, "Yarn Sales Return"),
+    ]
+
+
+class YarnOutwardTypes:
+    KNITTING = "KNITTING"
+    DYEING = "DYEING"
+    PURCHASE_RETURN = "PURCHASE_RETURN"
+
+    CHOICES = [
+        (KNITTING, "Yarn Outward for Knitting"),
+        (DYEING, "Yarn Outward for Dyeing"),
+        (PURCHASE_RETURN, "Yarn Return (Purchase Return)"),
     ]
 
 
