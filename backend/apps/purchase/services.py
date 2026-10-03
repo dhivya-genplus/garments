@@ -6,6 +6,7 @@ from django.utils import timezone
 from core.base_services import BaseService
 from core.exceptions import ValidationError, ResourceNotFound, ConflictError
 from core.constants import YarnCategory
+from apps.authentication.models import Company, FinancialYear
 from apps.purchase.models import parent_po_table, child_po_table, yarn_po_delivery_table
 from apps.purchase.repositories import YarnPORepository
 
@@ -83,6 +84,14 @@ class YarnPOService(BaseService):
                 )
 
         # 6. Create Parent PO Header
+        cfyear_id = data.get("cfyear_id") or data.get("cfyear")
+        if not cfyear_id:
+            comp_obj = Company.objects.filter(id=company_id).first()
+            cf = comp_obj.current_financial_year if comp_obj else None
+            cfyear_id = cf.id if cf else (FinancialYear.objects.filter(company_id=company_id).first().id if FinancialYear.objects.filter(company_id=company_id).exists() else None)
+        if not cfyear_id:
+            raise ValidationError("A valid Financial Year is required for the Purchase Order.")
+
         po_data = {
             "po_number": po_number,
             "po_date": data.get("po_date") or timezone.now().date(),
@@ -90,7 +99,7 @@ class YarnPOService(BaseService):
             "color_shade_id": color_shade_id if yarn_type == YarnCategory.DYED else None,
             "name": data.get("name"),
             "company_id": company_id,
-            "cfyear_id": data.get("cfyear_id") or data.get("cfyear"),
+            "cfyear_id": cfyear_id,
             "party_id": data.get("party_id") or data.get("party"),
             "mill_id": data.get("mill_id") or data.get("mill"),
             "yarn_count_id": data.get("yarn_count_id") or data.get("yarn_count"),
@@ -351,3 +360,21 @@ class YarnPOService(BaseService):
             po.save(update_fields=["is_complete", "updated_on"])
             return True
         return False
+
+    @classmethod
+    @transaction.atomic
+    def delete_yarn_po(cls, po_id: int, company_id: int, user=None) -> parent_po_table:
+        """Safely soft-delete an un-authorized PO if no inward receipts exist."""
+        po = YarnPORepository.get_by_id(po_id)
+        if not po or po.company_id != company_id:
+            raise ResourceNotFound(f"Purchase Order with ID {po_id} not found.")
+
+        if po.is_authorized == 1:
+            raise ValidationError("Authorized purchase orders cannot be deleted. Unauthorize first.")
+
+        if hasattr(po, 'inwards') and po.inwards.filter(status=1).exists():
+            raise ValidationError("Cannot delete purchase order because Goods Receipt (Inward) entries exist against it.")
+
+        po.soft_delete(user=user)
+        return po
+

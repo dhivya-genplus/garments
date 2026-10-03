@@ -159,6 +159,12 @@ class parent_yarn_inward_table(UppercaseModel):
         self.clean()
         super().save(*args, **kwargs)
 
+    def soft_delete(self, user=None):
+        self.status = 0
+        self.updated_by = user
+        self.save(update_fields=["status", "updated_by", "updated_on"])
+        self.line_items.all().update(status=0)
+
 
 class child_yarn_inward_table(UppercaseModel):
     """
@@ -258,6 +264,12 @@ class parent_yarn_outward_table(UppercaseModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+    def soft_delete(self, user=None):
+        self.status = 0
+        self.updated_by = user
+        self.save(update_fields=["status", "updated_by", "updated_on"])
+        self.line_items.all().update(status=0)
 
 
 

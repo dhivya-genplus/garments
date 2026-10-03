@@ -260,11 +260,17 @@ class quality_program_table(UppercaseModel):
     
     class Meta:
         db_table = "quality_program"
-        verbose_name = "Quality Program"
+        verbose_name = "Quality Program" 
         verbose_name_plural = "Quality Programs"
 
     def __str__(self):
         return f"{self.style} - {self.quality}"
+
+    def soft_delete(self, user=None):
+        self.status = 0
+        self.is_active = 0
+        self.save(update_fields=["status", "is_active", "updated_on"])
+        self.sizes.all().update(status=0, is_active=0)
 
 
 class sub_quality_program_table(UppercaseModel):
@@ -292,4 +298,10 @@ class sub_quality_program_table(UppercaseModel):
 
     def __str__(self):
         return f"TM: {self.tm_id} - Size: {self.size_id}"
+
+    def soft_delete(self, user=None):
+        self.status = 0
+        self.is_active = 0
+        self.save(update_fields=["status", "is_active", "updated_on"])
+
 

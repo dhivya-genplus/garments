@@ -129,10 +129,13 @@ class SubQualityProgramSerializer(serializers.ModelSerializer):
             'created_by', 'updated_by'
         ]
         read_only_fields = ['id', 'created_on', 'updated_on']
+        extra_kwargs = {
+            'tm': {'required': False}
+        }
 
 
 class QualityProgramSerializer(serializers.ModelSerializer):
-    sizes = SubQualityProgramSerializer(many=True, read_only=True)
+    sizes = SubQualityProgramSerializer(many=True, required=False)
 
     class Meta:
         model = quality_program_table
@@ -142,4 +145,48 @@ class QualityProgramSerializer(serializers.ModelSerializer):
             'created_by', 'updated_by'
         ]
         read_only_fields = ['id', 'created_on', 'updated_on']
+
+    def create(self, validated_data):
+        sizes_data = validated_data.pop('sizes', [])
+        qp = quality_program_table.objects.create(**validated_data)
+        if sizes_data:
+            size_objs = [
+                sub_quality_program_table(
+                    tm=qp,
+                    size_id=s.get('size_id'),
+                    position=s.get('position', idx + 1),
+                    per_box=s.get('per_box', 0),
+                    is_active=s.get('is_active', 1),
+                    status=s.get('status', 1),
+                    created_by=validated_data.get('created_by', 1),
+                    updated_by=validated_data.get('updated_by', 1),
+                )
+                for idx, s in enumerate(sizes_data)
+            ]
+            sub_quality_program_table.objects.bulk_create(size_objs)
+        return qp
+
+    def update(self, instance, validated_data):
+        sizes_data = validated_data.pop('sizes', None)
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+        instance.save()
+        if sizes_data is not None:
+            sub_quality_program_table.objects.filter(tm=instance).delete()
+            size_objs = [
+                sub_quality_program_table(
+                    tm=instance,
+                    size_id=s.get('size_id'),
+                    position=s.get('position', idx + 1),
+                    per_box=s.get('per_box', 0),
+                    is_active=s.get('is_active', 1),
+                    status=s.get('status', 1),
+                    created_by=instance.created_by,
+                    updated_by=instance.updated_by,
+                )
+                for idx, s in enumerate(sizes_data)
+            ]
+            sub_quality_program_table.objects.bulk_create(size_objs)
+        return instance
+
 

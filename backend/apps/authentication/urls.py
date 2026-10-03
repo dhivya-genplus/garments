@@ -16,7 +16,15 @@ router.register(r'employees', EmployeeUserViewSet, basename='employee')
 router.register(r'roles', RoleViewSet, basename='role')
 
 urlpatterns = [
-    # Auth endpoints
+    # Direct auth endpoints
+    path('login/', LoginView.as_view(), name='login_direct'),
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh_direct'),
+    path('me/', CurrentUserProfileView.as_view(), name='current_user_direct'),
+    path('switch-financial-year/', SwitchFinancialYearView.as_view(), name='switch_financial_year_direct'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password_direct'),
+    path('modules/', AvailableModulesView.as_view(), name='available_modules_direct'),
+
+    # Backward-compatible prefixed auth endpoints
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', CurrentUserProfileView.as_view(), name='current_user'),

@@ -46,6 +46,20 @@ class ParentYarnSalesSerializer(serializers.ModelSerializer):
         ]
 
 
+class ChildYarnSalesReturnSerializer(serializers.ModelSerializer):
+    yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
+    color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    mill_name = serializers.CharField(source='mill.name', read_only=True)
+
+    class Meta:
+        model = child_yarn_sales_return_table
+        fields = [
+            'id', 'tm_sales_return', 'yarn_count', 'yarn_count_name', 'color_shade',
+            'color_shade_name', 'mill', 'mill_name', 'lot_no', 'bag',
+            'quantity', 'rate', 'amount', 'status'
+        ]
+
+
 class ParentYarnSalesReturnSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     mill_name = serializers.CharField(source='mill.name', read_only=True)
@@ -53,6 +67,7 @@ class ParentYarnSalesReturnSerializer(serializers.ModelSerializer):
     yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
     yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
+    line_items = ChildYarnSalesReturnSerializer(many=True, read_only=True)
 
     class Meta:
         model = parent_yarn_sales_return_table
@@ -63,6 +78,7 @@ class ParentYarnSalesReturnSerializer(serializers.ModelSerializer):
             'yarn_count_name', 'mill', 'mill_name', 'color_shade',
             'color_shade_name', 'lot_no', 'bag', 'quantity', 'rate',
             'amount', 'return_reason', 'is_authorized', 'status',
-            'created_on', 'updated_on'
+            'created_on', 'updated_on', 'line_items'
         ]
         read_only_fields = ['id', 'company', 'amount', 'created_on', 'updated_on']
+

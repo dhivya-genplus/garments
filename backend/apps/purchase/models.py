@@ -173,6 +173,15 @@ class parent_po_table(UppercaseModel):
         self.clean()
         super().save(*args, **kwargs)
 
+    def soft_delete(self, user=None):
+        self.status = 0
+        self.is_active = 0
+        self.updated_by = user
+        self.save(update_fields=["status", "is_active", "updated_by", "updated_on"])
+        self.line_items.all().update(status=0, is_active=0)
+        self.deliveries.all().update(status=0, is_active=0)
+
+
 
 class child_po_table(UppercaseModel):
     """

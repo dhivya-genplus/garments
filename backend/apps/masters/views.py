@@ -260,17 +260,26 @@ class WarehouseMasterViewSet(BaseMasterViewSet):
 
 
 class QualityProgramViewSet(ModelViewSet):
-    queryset = quality_program_table.objects.all().order_by('-id')
+    permission_classes = [IsCompanyUser]
+    queryset = quality_program_table.objects.filter(status=1).prefetch_related('sizes').order_by('-id')
     serializer_class = QualityProgramSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['quality', 'style', 'fabric_id']
     filterset_fields = ['is_active', 'status']
     ordering_fields = ['id', 'created_on', 'quality', 'style']
 
+    def perform_destroy(self, instance):
+        instance.soft_delete(user=self.request.user)
+
 
 class SubQualityProgramViewSet(ModelViewSet):
-    queryset = sub_quality_program_table.objects.all().order_by('position')
+    permission_classes = [IsCompanyUser]
+    queryset = sub_quality_program_table.objects.filter(status=1).order_by('position')
     serializer_class = SubQualityProgramSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['tm', 'size_id', 'is_active', 'status']
+
+    def perform_destroy(self, instance):
+        instance.soft_delete(user=self.request.user)
+
 

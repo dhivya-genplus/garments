@@ -78,11 +78,12 @@ class YarnStockService(BaseService):
             )
             .first()
         )
-        if not stock or stock.balance_quantity < quantity:
+        if not stock or stock.balance_quantity < quantity or (bag > 0 and stock.balance_bag < bag):
             avail = stock.balance_quantity if stock else Decimal("0.000")
+            avail_bag = stock.balance_bag if stock else 0
             raise ValidationError(
                 f"Insufficient stock for {yarn_type} Yarn (Count ID: {yarn_count_id}, Lot: {lot_no}). "
-                f"Available: {avail} Kg, Requested: {quantity} Kg."
+                f"Available: {avail} Kg ({avail_bag} bags), Requested: {quantity} Kg ({bag} bags)."
             )
 
         stock.outward_bag += bag
@@ -119,10 +120,12 @@ class YarnStockService(BaseService):
             )
             .first()
         )
-        if not stock or stock.balance_quantity < quantity:
+        if not stock or stock.balance_quantity < quantity or (bag > 0 and stock.balance_bag < bag):
             avail = stock.balance_quantity if stock else Decimal("0.000")
+            avail_bag = stock.balance_bag if stock else 0
             raise ValidationError(
-                f"Insufficient stock to complete Yarn Sales. Available: {avail} Kg, Requested: {quantity} Kg."
+                f"Insufficient stock to complete Yarn Sales. "
+                f"Available: {avail} Kg ({avail_bag} bags), Requested: {quantity} Kg ({bag} bags)."
             )
 
         stock.sales_bag += bag
@@ -159,6 +162,143 @@ class YarnStockService(BaseService):
         stock.recalculate_balance()
         stock.save()
         return stock
+
+    @classmethod
+    @transaction.atomic
+    def reverse_inward_stock(
+        cls,
+        company_id: int,
+        warehouse_id: int,
+        yarn_type: str,
+        yarn_count_id: int,
+        mill_id: int,
+        color_shade_id: Optional[int],
+        lot_no: str,
+        bag: int,
+        quantity: Decimal
+    ) -> yarn_stock_table:
+        stock = (
+            yarn_stock_table.objects
+            .select_for_update()
+            .filter(
+                company_id=company_id,
+                warehouse_id=warehouse_id,
+                yarn_type=yarn_type,
+                yarn_count_id=yarn_count_id,
+                mill_id=mill_id,
+                color_shade_id=color_shade_id,
+                lot_no=lot_no or "GEN"
+            )
+            .first()
+        )
+        if not stock or stock.balance_quantity < quantity or (bag > 0 and stock.balance_bag < bag):
+            avail = stock.balance_quantity if stock else Decimal("0.000")
+            raise ValidationError(
+                f"Cannot reverse Inward: stock has already been consumed. Available: {avail} Kg, Needed: {quantity} Kg."
+            )
+        stock.inward_bag = max(0, stock.inward_bag - bag)
+        stock.inward_quantity = max(Decimal("0.000"), stock.inward_quantity - quantity)
+        stock.recalculate_balance()
+        stock.save()
+        return stock
+
+    @classmethod
+    @transaction.atomic
+    def reverse_outward_stock(
+        cls,
+        company_id: int,
+        warehouse_id: int,
+        yarn_type: str,
+        yarn_count_id: int,
+        mill_id: int,
+        color_shade_id: Optional[int],
+        lot_no: str,
+        bag: int,
+        quantity: Decimal
+    ) -> yarn_stock_table:
+        stock, _ = yarn_stock_table.objects.select_for_update().get_or_create(
+            company_id=company_id,
+            warehouse_id=warehouse_id,
+            yarn_type=yarn_type,
+            yarn_count_id=yarn_count_id,
+            mill_id=mill_id,
+            color_shade_id=color_shade_id,
+            lot_no=lot_no or "GEN"
+        )
+        stock.outward_bag = max(0, stock.outward_bag - bag)
+        stock.outward_quantity = max(Decimal("0.000"), stock.outward_quantity - quantity)
+        stock.recalculate_balance()
+        stock.save()
+        return stock
+
+    @classmethod
+    @transaction.atomic
+    def reverse_sales_stock(
+        cls,
+        company_id: int,
+        warehouse_id: int,
+        yarn_type: str,
+        yarn_count_id: int,
+        mill_id: int,
+        color_shade_id: Optional[int],
+        lot_no: str,
+        bag: int,
+        quantity: Decimal
+    ) -> yarn_stock_table:
+        stock, _ = yarn_stock_table.objects.select_for_update().get_or_create(
+            company_id=company_id,
+            warehouse_id=warehouse_id,
+            yarn_type=yarn_type,
+            yarn_count_id=yarn_count_id,
+            mill_id=mill_id,
+            color_shade_id=color_shade_id,
+            lot_no=lot_no or "GEN"
+        )
+        stock.sales_bag = max(0, stock.sales_bag - bag)
+        stock.sales_quantity = max(Decimal("0.000"), stock.sales_quantity - quantity)
+        stock.recalculate_balance()
+        stock.save()
+        return stock
+
+    @classmethod
+    @transaction.atomic
+    def reverse_sales_return_stock(
+        cls,
+        company_id: int,
+        warehouse_id: int,
+        yarn_type: str,
+        yarn_count_id: int,
+        mill_id: int,
+        color_shade_id: Optional[int],
+        lot_no: str,
+        bag: int,
+        quantity: Decimal
+    ) -> yarn_stock_table:
+        stock = (
+            yarn_stock_table.objects
+            .select_for_update()
+            .filter(
+                company_id=company_id,
+                warehouse_id=warehouse_id,
+                yarn_type=yarn_type,
+                yarn_count_id=yarn_count_id,
+                mill_id=mill_id,
+                color_shade_id=color_shade_id,
+                lot_no=lot_no or "GEN"
+            )
+            .first()
+        )
+        if not stock or stock.balance_quantity < quantity or (bag > 0 and stock.balance_bag < bag):
+            avail = stock.balance_quantity if stock else Decimal("0.000")
+            raise ValidationError(
+                f"Cannot reverse Sales Return: stock has already been consumed. Available: {avail} Kg, Needed: {quantity} Kg."
+            )
+        stock.sales_return_bag = max(0, stock.sales_return_bag - bag)
+        stock.sales_return_quantity = max(Decimal("0.000"), stock.sales_return_quantity - quantity)
+        stock.recalculate_balance()
+        stock.save()
+        return stock
+
 
 
 class YarnInwardService(BaseService):
@@ -329,7 +469,87 @@ class YarnInwardService(BaseService):
                 outward.is_complete = 1
             outward.save()
 
+        # 4. Create Line Items (Child Inward)
+        if line_items_data:
+            line_objs = [
+                child_yarn_inward_table(
+                    tm_inward=inward,
+                    yarn_count_id=item.get("yarn_count_id") or inward.yarn_count_id,
+                    color_shade_id=item.get("color_shade_id") or inward.color_shade_id,
+                    lot_no=item.get("lot_no", lot_no),
+                    bag=int(item.get("bag", 0)),
+                    per_bag=Decimal(str(item.get("per_bag", per_bag))),
+                    gross_wt=Decimal(str(item.get("gross_wt", "0.000"))),
+                    tare_wt=Decimal(str(item.get("tare_wt", "0.000"))),
+                    net_wt=Decimal(str(item.get("net_wt", "0.000"))),
+                    rate=Decimal(str(item.get("rate", rate))),
+                    amount=Decimal(str(item.get("amount", "0.000"))),
+                    status=1
+                )
+                for item in line_items_data
+            ]
+            child_yarn_inward_table.objects.bulk_create(line_objs)
+        elif inward.yarn_count_id and inward.net_wt:
+            child_yarn_inward_table.objects.create(
+                tm_inward=inward,
+                yarn_count_id=inward.yarn_count_id,
+                color_shade_id=inward.color_shade_id,
+                lot_no=inward.lot_no,
+                bag=inward.bag,
+                per_bag=inward.per_bag,
+                gross_wt=inward.gross_wt,
+                tare_wt=inward.tare_wt,
+                net_wt=inward.net_wt,
+                rate=inward.rate,
+                amount=inward.amount,
+                status=1
+            )
+
         return inward
+
+    @classmethod
+    @transaction.atomic
+    def cancel_inward(cls, inward_id: int, company_id: int, user=None) -> parent_yarn_inward_table:
+        """Atomically reverse inward stock, restore PO/outward balances, and soft delete."""
+        inward = parent_yarn_inward_table.objects.select_for_update().filter(id=inward_id, company_id=company_id, status=1).first()
+        if not inward:
+            raise ResourceNotFound(f"Yarn Inward with ID {inward_id} not found.")
+
+        # 1. Reverse live stock
+        YarnStockService.reverse_inward_stock(
+            company_id=company_id,
+            warehouse_id=inward.warehouse_id,
+            yarn_type=inward.yarn_type,
+            yarn_count_id=inward.yarn_count_id,
+            mill_id=inward.mill_id,
+            color_shade_id=inward.color_shade_id,
+            lot_no=inward.lot_no,
+            bag=inward.bag,
+            quantity=inward.net_wt
+        )
+
+        # 2. Restore PO balances if applicable
+        if inward.po:
+            line_item = child_po_table.objects.filter(tm_po=inward.po, yarn_count_id=inward.yarn_count_id).first()
+            if line_item:
+                line_item.remaining_bag += inward.bag
+                line_item.remaining_quantity += inward.net_wt
+                line_item.remaining_amount = line_item.remaining_quantity * line_item.rate
+                line_item.save()
+            inward.po.is_complete = 0
+            inward.po.save(update_fields=["is_complete", "updated_on"])
+
+        # 3. Restore Outward balance if dyeing return
+        if inward.outward:
+            inward.outward.received_quantity = max(Decimal("0.000"), inward.outward.received_quantity - inward.net_wt)
+            inward.outward.remaining_quantity += (inward.net_wt + inward.process_loss_wt)
+            inward.outward.is_complete = 0
+            inward.outward.save()
+
+        # 4. Soft delete
+        inward.soft_delete(user=user)
+        return inward
+
 
 
 class YarnOutwardService(BaseService):
@@ -418,4 +638,62 @@ class YarnOutwardService(BaseService):
             updated_by=user,
         )
 
+        # 3. Create Child Line Items
+        if line_items_data:
+            line_objs = [
+                child_yarn_outward_table(
+                    tm_outward=outward,
+                    yarn_count_id=item.get("yarn_count_id") or outward.yarn_count_id,
+                    color_shade_id=item.get("color_shade_id") or outward.color_shade_id,
+                    mill_id=item.get("mill_id") or outward.mill_id,
+                    lot_no=item.get("lot_no", lot_no),
+                    bag=int(item.get("bag", 0)),
+                    quantity=Decimal(str(item.get("quantity", "0.000"))),
+                    remarks=item.get("remarks", ""),
+                    status=1
+                )
+                for item in line_items_data
+            ]
+            child_yarn_outward_table.objects.bulk_create(line_objs)
+        elif outward.yarn_count_id and outward.quantity:
+            child_yarn_outward_table.objects.create(
+                tm_outward=outward,
+                yarn_count_id=outward.yarn_count_id,
+                color_shade_id=outward.color_shade_id,
+                mill_id=outward.mill_id,
+                lot_no=outward.lot_no,
+                bag=outward.bag,
+                quantity=outward.quantity,
+                remarks=outward.remarks,
+                status=1
+            )
+
         return outward
+
+    @classmethod
+    @transaction.atomic
+    def cancel_outward(cls, outward_id: int, company_id: int, user=None) -> parent_yarn_outward_table:
+        """Atomically reverse outward stock and soft delete outward dispatch."""
+        outward = parent_yarn_outward_table.objects.select_for_update().filter(id=outward_id, company_id=company_id, status=1).first()
+        if not outward:
+            raise ResourceNotFound(f"Yarn Outward with ID {outward_id} not found.")
+
+        if outward.received_quantity > 0:
+            raise ValidationError("Cannot cancel outward dispatch that already has incoming receipts.")
+
+        # Reverse live stock
+        YarnStockService.reverse_outward_stock(
+            company_id=company_id,
+            warehouse_id=outward.warehouse_id,
+            yarn_type=outward.yarn_type,
+            yarn_count_id=outward.yarn_count_id,
+            mill_id=outward.mill_id,
+            color_shade_id=outward.color_shade_id,
+            lot_no=outward.lot_no,
+            bag=outward.bag,
+            quantity=outward.quantity
+        )
+
+        outward.soft_delete(user=user)
+        return outward
+

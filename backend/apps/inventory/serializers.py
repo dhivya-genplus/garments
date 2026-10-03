@@ -66,6 +66,20 @@ class ParentYarnInwardSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'company', 'net_wt', 'amount', 'dyeing_charges', 'created_on', 'updated_on']
 
 
+class ChildYarnOutwardSerializer(serializers.ModelSerializer):
+    yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
+    color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    mill_name = serializers.CharField(source='mill.name', read_only=True)
+
+    class Meta:
+        model = child_yarn_outward_table
+        fields = [
+            'id', 'tm_outward', 'yarn_count', 'yarn_count_name', 'color_shade',
+            'color_shade_name', 'mill', 'mill_name', 'lot_no', 'bag',
+            'quantity', 'remarks', 'status'
+        ]
+
+
 class ParentYarnOutwardSerializer(serializers.ModelSerializer):
     destination_party_name = serializers.CharField(source='destination_party.name', read_only=True)
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
@@ -74,6 +88,7 @@ class ParentYarnOutwardSerializer(serializers.ModelSerializer):
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
     outward_type_display = serializers.CharField(source='get_outward_type_display', read_only=True)
     yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
+    line_items = ChildYarnOutwardSerializer(many=True, read_only=True)
 
     class Meta:
         model = parent_yarn_outward_table
@@ -85,7 +100,8 @@ class ParentYarnOutwardSerializer(serializers.ModelSerializer):
             'mill', 'mill_name', 'color_shade', 'color_shade_name', 'lot_no',
             'bag', 'quantity', 'received_quantity', 'remaining_quantity', 'is_complete',
             'vehicle_no', 'driver_name', 'remarks', 'is_authorized', 'status',
-            'created_on', 'updated_on'
+            'created_on', 'updated_on', 'line_items'
         ]
         read_only_fields = ['id', 'company', 'received_quantity', 'remaining_quantity', 'created_on', 'updated_on']
+
 

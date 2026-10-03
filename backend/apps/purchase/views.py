@@ -25,7 +25,8 @@ class YarnPOViewSet(ModelViewSet):
     Supports nested creation of child line items and delivery schedules,
     Grey vs Dyed yarn filtering, and approval/authorization workflow.
     """
-    permission_classes = [IsCompanyUser]
+    permission_classes = [IsCompanyUser, HasModulePrivilege]
+    required_module = ModulePermissions.PURCHASE_YARN_PO
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['po_number', 'name', 'remarks', 'party__name', 'mill__name']
     filterset_fields = ['yarn_type', 'party', 'mill', 'yarn_count', 'is_authorized', 'is_complete', 'is_active']
@@ -44,17 +45,25 @@ class YarnPOViewSet(ModelViewSet):
             return self.request.company.id
         if getattr(user, 'company', None):
             return user.company.id
-        return 1
+        return None
 
     def get_queryset(self):
         company_id = self.get_company_id()
-        return (
+        qs = (
             parent_po_table.objects
             .select_related("company", "cfyear", "party", "mill", "yarn_count", "color_shade", "authorized_by")
             .prefetch_related("line_items", "deliveries")
-            .filter(company_id=company_id, status=1)
-            .order_by("-po_date", "-id")
+            .filter(status=1)
         )
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        elif not (self.request.user.is_superuser or getattr(self.request.user, 'is_superadmin', False)):
+            qs = qs.none()
+        return qs.order_by("-po_date", "-id")
+
+    def perform_destroy(self, instance):
+        company_id = self.get_company_id() or instance.company_id
+        YarnPOService.delete_yarn_po(instance.id, company_id, user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         company_id = self.get_company_id()
@@ -91,7 +100,7 @@ class YarnPOViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='authorize')
     def authorize(self, request, pk=None):
         """Authorize and lock the Yarn Purchase Order."""
-        company_id = self.get_company_id()
+        company_id = self.get_company_id() or parent_po_table.objects.get(id=pk).company_id
         po = YarnPOService.authorize_yarn_po(
             po_id=int(pk),
             company_id=company_id,
@@ -102,7 +111,7 @@ class YarnPOViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='unauthorize')
     def unauthorize(self, request, pk=None):
         """Re-open an authorized PO for edits."""
-        company_id = self.get_company_id()
+        company_id = self.get_company_id() or parent_po_table.objects.get(id=pk).company_id
         po = YarnPOService.unauthorize_yarn_po(
             po_id=int(pk),
             company_id=company_id,
@@ -112,25 +121,58 @@ class YarnPOViewSet(ModelViewSet):
 
 
 class YarnPODeliveryViewSet(ModelViewSet):
-    permission_classes = [IsCompanyUser]
+    permission_classes = [IsCompanyUser, HasModulePrivilege]
+    required_module = ModulePermissions.PURCHASE_YARN_PO
     serializer_class = YarnPODeliverySerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['tm_po', 'party', 'yarn_count', 'is_active']
     ordering_fields = ['delivery_date', 'id']
 
-    def get_queryset(self):
+    def get_company_id(self):
         user = self.request.user
-        company_id = getattr(user, 'company_id', None) or 1
-        return yarn_po_delivery_table.objects.filter(company_id=company_id, status=1).order_by("delivery_date")
+        if (getattr(user, 'is_superadmin', False) or getattr(user, 'role', '') == UserRoles.SUPER_ADMIN or user.is_superuser) and self.request.query_params.get('company_id'):
+            return int(self.request.query_params.get('company_id'))
+        if getattr(self.request, 'company', None):
+            return self.request.company.id
+        if getattr(user, 'company', None):
+            return user.company.id
+        return None
+
+    def get_queryset(self):
+        company_id = self.get_company_id()
+        qs = yarn_po_delivery_table.objects.filter(status=1)
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        elif not (self.request.user.is_superuser or getattr(self.request.user, 'is_superadmin', False)):
+            qs = qs.none()
+        return qs.order_by("delivery_date")
 
 
 class YarnPOBalanceViewSet(ReadOnlyModelViewSet):
     """Read-only view for tracking PO ordered vs inward received balances."""
-    permission_classes = [IsCompanyUser]
+    permission_classes = [IsCompanyUser, HasModulePrivilege]
+    required_module = ModulePermissions.PURCHASE_YARN_PO
     serializer_class = YarnPOBalanceSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['po_number']
     filterset_fields = ['yarn_type', 'yarn_count_id', 'party_id']
 
+    def get_company_id(self):
+        user = self.request.user
+        if (getattr(user, 'is_superadmin', False) or getattr(user, 'role', '') == UserRoles.SUPER_ADMIN or user.is_superuser) and self.request.query_params.get('company_id'):
+            return int(self.request.query_params.get('company_id'))
+        if getattr(self.request, 'company', None):
+            return self.request.company.id
+        if getattr(user, 'company', None):
+            return user.company.id
+        return None
+
     def get_queryset(self):
-        return yarn_po_balance_table.objects.all()
+        company_id = self.get_company_id()
+        qs = yarn_po_balance_table.objects.all()
+        if company_id:
+            po_ids = parent_po_table.objects.filter(company_id=company_id, status=1).values_list('id', flat=True)
+            qs = qs.filter(po_id__in=po_ids)
+        elif not (self.request.user.is_superuser or getattr(self.request.user, 'is_superadmin', False)):
+            qs = qs.none()
+        return qs

@@ -110,6 +110,68 @@ class YarnSalesService(BaseService):
             updated_by=user,
         )
 
+        # 3. Create Child Line Items
+        if line_items_data:
+            line_objs = [
+                child_yarn_sales_table(
+                    tm_sales=sales,
+                    yarn_count_id=item.get("yarn_count_id") or sales.yarn_count_id,
+                    color_shade_id=item.get("color_shade_id") or sales.color_shade_id,
+                    mill_id=item.get("mill_id") or sales.mill_id,
+                    lot_no=item.get("lot_no", lot_no),
+                    bag=int(item.get("bag", 0)),
+                    per_bag=Decimal(str(item.get("per_bag", per_bag))),
+                    quantity=Decimal(str(item.get("quantity", "0.000"))),
+                    rate=Decimal(str(item.get("rate", rate))),
+                    amount=Decimal(str(item.get("amount", "0.000"))),
+                    status=1
+                )
+                for item in line_items_data
+            ]
+            child_yarn_sales_table.objects.bulk_create(line_objs)
+        elif sales.yarn_count_id and sales.quantity:
+            child_yarn_sales_table.objects.create(
+                tm_sales=sales,
+                yarn_count_id=sales.yarn_count_id,
+                color_shade_id=sales.color_shade_id,
+                mill_id=sales.mill_id,
+                lot_no=sales.lot_no,
+                bag=sales.bag,
+                per_bag=sales.per_bag,
+                quantity=sales.quantity,
+                rate=sales.rate,
+                amount=sales.subtotal,
+                status=1
+            )
+
+        return sales
+
+    @classmethod
+    @transaction.atomic
+    def cancel_sales(cls, sales_id: int, company_id: int, user=None) -> parent_yarn_sales_table:
+        """Atomically reverse sold stock and soft delete invoice."""
+        sales = parent_yarn_sales_table.objects.select_for_update().filter(id=sales_id, company_id=company_id, status=1).first()
+        if not sales:
+            raise ResourceNotFound(f"Yarn Sales Invoice #{sales_id} not found.")
+
+        # Check if sales returns exist against this invoice
+        if sales.returns.filter(status=1).exists():
+            raise ValidationError("Cannot cancel invoice because active sales return records exist against it.")
+
+        # Reverse live stock
+        YarnStockService.reverse_sales_stock(
+            company_id=company_id,
+            warehouse_id=sales.warehouse_id,
+            yarn_type=sales.yarn_type,
+            yarn_count_id=sales.yarn_count_id,
+            mill_id=sales.mill_id,
+            color_shade_id=sales.color_shade_id,
+            lot_no=sales.lot_no,
+            bag=sales.bag,
+            quantity=sales.quantity
+        )
+
+        sales.soft_delete(user=user)
         return sales
 
 
@@ -196,4 +258,61 @@ class YarnSalesReturnService(BaseService):
             updated_by=user,
         )
 
+        # 2. Create Child Line Items
+        if line_items_data:
+            line_objs = [
+                child_yarn_sales_return_table(
+                    tm_sales_return=sales_return,
+                    yarn_count_id=item.get("yarn_count_id") or sales_return.yarn_count_id,
+                    color_shade_id=item.get("color_shade_id") or sales_return.color_shade_id,
+                    mill_id=item.get("mill_id") or sales_return.mill_id,
+                    lot_no=item.get("lot_no", lot_no),
+                    bag=int(item.get("bag", 0)),
+                    quantity=Decimal(str(item.get("quantity", "0.000"))),
+                    rate=Decimal(str(item.get("rate", rate))),
+                    amount=Decimal(str(item.get("amount", "0.000"))),
+                    status=1
+                )
+                for item in line_items_data
+            ]
+            child_yarn_sales_return_table.objects.bulk_create(line_objs)
+        elif sales_return.yarn_count_id and sales_return.quantity:
+            child_yarn_sales_return_table.objects.create(
+                tm_sales_return=sales_return,
+                yarn_count_id=sales_return.yarn_count_id,
+                color_shade_id=sales_return.color_shade_id,
+                mill_id=sales_return.mill_id,
+                lot_no=sales_return.lot_no,
+                bag=sales_return.bag,
+                quantity=sales_return.quantity,
+                rate=sales_return.rate,
+                amount=sales_return.amount,
+                status=1
+            )
+
         return sales_return
+
+    @classmethod
+    @transaction.atomic
+    def cancel_sales_return(cls, return_id: int, company_id: int, user=None) -> parent_yarn_sales_return_table:
+        """Atomically reverse returned stock and soft delete return."""
+        sales_return = parent_yarn_sales_return_table.objects.select_for_update().filter(id=return_id, company_id=company_id, status=1).first()
+        if not sales_return:
+            raise ResourceNotFound(f"Yarn Sales Return #{return_id} not found.")
+
+        # Reverse live stock
+        YarnStockService.reverse_sales_return_stock(
+            company_id=company_id,
+            warehouse_id=sales_return.warehouse_id,
+            yarn_type=sales_return.yarn_type,
+            yarn_count_id=sales_return.yarn_count_id,
+            mill_id=sales_return.mill_id,
+            color_shade_id=sales_return.color_shade_id,
+            lot_no=sales_return.lot_no,
+            bag=sales_return.bag,
+            quantity=sales_return.quantity
+        )
+
+        sales_return.soft_delete(user=user)
+        return sales_return
+
