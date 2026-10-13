@@ -26,6 +26,7 @@ class ParentYarnSalesSerializer(serializers.ModelSerializer):
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
     yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    tax_name = serializers.CharField(source='tax.tax_name', read_only=True, default=None)
     yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
     line_items = ChildYarnSalesSerializer(many=True, read_only=True)
 
@@ -36,8 +37,10 @@ class ParentYarnSalesSerializer(serializers.ModelSerializer):
             'company', 'cfyear', 'warehouse', 'warehouse_name', 'customer',
             'customer_name', 'yarn_count', 'yarn_count_name', 'mill',
             'mill_name', 'color_shade', 'color_shade_name', 'lot_no',
-            'bag', 'per_bag', 'quantity', 'rate', 'subtotal', 'tax_percent',
-            'tax_amount', 'total_amount', 'payment_terms', 'remarks',
+            'bag', 'per_bag', 'quantity', 'rate', 'subtotal',
+            'tax', 'tax_name', 'tax_percent', 'tax_amount',
+            'cgst_percent', 'cgst_amount', 'sgst_percent', 'sgst_amount',
+            'igst_percent', 'igst_amount', 'total_amount', 'payment_terms', 'remarks',
             'is_authorized', 'status', 'created_on', 'updated_on', 'line_items'
         ]
         read_only_fields = [
@@ -66,6 +69,7 @@ class ParentYarnSalesReturnSerializer(serializers.ModelSerializer):
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
     yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
+    tax_name = serializers.CharField(source='tax.tax_name', read_only=True, default=None)
     yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
     line_items = ChildYarnSalesReturnSerializer(many=True, read_only=True)
 
@@ -77,8 +81,11 @@ class ParentYarnSalesReturnSerializer(serializers.ModelSerializer):
             'customer_name', 'yarn_type', 'yarn_type_display', 'yarn_count',
             'yarn_count_name', 'mill', 'mill_name', 'color_shade',
             'color_shade_name', 'lot_no', 'bag', 'quantity', 'rate',
-            'amount', 'return_reason', 'is_authorized', 'status',
+            'amount', 'subtotal', 'tax', 'tax_name', 'tax_percent', 'tax_amount',
+            'cgst_percent', 'cgst_amount', 'sgst_percent', 'sgst_amount',
+            'igst_percent', 'igst_amount', 'total_amount',
+            'return_reason', 'is_authorized', 'status',
             'created_on', 'updated_on', 'line_items'
         ]
-        read_only_fields = ['id', 'company', 'amount', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'amount', 'subtotal', 'tax_amount', 'total_amount', 'created_on', 'updated_on']
 

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from core.base_models import SoftDeleteModel
 from core.constants import PartyTypes, YarnCategory, FabricCategory, ProcessTypes, WarehouseTypes
@@ -76,24 +77,6 @@ class YarnCountMaster(SoftDeleteModel):
         return self.count
 
 
-class YarnTypeMaster(SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="yarn_types")
-    name = models.CharField(max_length=100, db_index=True)  # e.g., "100% Cotton Combed", "Carded", "PC Blend", "Modal"
-    code = models.CharField(max_length=50)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = "mx_yarn_type"
-        verbose_name = "Yarn Type Master"
-        verbose_name_plural = "Yarn Type Masters"
-        unique_together = ("company", "code")
-        ordering = ["name"]
-
-    def __str__(self):
-        return self.name
-
-
 class ColorShadeMaster(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="color_shades")
     shade_code = models.CharField(max_length=50, db_index=True)
@@ -117,7 +100,6 @@ class ColorShadeMaster(SoftDeleteModel):
 class YarnMaster(SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="yarns")
     yarn_code = models.CharField(max_length=50, db_index=True)
-    yarn_type = models.ForeignKey(YarnTypeMaster, on_delete=models.PROTECT, related_name="yarns")
     yarn_count = models.ForeignKey(YarnCountMaster, on_delete=models.PROTECT, related_name="yarns")
     category = models.CharField(max_length=20, choices=YarnCategory.CHOICES, default=YarnCategory.GREY, db_index=True)
     color_shade = models.ForeignKey(ColorShadeMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="dyed_yarns")
@@ -139,7 +121,7 @@ class YarnMaster(SoftDeleteModel):
 
     def __str__(self):
         color = f" - {self.color_shade.color_name}" if self.color_shade else ""
-        return f"{self.yarn_code} ({self.yarn_type.name} {self.yarn_count.count}{color})"
+        return f"{self.yarn_code} ({self.yarn_count.count}{color})"
 
 
 class FabricTypeMaster(SoftDeleteModel):
@@ -303,5 +285,34 @@ class sub_quality_program_table(UppercaseModel):
         self.status = 0
         self.is_active = 0
         self.save(update_fields=["status", "is_active", "updated_on"])
+
+
+class TaxMaster(SoftDeleteModel):
+    """
+    Tax Master: mx_tax
+    Defines GST rates, cess, and HSN/SAC classifications per company.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="taxes")
+    tax_name = models.CharField(max_length=100)
+    tax_code = models.CharField(max_length=50, db_index=True)
+    tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("5.00"))
+    cgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    sgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    igst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("5.00"))
+    hsn_sac_code = models.CharField(max_length=20, blank=True, help_text="HSN/SAC Code (e.g. 5205 for Cotton Yarn)")
+    is_default = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, db_index=True)
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = "mx_tax"
+        verbose_name = "Tax Master"
+        verbose_name_plural = "Tax Masters"
+        unique_together = ("company", "tax_code")
+        ordering = ["tax_percent", "tax_name"]
+
+    def __str__(self):
+        return f"{self.tax_name} ({self.tax_percent}%)"
+
 
 

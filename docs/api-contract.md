@@ -12,6 +12,7 @@ Pagination: Standard page/page_size (`meta: { page: 1, page_size: 20, total_coun
 
 ## Response Envelopes
 
+
 ### Success
 ```json
 {
@@ -68,10 +69,15 @@ Pagination: Standard page/page_size (`meta: { page: 1, page_size: 20, total_coun
 | `CRUD` | `/api/v1/masters/processes/` | `masters_process` | Processing stages, loss % and rate |
 | `CRUD` | `/api/v1/masters/warehouses/` | `masters_warehouse` | Godowns & warehouse locations |
 | `CRUD` | `/api/v1/masters/quality-programs/` | `IsCompanyUser` | Garment box & size breakdowns |
+| `CRUD` | `/api/v1/masters/taxes/` | `masters_tax` | GST Tax Master with rates (CGST, SGST, IGST) & HSN codes |
+| `POST` | `/api/v1/masters/taxes/seed-defaults/` | `masters_tax` | Seed standard GST tax slabs (0%, 5%, 12%, 18%, 28%) |
 
 ### 3. Procurement (Purchase)
 | Method | Path | Privilege Code | Description |
 |---|---|---|---|
+| `GET, POST` | `/api/v1/purchase/yarn-types/` | `purchase_yarn_po` | List / Configure allowed company yarn process types |
+| `GET` | `/api/v1/purchase/yarn-types/active/` | `purchase_yarn_po` | List active company yarn types & field requirements for dropdowns |
+| `POST` | `/api/v1/purchase/yarn-types/seed-defaults/` | `purchase_yarn_po` | Seed / Reset standard default company yarn types |
 | `GET, POST` | `/api/v1/purchase/yarn-pos/` | `purchase_yarn_po` | Create / List POs with auto FY & schedules |
 | `GET, PUT` | `/api/v1/purchase/yarn-pos/{id}/` | `purchase_yarn_po` | Retrieve / Update draft PO |
 | `DELETE` | `/api/v1/purchase/yarn-pos/{id}/` | `purchase_yarn_po` | Soft delete draft PO (blocked if authorized/inwarded) |
@@ -95,3 +101,37 @@ Pagination: Standard page/page_size (`meta: { page: 1, page_size: 20, total_coun
 | `DELETE` | `/api/v1/sales/yarn-sales/{id}/` | `sales_yarn` | Cancel sales invoice & restore warehouse stock |
 | `GET, POST` | `/api/v1/sales/yarn-sales-returns/` | `sales_yarn_return` | Post customer return (re-credits stock) |
 | `DELETE` | `/api/v1/sales/yarn-sales-returns/{id}/` | `sales_yarn_return` | Cancel return & reverse re-credited stock |
+
+### 6. Knitting & Grey Fabric Production
+| Method | Path | Privilege Code | Description |
+|---|---|---|---|
+| `GET, POST` | `/api/v1/knitting/programs/` | `knitting_program` | Create / List Knitting Programs (Job Cards) with loss % & yarn lines |
+| `GET, PUT` | `/api/v1/knitting/programs/{id}/` | `knitting_program` | Retrieve / Update Knitting Program |
+| `POST` | `/api/v1/knitting/programs/{id}/authorize/` | `knitting_program` | Authorize / Release Program for factory production |
+| `POST` | `/api/v1/knitting/programs/{id}/unauthorize/` | `knitting_program` | Re-open Knitting Program to Draft (if not yet in production) |
+| `GET` | `/api/v1/knitting/programs/{id}/summary/` | `knitting_program` | Live reconciliation (Planned vs Issued Yarn vs Received Fabric) |
+| `GET` | `/api/v1/knitting/stock/` | `knitting_grey_fabric_stock` | Live Godown stock of Grey Fabric (Rolls & Kg) |
+| `GET, POST` | `/api/v1/knitting/inwards/` | `knitting_grey_fabric_inward` | Post Grey Fabric Inward GRN (credits stock, updates program) |
+| `DELETE` | `/api/v1/knitting/inwards/{id}/` | `knitting_grey_fabric_inward` | Atomic inward cancellation and stock rollback |
+| `GET, POST` | `/api/v1/knitting/outwards/` | `knitting_grey_fabric_outward` | Issue Grey Fabric Outward DC (for Dyeing or Return) |
+| `DELETE` | `/api/v1/knitting/outwards/{id}/` | `knitting_grey_fabric_outward` | Atomic outward cancellation and stock re-credit |
+| `GET, POST` | `/api/v1/knitting/grey-pos/` | `knitting_grey_po` | Create / List Grey Fabric Purchase Orders for Traders |
+| `POST` | `/api/v1/knitting/grey-pos/{id}/authorize/` | `knitting_grey_po` | Authorize Grey Fabric PO |
+| `GET, POST` | `/api/v1/knitting/sales/` | `knitting_grey_fabric_sales` | Issue Commercial Grey Fabric Tax Invoice (rolls & Kg, deducts stock) |
+| `DELETE` | `/api/v1/knitting/sales/{id}/` | `knitting_grey_fabric_sales` | Atomic sales cancellation and godown stock restoration |
+| `GET, POST` | `/api/v1/knitting/sales-returns/` | `knitting_grey_fabric_sales_return` | Post Customer Sales Return for Grey Fabric (re-credits godown stock) |
+| `DELETE` | `/api/v1/knitting/sales-returns/{id}/` | `knitting_grey_fabric_sales_return` | Atomic return cancellation and stock reversion |
+
+### 7. Production Process Engine (Knitting, Dyeing, Cutting, Printing, Stitching)
+| Method | Path | Privilege Code | Description |
+|---|---|---|---|
+| `GET, POST` | `/api/v1/process/stages/` | `process_stage` | Configure / List Process Stages with routing, loss %, and rate |
+| `POST` | `/api/v1/process/stages/seed-defaults/` | `process_stage` | Seed standard stages (Knitting, Dyeing, Compacting, Cutting) |
+| `GET, POST` | `/api/v1/process/programs/` | `process_program` | Create / List Production Process Programs (input_from, input_item, output_to, output_item, rates, loss %) |
+| `GET, PUT` | `/api/v1/process/programs/{id}/` | `process_program` | Retrieve / Update Process Program |
+| `POST` | `/api/v1/process/programs/{id}/authorize/` | `process_program` | Authorize / Release Program for shop floor execution |
+| `POST` | `/api/v1/process/programs/{id}/unauthorize/` | `process_program` | Re-open Authorized Program back to Draft |
+| `DELETE` | `/api/v1/process/programs/{id}/` | `process_program` | Cancel Process Program (if production has not commenced) |
+| `GET` | `/api/v1/process/programs/{id}/summary/` | `process_program` | Live reconciliation (Planned Input vs Expected Output vs Received Output) |
+
+

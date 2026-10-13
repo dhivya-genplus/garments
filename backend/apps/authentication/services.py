@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from core.base_services import BaseService
 from core.exceptions import ValidationError, ResourceNotFound, PermissionDeniedError, ConflictError, AuthenticationError
 from core.constants import UserRoles, ModulePermissions
-from apps.authentication.models import Company, FinancialYear, User, Role, Privilege
+from apps.authentication.models import Company, FinancialYear, User, Role, Privilege, Employee
 from apps.authentication.repositories import (
     CompanyRepository, FinancialYearRepository, UserRepository,
     RoleRepository, PrivilegeRepository
@@ -82,6 +82,14 @@ class CompanyService(BaseService):
 
         # 2. Initialize default roles & privileges for this company
         cls._create_default_roles(company, creator)
+
+        # 3. Initialize default GST taxes for this company
+        try:
+            from apps.masters.services import TaxService
+            TaxService.seed_company_taxes(company.id, creator)
+        except Exception:
+            pass
+
         return company
 
     @classmethod
@@ -241,6 +249,29 @@ class UserService(BaseService):
         user = User(**data)
         user.set_password(password)
         user.save()
+
+        # Ensure dedicated Employee (tm_employee) record is linked for Company Users
+        if user.company and (user.role == UserRoles.COMPANY_USER or user.employee_code):
+            emp_code = user.employee_code or f"EMP-{user.id:04d}"
+            employee, _ = Employee.objects.get_or_create(
+                company=user.company,
+                employee_code=emp_code,
+                defaults={
+                    "first_name": user.first_name or user.username,
+                    "last_name": user.last_name or "",
+                    "email": user.email,
+                    "phone": user.phone or "",
+                    "department": user.department or "General",
+                    "designation": user.designation or "Staff",
+                    "status": "ACTIVE",
+                    "is_active": True,
+                    "created_by": creator,
+                }
+            )
+            user.employee = employee
+            user.employee_code = employee.employee_code
+            user.save(update_fields=["employee", "employee_code"])
+
         return user
 
     @classmethod
@@ -282,6 +313,26 @@ class UserService(BaseService):
             setattr(target_user, field, val)
 
         target_user.save()
+
+        # Sync changes to linked tm_employee
+        if target_user.employee:
+            emp = target_user.employee
+            if "first_name" in data:
+                emp.first_name = data["first_name"]
+            if "last_name" in data:
+                emp.last_name = data["last_name"]
+            if "department" in data:
+                emp.department = data["department"]
+            if "designation" in data:
+                emp.designation = data["designation"]
+            if "phone" in data:
+                emp.phone = data["phone"]
+            if "is_active" in data:
+                emp.is_active = data["is_active"]
+                emp.status = "ACTIVE" if data["is_active"] else "INACTIVE"
+            emp.updated_by = modifier
+            emp.save()
+
         return target_user
 
 
@@ -354,22 +405,71 @@ class AuthService(BaseService):
     @classmethod
     def login(cls, email: str, password: str) -> Dict[str, Any]:
         if not email or not password:
-            raise ValidationError("Email and password are required.")
+            raise ValidationError("Login identifier and password are required.")
 
-        user = authenticate(username=email, password=password)
-        if not user:
-            user_obj = User.objects.filter(username__iexact=email).first()
-            if user_obj:
-                user = authenticate(username=user_obj.email, password=password)
+        # Flexible multi-identifier candidate lookup: Email, Username, Employee Code, or Phone
+        candidate = (
+            User.objects.filter(email__iexact=email).first()
+            or User.objects.filter(username__iexact=email).first()
+            or User.objects.filter(employee__employee_code__iexact=email).first()
+            or User.objects.filter(employee_code__iexact=email).first()
+            or User.objects.filter(phone=email).first()
+            or User.objects.filter(employee__phone=email).first()
+        )
+
+        user = None
+        if candidate:
+            if candidate.check_password(password):
+                user = candidate
+            else:
+                user = authenticate(username=candidate.email, password=password)
+        else:
+            user = authenticate(username=email, password=password)
 
         if not user:
-            raise AuthenticationError("Invalid email or password.")
+            raise AuthenticationError("Invalid login credentials.")
 
         if not user.is_active or user.is_deleted:
-            raise AuthenticationError("This account is inactive or has been disabled.")
+            raise AuthenticationError("This user account is inactive or has been disabled.")
 
         if user.company and not user.company.is_active:
             raise AuthenticationError("Your company account is inactive. Please contact support.")
+
+        # Verify against Employee master table (tm_employee)
+        employee = getattr(user, 'employee', None)
+        if not employee and user.company and (user.role == UserRoles.COMPANY_USER or user.employee_code):
+            emp_code = user.employee_code or f"EMP-{user.id:04d}"
+            employee, _ = Employee.objects.get_or_create(
+                company=user.company,
+                employee_code=emp_code,
+                defaults={
+                    "first_name": user.first_name or user.username,
+                    "last_name": user.last_name or "",
+                    "email": user.email,
+                    "phone": user.phone or "",
+                    "department": user.department or "General",
+                    "designation": user.designation or "Staff",
+                    "status": "ACTIVE",
+                    "is_active": True,
+                }
+            )
+            user.employee = employee
+            user.save(update_fields=['employee'])
+
+        # Enforce employee active status check
+        if employee:
+            if not employee.is_active or employee.is_deleted or employee.status.upper() in ["INACTIVE", "RESIGNED", "SUSPENDED", "TERMINATED"]:
+                raise AuthenticationError("Employee record is inactive or resigned. Access denied.")
+
+            # Sync user profile with Employee table data as single source of truth
+            if employee.department:
+                user.department = employee.department
+            if employee.designation:
+                user.designation = employee.designation
+            if employee.employee_code:
+                user.employee_code = employee.employee_code
+            if employee.phone:
+                user.phone = employee.phone
 
         refresh = RefreshToken.for_user(user)
         refresh["email"] = user.email
@@ -398,6 +498,20 @@ class AuthService(BaseService):
                 "is_superadmin": user.is_super_admin,
                 "is_admin_user": user.is_admin_user,
                 "is_company_user": user.is_company_user,
+                "employee": {
+                    "id": employee.id,
+                    "employee_code": employee.employee_code,
+                    "full_name": employee.full_name,
+                    "first_name": employee.first_name,
+                    "last_name": employee.last_name,
+                    "department": employee.department,
+                    "designation": employee.designation,
+                    "phone": employee.phone,
+                    "email": employee.email,
+                    "status": employee.status,
+                    "joining_date": str(employee.joining_date) if employee.joining_date else None,
+                    "is_active": employee.is_active,
+                } if employee else None,
                 "company": {
                     "id": user.company.id,
                     "name": user.company.name,

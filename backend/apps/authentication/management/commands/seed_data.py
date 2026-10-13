@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from apps.authentication.models import User, Company, FinancialYear, Role, Privilege
 from apps.authentication.services import CompanyService, FinancialYearService, UserService
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
     ProcessMaster, WarehouseMaster
 )
@@ -160,20 +160,6 @@ class Command(BaseCommand):
             )
             count_map[c] = obj
 
-        type_data = [
-            {"code": "COMBED_COTTON", "name": "100% Combed Cotton"},
-            {"code": "CARDED_COTTON", "name": "100% Carded Cotton"},
-            {"code": "PC_BLEND", "name": "65/35 Poly Cotton Blend"},
-            {"code": "VISCOSE", "name": "100% Viscose"},
-        ]
-        type_map = {}
-        for t in type_data:
-            obj, _ = YarnTypeMaster.objects.get_or_create(
-                company=company, code=t["code"],
-                defaults={"name": t["name"], "created_by": company_admin}
-            )
-            type_map[t["code"]] = obj
-
         color_data = [
             {"shade_code": "WHT-001", "color_name": "Bleached White", "hex_code": "#FFFFFF"},
             {"shade_code": "BLK-001", "color_name": "Jet Black", "hex_code": "#000000"},
@@ -192,7 +178,6 @@ class Command(BaseCommand):
         yarn_grey, _ = YarnMaster.objects.get_or_create(
             company=company, yarn_code="YRN-30S-COT-GRY",
             defaults={
-                "yarn_type": type_map["COMBED_COTTON"],
                 "yarn_count": count_map["30s"],
                 "category": YarnCategory.GREY,
                 "uom": uom_map["KGS"],
@@ -206,7 +191,6 @@ class Command(BaseCommand):
         yarn_dyed, _ = YarnMaster.objects.get_or_create(
             company=company, yarn_code="YRN-30S-COT-NVY",
             defaults={
-                "yarn_type": type_map["COMBED_COTTON"],
                 "yarn_count": count_map["30s"],
                 "category": YarnCategory.DYED,
                 "color_shade": color_map["NVY-002"],
@@ -214,6 +198,85 @@ class Command(BaseCommand):
                 "hsn_code": "5205",
                 "reorder_level": 300,
                 "description": "30s Combed Cotton Dyed Yarn - Navy Blue",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_melange, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-30S-COT-MEL",
+            defaults={
+                "yarn_count": count_map["30s"],
+                "category": YarnCategory.MELANGE,
+                "color_shade": color_map["MEL-003"],
+                "uom": uom_map["KGS"],
+                "hsn_code": "5205",
+                "reorder_level": 400,
+                "description": "30s Combed Cotton 85/15 Grey Melange Fiber-Dyed Yarn",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_blended, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-40S-PC-6535",
+            defaults={
+                "yarn_count": count_map["40s"],
+                "category": YarnCategory.BLENDED,
+                "uom": uom_map["KGS"],
+                "hsn_code": "5509",
+                "reorder_level": 350,
+                "description": "40s Polyester/Cotton 65/35 Blended Spun Yarn",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_wound, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-2/40S-COT-TFO",
+            defaults={
+                "yarn_count": count_map["2/40s"],
+                "category": YarnCategory.WOUND,
+                "uom": uom_map["KGS"],
+                "hsn_code": "5205",
+                "reorder_level": 250,
+                "description": "2/40s Combed Cotton 2-Ply TFO Twisted & Waxed Yarn",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_slub, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-30S-COT-SLUB",
+            defaults={
+                "yarn_count": count_map["30s"],
+                "category": YarnCategory.SLUB,
+                "uom": uom_map["KGS"],
+                "hsn_code": "5205",
+                "reorder_level": 300,
+                "description": "30s Ring Spun Ground Slub Pattern Textured Yarn",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_core_spun, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-30S-COT-LYC40",
+            defaults={
+                "yarn_count": count_map["30s"],
+                "category": YarnCategory.CORE_SPUN,
+                "uom": uom_map["KGS"],
+                "hsn_code": "5205",
+                "reorder_level": 200,
+                "description": "30s Cotton with 40D Spandex/Lycra Core-Spun Stretch Yarn",
+                "created_by": company_admin
+            }
+        )
+
+        yarn_recycled, _ = YarnMaster.objects.get_or_create(
+            company=company, yarn_code="YRN-24S-REC-COT",
+            defaults={
+                "yarn_count": count_map["24s"],
+                "category": YarnCategory.RECYCLED,
+                "uom": uom_map["KGS"],
+                "hsn_code": "5202",
+                "reorder_level": 300,
+                "description": "24s GRS Certified Recycled Cotton Open-End Sustainable Yarn",
                 "created_by": company_admin
             }
         )

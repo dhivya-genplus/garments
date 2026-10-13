@@ -1,8 +1,21 @@
 from rest_framework import serializers
 from apps.purchase.models import (
+    company_yarn_type_table,
     parent_po_table, child_po_table, yarn_po_delivery_table,
     yarn_po_balance_table, yarn_po_sum_table, yarn_po_delivery_sum_table
 )
+
+
+class CompanyYarnTypeSerializer(serializers.ModelSerializer):
+    yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
+
+    class Meta:
+        model = company_yarn_type_table
+        fields = [
+            'id', 'yarn_type', 'yarn_type_display', 'display_name', 'is_active',
+            'requires_color_shade', 'requires_blend_ratio', 'requires_ply_twists',
+            'requires_slub_pattern', 'requires_core_denier'
+        ]
 
 
 class ChildPOSerializer(serializers.ModelSerializer):
@@ -14,8 +27,9 @@ class ChildPOSerializer(serializers.ModelSerializer):
         model = child_po_table
         fields = [
             'id', 'tm_po', 'yarn_type', 'yarn_type_display', 'yarn_count',
-            'yarn_count_name', 'color_shade', 'color_shade_name', 'bag',
-            'per_bag', 'quantity', 'gross_wt', 'actual_rate', 'discount',
+            'yarn_count_name', 'color_shade', 'color_shade_name',
+            'blend_ratio', 'ply_count', 'twists_per_inch', 'slub_pattern', 'core_denier',
+            'bag', 'per_bag', 'quantity', 'gross_wt', 'actual_rate', 'discount',
             'rate', 'amount', 'remaining_bag', 'remaining_quantity',
             'remaining_amount', 'is_active', 'status'
         ]
@@ -55,7 +69,9 @@ class ParentPOSerializer(serializers.ModelSerializer):
         model = parent_po_table
         fields = [
             'id', 'po_number', 'po_date', 'yarn_type', 'yarn_type_display',
-            'color_shade', 'color_shade_name', 'name', 'company', 'cfyear',
+            'color_shade', 'color_shade_name', 'blend_ratio', 'ply_count',
+            'twists_per_inch', 'slub_pattern', 'core_denier',
+            'name', 'company', 'cfyear',
             'cfyear_name', 'party', 'party_name', 'mill', 'mill_name',
             'yarn_count', 'yarn_count_name', 'bag', 'per_bag', 'quantity',
             'gross_quantity', 'rate', 'discount', 'net_rate', 'amount',
@@ -79,6 +95,7 @@ class ParentPOCreateSerializer(serializers.ModelSerializer):
         model = parent_po_table
         fields = [
             'id', 'po_number', 'po_date', 'yarn_type', 'color_shade',
+            'blend_ratio', 'ply_count', 'twists_per_inch', 'slub_pattern', 'core_denier',
             'name', 'cfyear', 'party', 'mill', 'yarn_count',
             'bag', 'per_bag', 'gross_quantity', 'rate', 'discount',
             'remarks', 'is_delivery', 'line_items', 'deliveries'

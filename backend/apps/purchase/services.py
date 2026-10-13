@@ -7,7 +7,12 @@ from core.base_services import BaseService
 from core.exceptions import ValidationError, ResourceNotFound, ConflictError
 from core.constants import YarnCategory
 from apps.authentication.models import Company, FinancialYear
-from apps.purchase.models import parent_po_table, child_po_table, yarn_po_delivery_table
+from apps.purchase.models import (
+    company_yarn_type_table,
+    parent_po_table,
+    child_po_table,
+    yarn_po_delivery_table,
+)
 from apps.purchase.repositories import YarnPORepository
 
 
@@ -17,6 +22,115 @@ class YarnPOService(BaseService):
     Enforces authorization locks, delivery allocation constraints,
     Grey vs. Dyed yarn rules, and atomic multi-line/delivery creation.
     """
+
+    STANDARD_YARN_TYPES = [
+        {
+            "yarn_type": YarnCategory.GREY,
+            "display_name": "Grey Yarn (Natural / Ecru)",
+            "is_active": True,
+            "requires_color_shade": False,
+            "requires_blend_ratio": False,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.DYED,
+            "display_name": "Dyed Yarn (Cone / Cheese Dyed)",
+            "is_active": True,
+            "requires_color_shade": True,
+            "requires_blend_ratio": False,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.MELANGE,
+            "display_name": "Melange Yarn (Fiber / Top Dyed)",
+            "is_active": False,
+            "requires_color_shade": True,
+            "requires_blend_ratio": True,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.BLENDED,
+            "display_name": "Blended Yarn (PC, PV, Cotton-Modal)",
+            "is_active": False,
+            "requires_color_shade": False,
+            "requires_blend_ratio": True,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.WOUND,
+            "display_name": "Wound / Doubled & Twisted Yarn (TFO)",
+            "is_active": False,
+            "requires_color_shade": False,
+            "requires_blend_ratio": False,
+            "requires_ply_twists": True,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.SLUB,
+            "display_name": "Slub / Fancy Yarn (Injected / Structured)",
+            "is_active": False,
+            "requires_color_shade": False,
+            "requires_blend_ratio": False,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": True,
+            "requires_core_denier": False,
+        },
+        {
+            "yarn_type": YarnCategory.CORE_SPUN,
+            "display_name": "Lycra / Core-Spun Stretch Yarn",
+            "is_active": False,
+            "requires_color_shade": False,
+            "requires_blend_ratio": False,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": True,
+        },
+        {
+            "yarn_type": YarnCategory.RECYCLED,
+            "display_name": "Recycled / Sustainable Yarn (GRS / GOTS)",
+            "is_active": False,
+            "requires_color_shade": False,
+            "requires_blend_ratio": True,
+            "requires_ply_twists": False,
+            "requires_slub_pattern": False,
+            "requires_core_denier": False,
+        },
+    ]
+
+    @classmethod
+    @transaction.atomic
+    def seed_company_yarn_types(cls, company_id: int, user=None) -> List[company_yarn_type_table]:
+        """Initialize company yarn process configurations if not present."""
+        configs = []
+        for defn in cls.STANDARD_YARN_TYPES:
+            cfg, _ = company_yarn_type_table.objects.get_or_create(
+                company_id=company_id,
+                yarn_type=defn["yarn_type"],
+                defaults={
+                    **defn,
+                    "company_id": company_id,
+                    "created_by": user,
+                    "updated_by": user,
+                }
+            )
+            configs.append(cfg)
+        return configs
+
+    @classmethod
+    def get_active_yarn_types(cls, company_id: int) -> List[company_yarn_type_table]:
+        """Fetch active yarn process types configured for the company."""
+        if not company_yarn_type_table.objects.filter(company_id=company_id).exists():
+            cls.seed_company_yarn_types(company_id)
+        return list(company_yarn_type_table.objects.filter(company_id=company_id, is_active=True))
 
     @staticmethod
     def generate_po_number(company_id: int) -> str:
@@ -48,26 +162,58 @@ class YarnPOService(BaseService):
         deliveries_data: Optional[List[Dict[str, Any]]] = None,
         user=None
     ) -> parent_po_table:
-        # 1. Validate Yarn Type (Grey vs Dyed Yarn condition)
+        # 1. Validate Yarn Type & Company Enablement
         yarn_type = data.get("yarn_type", YarnCategory.GREY)
-        if yarn_type not in [YarnCategory.GREY, YarnCategory.DYED]:
-            raise ValidationError(f"Invalid yarn type '{yarn_type}'. Must be '{YarnCategory.GREY}' (Grey Yarn) or '{YarnCategory.DYED}' (Dyed Yarn).")
+        valid_yarn_types = [c[0] for c in YarnCategory.CHOICES]
+        if yarn_type not in valid_yarn_types:
+            raise ValidationError(f"Invalid yarn type '{yarn_type}'. Must be one of: {', '.join(valid_yarn_types)}.")
 
+        # Ensure company yarn types are seeded
+        if not company_yarn_type_table.objects.filter(company_id=company_id).exists():
+            cls.seed_company_yarn_types(company_id, user)
+
+        active_yarn_types = set(
+            company_yarn_type_table.objects
+            .filter(company_id=company_id, is_active=True)
+            .values_list("yarn_type", flat=True)
+        )
+        if yarn_type not in active_yarn_types:
+            raise ValidationError(
+                f"Yarn process type '{yarn_type}' is not enabled for this company. "
+                f"Enabled types: {', '.join(sorted(active_yarn_types))}."
+            )
+
+        # 2. Dynamic Conditional Validation per Yarn Type
         color_shade_id = data.get("color_shade_id") or data.get("color_shade")
+        blend_ratio = data.get("blend_ratio")
+        ply_count = int(data.get("ply_count", 1) or 1)
+
         if yarn_type == YarnCategory.DYED and not color_shade_id:
             raise ValidationError("Color shade is required for Dyed Yarn Purchase Orders.")
 
-        # 2. Standard bag weight defaults
+        if yarn_type == YarnCategory.MELANGE:
+            if not color_shade_id:
+                raise ValidationError("Color shade is required for Melange Yarn Purchase Orders.")
+            if not blend_ratio:
+                raise ValidationError("Melange shade ratio / fiber blend percentage (e.g. 85/15) is required for Melange Yarn.")
+
+        if yarn_type in [YarnCategory.BLENDED, YarnCategory.RECYCLED] and not blend_ratio:
+            raise ValidationError(f"Fiber blend ratio (e.g. 65/35 PC) is required for {yarn_type} Yarn Purchase Orders.")
+
+        if yarn_type == YarnCategory.WOUND and ply_count < 1:
+            raise ValidationError("Ply count must be at least 1 for Wound / Twisted Yarn.")
+
+        # 3. Standard bag weight defaults
         per_bag = Decimal(str(data.get("per_bag", "45.360")))
         if per_bag <= 0:
             raise ValidationError("Per bag weight must be positive (typically 45.360 or 50.000 Kg/bag).")
 
-        # 3. Generate PO Number if not provided
+        # 4. Generate PO Number if not provided
         po_number = data.get("po_number") or cls.generate_po_number(company_id)
         if parent_po_table.objects.filter(company_id=company_id, po_number=po_number, status=1).exists():
             raise ConflictError(f"Purchase Order #{po_number} already exists.")
 
-        # 4. Compute quantities and values
+        # 5. Compute quantities and values
         bag = int(data.get("bag", 0))
         rate = Decimal(str(data.get("rate", "0.00")))
         discount = Decimal(str(data.get("discount", "0.00")))
@@ -75,7 +221,7 @@ class YarnPOService(BaseService):
         quantity = Decimal(str(bag)) * per_bag
         amount = quantity * net_rate
 
-        # 5. Delivery Allocation Constraint
+        # 6. Delivery Allocation Constraint
         if deliveries_data:
             total_delivery_bags = sum(int(d.get("bag", 0)) for d in deliveries_data)
             if total_delivery_bags > bag:
@@ -83,7 +229,7 @@ class YarnPOService(BaseService):
                     f"Total scheduled delivery bags ({total_delivery_bags}) cannot exceed total PO bags ({bag})."
                 )
 
-        # 6. Create Parent PO Header
+        # 7. Create Parent PO Header
         cfyear_id = data.get("cfyear_id") or data.get("cfyear")
         if not cfyear_id:
             comp_obj = Company.objects.filter(id=company_id).first()
@@ -96,7 +242,12 @@ class YarnPOService(BaseService):
             "po_number": po_number,
             "po_date": data.get("po_date") or timezone.now().date(),
             "yarn_type": yarn_type,
-            "color_shade_id": color_shade_id if yarn_type == YarnCategory.DYED else None,
+            "color_shade_id": color_shade_id if yarn_type in [YarnCategory.DYED, YarnCategory.MELANGE] else None,
+            "blend_ratio": blend_ratio,
+            "ply_count": ply_count,
+            "twists_per_inch": data.get("twists_per_inch"),
+            "slub_pattern": data.get("slub_pattern"),
+            "core_denier": data.get("core_denier"),
             "name": data.get("name"),
             "company_id": company_id,
             "cfyear_id": cfyear_id,
@@ -122,13 +273,13 @@ class YarnPOService(BaseService):
         }
         po = parent_po_table.objects.create(**po_data)
 
-        # 7. Create Line Items (Child PO)
+        # 8. Create Line Items (Child PO)
         if line_items_data:
             line_objs = []
             for item in line_items_data:
                 item_yarn_type = item.get("yarn_type", yarn_type)
                 item_shade = item.get("color_shade_id") or item.get("color_shade")
-                if item_yarn_type == YarnCategory.DYED and not item_shade:
+                if item_yarn_type in [YarnCategory.DYED, YarnCategory.MELANGE] and not item_shade:
                     item_shade = color_shade_id
 
                 item_bag = int(item.get("bag", 0))
@@ -145,6 +296,11 @@ class YarnPOService(BaseService):
                         yarn_type=item_yarn_type,
                         yarn_count_id=item.get("yarn_count_id") or item.get("yarn_count") or po.yarn_count_id,
                         color_shade_id=item_shade,
+                        blend_ratio=item.get("blend_ratio") or po.blend_ratio,
+                        ply_count=int(item.get("ply_count", po.ply_count) or 1),
+                        twists_per_inch=item.get("twists_per_inch") or po.twists_per_inch,
+                        slub_pattern=item.get("slub_pattern") or po.slub_pattern,
+                        core_denier=item.get("core_denier") or po.core_denier,
                         bag=item_bag,
                         per_bag=item_per_bag,
                         quantity=item_qty,
@@ -168,6 +324,11 @@ class YarnPOService(BaseService):
                 yarn_type=po.yarn_type,
                 yarn_count_id=po.yarn_count_id,
                 color_shade_id=po.color_shade_id,
+                blend_ratio=po.blend_ratio,
+                ply_count=po.ply_count,
+                twists_per_inch=po.twists_per_inch,
+                slub_pattern=po.slub_pattern,
+                core_denier=po.core_denier,
                 bag=po.bag,
                 per_bag=po.per_bag,
                 quantity=po.quantity,

@@ -98,6 +98,45 @@ class Privilege(SoftDeleteModel):
         return f"{self.role.name} - {self.module}"
 
 
+class Employee(SoftDeleteModel):
+    """
+    Employee Master: tm_employee
+    Represents factory and office personnel.
+    Separated from User login credential accounts (sys_user).
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="employees")
+    employee_code = models.CharField(max_length=50, db_index=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True, db_index=True)
+    phone = models.CharField(max_length=30, blank=True, db_index=True)
+    department = models.CharField(max_length=100, blank=True, db_index=True)
+    designation = models.CharField(max_length=100, blank=True)
+    joining_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, default="ACTIVE", db_index=True)  # ACTIVE, INACTIVE, RESIGNED, SUSPENDED
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        db_table = "tm_employee"
+        verbose_name = "Employee"
+        verbose_name_plural = "Employees"
+        unique_together = ("company", "employee_code")
+        ordering = ["employee_code"]
+        indexes = [
+            models.Index(fields=["company", "status", "is_deleted"]),
+            models.Index(fields=["company", "department"]),
+            models.Index(fields=["email", "phone"]),
+        ]
+
+    @property
+    def full_name(self):
+        name = f"{self.first_name} {self.last_name}".strip()
+        return name if name else self.employee_code
+
+    def __str__(self):
+        return f"{self.employee_code} - {self.full_name} ({self.designation or self.department})"
+
+
 class User(AbstractUser):
     """
     Unified User model partitioned cleanly by user_type:
@@ -110,6 +149,8 @@ class User(AbstractUser):
     employee_code = models.CharField(max_length=50, blank=True, db_index=True)
     department = models.CharField(max_length=100, blank=True)
     designation = models.CharField(max_length=100, blank=True)
+
+    employee = models.OneToOneField(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_account")
     
     role = models.CharField(max_length=30, choices=UserRoles.CHOICES, default=UserRoles.COMPANY_USER, db_index=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True, related_name="users")

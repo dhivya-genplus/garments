@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table
+    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table,
+    TaxMaster
 )
 
 class UOMSerializer(serializers.ModelSerializer):
@@ -34,13 +35,6 @@ class YarnCountSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'company', 'created_on', 'updated_on']
 
 
-class YarnTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = YarnTypeMaster
-        fields = ['id', 'company', 'name', 'code', 'description', 'is_active', 'created_on', 'updated_on']
-        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
-
-
 class ColorShadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColorShadeMaster
@@ -49,7 +43,6 @@ class ColorShadeSerializer(serializers.ModelSerializer):
 
 
 class YarnMasterSerializer(serializers.ModelSerializer):
-    yarn_type_name = serializers.CharField(source='yarn_type.name', read_only=True)
     yarn_count_name = serializers.CharField(source='yarn_count.count', read_only=True)
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
     uom_code = serializers.CharField(source='uom.code', read_only=True)
@@ -58,7 +51,7 @@ class YarnMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = YarnMaster
         fields = [
-            'id', 'company', 'yarn_code', 'yarn_type', 'yarn_type_name',
+            'id', 'company', 'yarn_code',
             'yarn_count', 'yarn_count_name', 'category', 'category_display',
             'color_shade', 'color_shade_name', 'uom', 'uom_code',
             'hsn_code', 'reorder_level', 'description', 'is_active',
@@ -186,7 +179,18 @@ class QualityProgramSerializer(serializers.ModelSerializer):
                 )
                 for idx, s in enumerate(sizes_data)
             ]
-            sub_quality_program_table.objects.bulk_create(size_objs)
         return instance
+
+
+class TaxMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaxMaster
+        fields = [
+            'id', 'company', 'tax_name', 'tax_code', 'tax_percent',
+            'cgst_percent', 'sgst_percent', 'igst_percent', 'hsn_sac_code',
+            'is_default', 'is_active', 'description', 'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'company', 'created_on', 'updated_on']
+
 
 

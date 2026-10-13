@@ -36,6 +36,9 @@ INSTALLED_APPS = [
     'apps.purchase',
     'apps.inventory',
     'apps.sales',
+    'apps.knitting',
+    'apps.process',
+    'apps.ledger',
 ]
 
 MIDDLEWARE = [
@@ -96,6 +99,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Global Date and Datetime formats: Display strictly in DMY ('DD/MM/YYYY'), Store in ISO YMD ('YYYY-MM-DD')
+DATE_FORMAT = 'd/m/Y'
+DATETIME_FORMAT = 'd/m/Y H:i'
+SHORT_DATE_FORMAT = 'd/m/Y'
+DATE_INPUT_FORMATS = ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d']
+
 # REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -117,6 +126,10 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
     'EXCEPTION_HANDLER': 'core.middleware.exception_handler.custom_exception_handler',
+    'DATE_FORMAT': '%d/%m/%Y',
+    'DATE_INPUT_FORMATS': ['%d/%m/%Y', '%d-%m-%Y', '%Y-%m-%d', 'iso-8601'],
+    'DATETIME_FORMAT': '%d/%m/%Y %H:%M',
+    'DATETIME_INPUT_FORMATS': ['%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%Y-%m-%d %H:%M:%S', 'iso-8601'],
 }
 
 # Simple JWT Configuration

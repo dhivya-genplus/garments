@@ -5,7 +5,7 @@ from django.conf import settings
 from core.base_models import UppercaseModel
 from core.constants import YarnCategory, YarnOutwardTypes
 from apps.authentication.models import Company, FinancialYear
-from apps.masters.models import PartyMaster, YarnCountMaster, ColorShadeMaster, WarehouseMaster
+from apps.masters.models import PartyMaster, YarnCountMaster, ColorShadeMaster, WarehouseMaster, TaxMaster
 from apps.purchase.models import parent_po_table
 
 
@@ -112,6 +112,35 @@ class parent_yarn_inward_table(UppercaseModel):
 
     yarn_count = models.ForeignKey(YarnCountMaster, on_delete=models.PROTECT, related_name="yarn_inwards")
     color_shade = models.ForeignKey(ColorShadeMaster, on_delete=models.PROTECT, null=True, blank=True, related_name="yarn_inwards")
+    blend_ratio = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Fiber blend ratio (e.g. 65/35 PC, 85/15 Melange)"
+    )
+    ply_count = models.IntegerField(
+        default=1,
+        help_text="Ply count (1 for Single, 2 for 2-ply doubled/TFO)"
+    )
+    twists_per_inch = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="TPI twist specification for wound/twisted yarns"
+    )
+    slub_pattern = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        help_text="Slub pattern profile code for slub/fancy yarns"
+    )
+    core_denier = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Core filament denier (e.g. 40D Spandex/Lycra)"
+    )
     lot_no = models.CharField(max_length=50, default="GEN", db_index=True)
 
     bag = models.IntegerField(default=0)
@@ -122,6 +151,17 @@ class parent_yarn_inward_table(UppercaseModel):
 
     rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"))
     amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    subtotal = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Amount before tax")
+    tax = models.ForeignKey(TaxMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="yarn_inwards")
+    tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"), help_text="GST %")
+    tax_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    cgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    cgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    sgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    sgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    igst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    igst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    total_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Total invoice amount including tax and charges")
 
     # Dyeing Process Loss & Charges (when received from Dyeing Outward)
     process_loss_wt = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Dyeing process loss in Kg")
@@ -153,7 +193,13 @@ class parent_yarn_inward_table(UppercaseModel):
         elif self.bag and self.per_bag and not self.net_wt:
             self.net_wt = Decimal(str(self.bag)) * Decimal(str(self.per_bag))
         if self.net_wt and self.rate:
-            self.amount = self.net_wt * Decimal(str(self.rate))
+            self.subtotal = self.net_wt * Decimal(str(self.rate))
+            self.amount = self.subtotal
+            tax_p = Decimal(str(self.tax_percent or 0)) / Decimal("100.00")
+            if not self.tax_amount and tax_p:
+                self.tax_amount = self.subtotal * tax_p
+            dyeing_chg = Decimal(str(self.dyeing_charges or 0))
+            self.total_amount = self.subtotal + Decimal(str(self.tax_amount or 0)) + dyeing_chg
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -174,6 +220,35 @@ class child_yarn_inward_table(UppercaseModel):
     tm_inward = models.ForeignKey(parent_yarn_inward_table, on_delete=models.CASCADE, related_name="line_items", db_column="tm_inward_id")
     yarn_count = models.ForeignKey(YarnCountMaster, on_delete=models.PROTECT, related_name="inward_line_items")
     color_shade = models.ForeignKey(ColorShadeMaster, on_delete=models.PROTECT, null=True, blank=True, related_name="inward_line_items")
+    blend_ratio = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Fiber blend ratio (e.g. 65/35 PC, 85/15 Melange)"
+    )
+    ply_count = models.IntegerField(
+        default=1,
+        help_text="Ply count (1 for Single, 2 for 2-ply doubled/TFO)"
+    )
+    twists_per_inch = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="TPI twist specification for wound/twisted yarns"
+    )
+    slub_pattern = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        help_text="Slub pattern profile code for slub/fancy yarns"
+    )
+    core_denier = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Core filament denier (e.g. 40D Spandex/Lycra)"
+    )
     lot_no = models.CharField(max_length=50, default="GEN")
     bag = models.IntegerField(default=0)
     per_bag = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("45.360"))
@@ -182,6 +257,8 @@ class child_yarn_inward_table(UppercaseModel):
     net_wt = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
     rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"))
     amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    tax_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
     status = models.IntegerField(default=1)
 
     class Meta:

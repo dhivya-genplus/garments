@@ -5,7 +5,7 @@ from django.conf import settings
 from core.base_models import UppercaseModel
 from core.constants import YarnCategory
 from apps.authentication.models import Company, FinancialYear
-from apps.masters.models import PartyMaster, YarnCountMaster, ColorShadeMaster, WarehouseMaster
+from apps.masters.models import PartyMaster, YarnCountMaster, ColorShadeMaster, WarehouseMaster, TaxMaster
 
 
 class parent_yarn_sales_table(UppercaseModel):
@@ -34,8 +34,15 @@ class parent_yarn_sales_table(UppercaseModel):
 
     rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"), help_text="Sale rate per Kg")
     subtotal = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    tax = models.ForeignKey(TaxMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="yarn_sales")
     tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("5.00"), help_text="GST % (typically 5% for Yarn)")
     tax_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    cgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    cgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    sgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    sgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    igst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    igst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
     total_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
 
     payment_terms = models.CharField(max_length=100, blank=True)
@@ -142,6 +149,17 @@ class parent_yarn_sales_return_table(UppercaseModel):
     quantity = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Returned weight in Kg")
     rate = models.DecimalField(max_digits=20, decimal_places=2, default=Decimal("0.00"))
     amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    subtotal = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Amount before tax")
+    tax = models.ForeignKey(TaxMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="yarn_sales_returns")
+    tax_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("5.00"), help_text="GST %")
+    tax_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    cgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    cgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    sgst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("2.50"))
+    sgst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    igst_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    igst_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"))
+    total_amount = models.DecimalField(max_digits=20, decimal_places=3, default=Decimal("0.000"), help_text="Net return amount including tax")
 
     return_reason = models.CharField(max_length=200, help_text="E.g., Shade Variation, Defective Count, Excess Quantity")
     is_authorized = models.IntegerField(default=1)
@@ -163,7 +181,12 @@ class parent_yarn_sales_return_table(UppercaseModel):
 
     def clean(self):
         if self.quantity and self.rate:
-            self.amount = self.quantity * Decimal(str(self.rate))
+            self.subtotal = self.quantity * Decimal(str(self.rate))
+            self.amount = self.subtotal
+            tax_p = Decimal(str(self.tax_percent or 0)) / Decimal("100.00")
+            if not self.tax_amount and tax_p:
+                self.tax_amount = self.subtotal * tax_p
+            self.total_amount = self.subtotal + Decimal(str(self.tax_amount or 0))
 
     def save(self, *args, **kwargs):
         self.clean()

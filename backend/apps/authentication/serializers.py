@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.authentication.models import Company, FinancialYear, User, Role, Privilege
+from apps.authentication.models import Company, FinancialYear, User, Role, Privilege, Employee
 from core.constants import UserRoles, ModulePermissions
 
 class PrivilegeSerializer(serializers.ModelSerializer):
@@ -62,10 +62,31 @@ class CompanySerializer(serializers.ModelSerializer):
         return obj.users.filter(is_deleted=False).count()
 
 
+class EmployeeSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    full_name = serializers.CharField(read_only=True)
+    has_user_account = serializers.SerializerMethodField()
+    username = serializers.CharField(source='user_account.username', read_only=True, default=None)
+
+    class Meta:
+        model = Employee
+        fields = [
+            'id', 'company', 'company_name', 'employee_code', 'first_name', 'last_name',
+            'full_name', 'email', 'phone', 'department', 'designation',
+            'joining_date', 'status', 'is_active', 'has_user_account', 'username',
+            'created_on', 'updated_on'
+        ]
+        read_only_fields = ['id', 'created_on', 'updated_on']
+
+    def get_has_user_account(self, obj):
+        return hasattr(obj, 'user_account') and obj.user_account is not None
+
+
 class UserSerializer(serializers.ModelSerializer):
     company_details = CompanySerializer(source='company', read_only=True)
     custom_role_details = RoleSerializer(source='custom_role', read_only=True)
     active_financial_year_details = FinancialYearSerializer(source='active_financial_year', read_only=True)
+    employee_details = EmployeeSerializer(source='employee', read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
 
     class Meta:
@@ -73,6 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username', 'first_name', 'last_name',
             'phone', 'employee_code', 'department', 'designation',
+            'employee', 'employee_details',
             'role', 'role_display', 'company', 'company_details',
             'active_financial_year', 'active_financial_year_details',
             'custom_role', 'custom_role_details', 'is_superadmin',

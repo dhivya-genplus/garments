@@ -33,8 +33,9 @@ class ChildYarnInwardSerializer(serializers.ModelSerializer):
         model = child_yarn_inward_table
         fields = [
             'id', 'tm_inward', 'yarn_count', 'yarn_count_name', 'color_shade',
-            'color_shade_name', 'lot_no', 'bag', 'per_bag', 'gross_wt',
-            'tare_wt', 'net_wt', 'rate', 'amount', 'status'
+            'color_shade_name', 'blend_ratio', 'ply_count', 'twists_per_inch',
+            'slub_pattern', 'core_denier', 'lot_no', 'bag', 'per_bag', 'gross_wt',
+            'tare_wt', 'net_wt', 'rate', 'amount', 'tax_percent', 'tax_amount', 'status'
         ]
 
 
@@ -46,6 +47,7 @@ class ParentYarnInwardSerializer(serializers.ModelSerializer):
     color_shade_name = serializers.CharField(source='color_shade.color_name', read_only=True, default=None)
     po_number = serializers.CharField(source='po.po_number', read_only=True, default=None)
     outward_number = serializers.CharField(source='outward.outward_number', read_only=True, default=None)
+    tax_name = serializers.CharField(source='tax.tax_name', read_only=True, default=None)
     yarn_type_display = serializers.CharField(source='get_yarn_type_display', read_only=True)
     inward_source_display = serializers.CharField(source='get_inward_source_display', read_only=True)
     line_items = ChildYarnInwardSerializer(many=True, read_only=True)
@@ -55,15 +57,19 @@ class ParentYarnInwardSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'inward_number', 'inward_date', 'inward_source', 'inward_source_display',
             'dc_number', 'dc_date', 'vehicle_no', 'yarn_type', 'yarn_type_display',
+            'blend_ratio', 'ply_count', 'twists_per_inch', 'slub_pattern', 'core_denier',
             'po', 'po_number', 'outward', 'outward_number',
             'company', 'cfyear', 'party', 'party_name', 'mill', 'mill_name',
             'warehouse', 'warehouse_name', 'yarn_count', 'yarn_count_name',
             'color_shade', 'color_shade_name', 'lot_no', 'bag', 'per_bag',
-            'gross_wt', 'tare_wt', 'net_wt', 'rate', 'amount',
+            'gross_wt', 'tare_wt', 'net_wt', 'rate', 'amount', 'subtotal',
+            'tax', 'tax_name', 'tax_percent', 'tax_amount',
+            'cgst_percent', 'cgst_amount', 'sgst_percent', 'sgst_amount',
+            'igst_percent', 'igst_amount', 'total_amount',
             'process_loss_wt', 'process_loss_percent', 'dyeing_rate', 'dyeing_charges',
             'remarks', 'is_authorized', 'status', 'created_on', 'updated_on', 'line_items'
         ]
-        read_only_fields = ['id', 'company', 'net_wt', 'amount', 'dyeing_charges', 'created_on', 'updated_on']
+        read_only_fields = ['id', 'company', 'net_wt', 'amount', 'subtotal', 'total_amount', 'dyeing_charges', 'created_on', 'updated_on']
 
 
 class ChildYarnOutwardSerializer(serializers.ModelSerializer):

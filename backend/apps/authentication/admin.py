@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.authentication.models import Company, FinancialYear, User, Role, Privilege
+from apps.authentication.models import Company, FinancialYear, User, Role, Privilege, Employee
 
 class PrivilegeInline(admin.TabularInline):
     model = Privilege
@@ -17,9 +17,15 @@ class CompanyAdmin(admin.ModelAdmin):
     search_fields = ('name', 'code', 'gst_number')
     list_filter = ('is_active', 'subscription_plan')
 
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = ('employee_code', 'first_name', 'last_name', 'department', 'designation', 'status', 'company', 'is_active')
+    search_fields = ('employee_code', 'first_name', 'last_name', 'email', 'phone', 'department')
+    list_filter = ('department', 'status', 'is_active', 'company')
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('email', 'username', 'role', 'company', 'employee_code', 'active_financial_year', 'is_superadmin', 'is_company_admin', 'is_active')
+    list_display = ('email', 'username', 'role', 'company', 'employee_code', 'employee', 'is_active')
     search_fields = ('email', 'username', 'employee_code', 'first_name', 'last_name')
     list_filter = ('role', 'is_superadmin', 'is_company_admin', 'is_active', 'company')
 

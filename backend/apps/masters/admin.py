@@ -1,8 +1,9 @@
 from django.contrib import admin
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table
+    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table,
+    TaxMaster
 )
 
 @admin.register(UnitOfMeasurement)
@@ -23,12 +24,6 @@ class YarnCountAdmin(admin.ModelAdmin):
     search_fields = ('count',)
     list_filter = ('company', 'is_active')
 
-@admin.register(YarnTypeMaster)
-class YarnTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'company', 'is_active')
-    search_fields = ('name', 'code')
-    list_filter = ('company', 'is_active')
-
 @admin.register(ColorShadeMaster)
 class ColorShadeAdmin(admin.ModelAdmin):
     list_display = ('shade_code', 'color_name', 'hex_code', 'pantone_ref', 'company', 'is_active')
@@ -37,9 +32,9 @@ class ColorShadeAdmin(admin.ModelAdmin):
 
 @admin.register(YarnMaster)
 class YarnMasterAdmin(admin.ModelAdmin):
-    list_display = ('yarn_code', 'yarn_type', 'yarn_count', 'category', 'color_shade', 'uom', 'company', 'is_active')
+    list_display = ('yarn_code', 'yarn_count', 'category', 'color_shade', 'uom', 'company', 'is_active')
     search_fields = ('yarn_code',)
-    list_filter = ('category', 'yarn_type', 'yarn_count', 'company', 'is_active')
+    list_filter = ('category', 'yarn_count', 'company', 'is_active')
 
 @admin.register(FabricTypeMaster)
 class FabricTypeAdmin(admin.ModelAdmin):
@@ -85,4 +80,12 @@ class SubQualityProgramAdmin(admin.ModelAdmin):
     list_display = ('id', 'tm', 'size_id', 'position', 'per_box', 'is_active', 'status')
     search_fields = ('size_id',)
     list_filter = ('is_active', 'status')
+
+
+@admin.register(TaxMaster)
+class TaxMasterAdmin(admin.ModelAdmin):
+    list_display = ('tax_code', 'tax_name', 'tax_percent', 'cgst_percent', 'sgst_percent', 'igst_percent', 'company', 'is_default', 'is_active')
+    search_fields = ('tax_code', 'tax_name', 'hsn_sac_code')
+    list_filter = ('company', 'is_active', 'is_default')
+
 

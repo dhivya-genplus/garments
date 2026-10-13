@@ -8,10 +8,12 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from core.permissions import IsCompanyUser, HasModulePrivilege
 from core.constants import ModulePermissions, UserRoles
 from apps.purchase.models import (
+    company_yarn_type_table,
     parent_po_table, child_po_table, yarn_po_delivery_table,
     yarn_po_balance_table
 )
 from apps.purchase.serializers import (
+    CompanyYarnTypeSerializer,
     ParentPOSerializer, ParentPOCreateSerializer, ChildPOSerializer,
     YarnPODeliverySerializer, YarnPOBalanceSerializer
 )
@@ -176,3 +178,61 @@ class YarnPOBalanceViewSet(ReadOnlyModelViewSet):
         elif not (self.request.user.is_superuser or getattr(self.request.user, 'is_superadmin', False)):
             qs = qs.none()
         return qs
+
+
+class CompanyYarnTypeViewSet(ModelViewSet):
+    """
+    CRUD API for Company-Configured Yarn Process Types.
+    Allows each tenant company to list, toggle on/off, or re-seed
+    allowed yarn types and inspect field requirements.
+    """
+    permission_classes = [IsCompanyUser, HasModulePrivilege]
+    required_module = ModulePermissions.PURCHASE_YARN_PO
+    serializer_class = CompanyYarnTypeSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['is_active', 'yarn_type']
+    ordering_fields = ['yarn_type', 'display_name', 'is_active']
+
+    def get_company_id(self):
+        user = self.request.user
+        if (getattr(user, 'is_superadmin', False) or getattr(user, 'role', '') == UserRoles.SUPER_ADMIN or user.is_superuser) and self.request.query_params.get('company_id'):
+            return int(self.request.query_params.get('company_id'))
+        if getattr(self.request, 'company', None):
+            return self.request.company.id
+        if getattr(user, 'company', None):
+            return user.company.id
+        return None
+
+    def get_queryset(self):
+        company_id = self.get_company_id()
+        if not company_id:
+            return company_yarn_type_table.objects.none()
+
+        # Auto-seed standard types if company doesn't have any yet
+        if not company_yarn_type_table.objects.filter(company_id=company_id).exists():
+            YarnPOService.seed_company_yarn_types(company_id, self.request.user if self.request.user.is_authenticated else None)
+
+        return company_yarn_type_table.objects.filter(company_id=company_id).order_by("yarn_type")
+
+    @action(detail=False, methods=['get'], url_path='active')
+    def active_types(self, request):
+        """Fetch active yarn types configured for the company (for dropdowns)."""
+        company_id = self.get_company_id()
+        if not company_id:
+            return Response({"success": False, "error": {"message": "Company context required."}}, status=status.HTTP_400_BAD_REQUEST)
+
+        active_list = YarnPOService.get_active_yarn_types(company_id)
+        serializer = CompanyYarnTypeSerializer(active_list, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=False, methods=['post'], url_path='seed-defaults')
+    def seed_defaults(self, request):
+        """Re-seed standard default yarn types for the company."""
+        company_id = self.get_company_id()
+        if not company_id:
+            return Response({"success": False, "error": {"message": "Company context required."}}, status=status.HTTP_400_BAD_REQUEST)
+
+        configs = YarnPOService.seed_company_yarn_types(company_id, request.user if request.user.is_authenticated else None)
+        serializer = CompanyYarnTypeSerializer(configs, many=True)
+        return Response({"success": True, "message": "Default yarn types seeded successfully.", "data": serializer.data})
+

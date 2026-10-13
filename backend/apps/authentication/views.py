@@ -6,11 +6,12 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from core.permissions import IsSuperAdmin, IsAdminUser, IsCompanyUser
 from core.constants import ModulePermissions, UserRoles
-from apps.authentication.models import Company, FinancialYear, User, Role
+from apps.authentication.models import Company, FinancialYear, User, Role, Employee
 from apps.authentication.serializers import (
     CompanySerializer, FinancialYearSerializer, UserSerializer,
     UserCreateSerializer, UserUpdateSerializer, RoleSerializer,
-    LoginSerializer, ChangePasswordSerializer, SwitchFinancialYearSerializer
+    LoginSerializer, ChangePasswordSerializer, SwitchFinancialYearSerializer,
+    EmployeeSerializer
 )
 from apps.authentication.services import (
     CompanyService, FinancialYearService, UserService,
@@ -267,7 +268,45 @@ class EmployeeUserViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.soft_delete(user=request.user)
+        if instance.employee:
+            instance.employee.is_active = False
+            instance.employee.status = "INACTIVE"
+            instance.employee.soft_delete(user=request.user)
         return Response({"message": f"Employee '{instance.email}' deactivated."}, status=status.HTTP_200_OK)
+
+
+class EmployeeProfileViewSet(ModelViewSet):
+    """
+    Dedicated Employee Master (tm_employee) CRUD ViewSet:
+    Manage human employee master records directly across factory departments.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = EmployeeSerializer
+    filterset_fields = ['department', 'designation', 'status', 'is_active']
+    search_fields = ['employee_code', 'first_name', 'last_name', 'email', 'phone', 'department', 'designation']
+    ordering_fields = ['employee_code', 'first_name', 'department', 'joining_date']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_super_admin:
+            company_id = self.request.query_params.get('company_id')
+            qs = Employee.objects.filter(is_deleted=False)
+            if company_id:
+                qs = qs.filter(company_id=company_id)
+            return qs.order_by('employee_code')
+        return Employee.objects.filter(company_id=user.company_id, is_deleted=False).order_by('employee_code')
+
+    def perform_create(self, serializer):
+        company = self.request.user.company if not self.request.user.is_super_admin else serializer.validated_data.get('company')
+        serializer.save(company=company, created_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.is_active = False
+        instance.status = "INACTIVE"
+        instance.soft_delete(user=self.request.user)
+        # Also deactivate user account if linked
+        if hasattr(instance, 'user_account') and instance.user_account:
+            instance.user_account.soft_delete(user=self.request.user)
 
 
 class RoleViewSet(ModelViewSet):

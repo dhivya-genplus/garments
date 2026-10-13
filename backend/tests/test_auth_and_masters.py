@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from apps.authentication.models import User, Company, FinancialYear, Role, Privilege
 from apps.authentication.services import CompanyService, FinancialYearService, UserService
-from apps.masters.models import UnitOfMeasurement, YarnTypeMaster, YarnCountMaster, YarnMaster
+from apps.masters.models import UnitOfMeasurement, YarnCountMaster, YarnMaster
 from core.constants import UserRoles, ModulePermissions, YarnCategory
 
 class AuthAndMastersTestCase(TestCase):
@@ -47,9 +47,6 @@ class AuthAndMastersTestCase(TestCase):
         # 4. Master Data
         self.uom = UnitOfMeasurement.objects.create(
             company=self.company, code="KGS", name="Kilograms"
-        )
-        self.yarn_type = YarnTypeMaster.objects.create(
-            company=self.company, code="COTTON", name="Cotton"
         )
         self.yarn_count = YarnCountMaster.objects.create(
             company=self.company, count="30s"
@@ -140,3 +137,43 @@ class AuthAndMastersTestCase(TestCase):
 
         res_admin = self.client.get('/api/v1/administration/admin-users/')
         self.assertEqual(res_admin.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_login_based_on_employee_table_and_inactive_block(self):
+        # 1. Verify self.employee has an associated tm_employee record
+        self.employee.refresh_from_db()
+        self.assertIsNotNone(self.employee.employee)
+        self.assertEqual(self.employee.employee.employee_code, "EMP-999")
+        self.assertEqual(self.employee.employee.status, "ACTIVE")
+
+        # 2. Login using Email returns employee table details
+        login_by_email = self.client.post('/api/v1/auth/auth/login/', {
+            "email": "emp@test.com",
+            "password": "Password123!"
+        })
+        self.assertEqual(login_by_email.status_code, status.HTTP_200_OK)
+        user_data = login_by_email.json()["data"]["user"]
+        self.assertIn("employee", user_data)
+        self.assertEqual(user_data["employee"]["employee_code"], "EMP-999")
+        self.assertEqual(user_data["employee"]["status"], "ACTIVE")
+
+        # 3. Login using Employee Code directly (EMP-999) succeeds
+        login_by_code = self.client.post('/api/v1/auth/auth/login/', {
+            "email": "EMP-999",
+            "password": "Password123!"
+        })
+        self.assertEqual(login_by_code.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_by_code.json()["success"])
+
+        # 4. Deactivate employee in Employee table
+        emp_obj = self.employee.employee
+        emp_obj.is_active = False
+        emp_obj.status = "RESIGNED"
+        emp_obj.save()
+
+        # 5. Login must be blocked because employee is inactive/resigned in Employee table
+        blocked_login = self.client.post('/api/v1/auth/auth/login/', {
+            "email": "emp@test.com",
+            "password": "Password123!"
+        })
+        self.assertEqual(blocked_login.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("Employee record is inactive or resigned", blocked_login.json()["error"]["message"])

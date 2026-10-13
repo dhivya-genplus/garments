@@ -5,12 +5,12 @@ from core.exceptions import ValidationError, ResourceNotFound, ConflictError
 from core.constants import YarnCategory, FabricCategory
 from apps.authentication.models import User
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster
+    ProcessMaster, WarehouseMaster, TaxMaster
 )
 from apps.masters.repositories import (
-    UOMRepository, PartyRepository, YarnCountRepository, YarnTypeRepository,
+    UOMRepository, PartyRepository, YarnCountRepository,
     ColorShadeRepository, YarnRepository, FabricTypeRepository, FabricRepository,
     ProcessRepository, WarehouseRepository
 )
@@ -174,3 +174,39 @@ class WarehouseService(BaseService):
         data["warehouse_code"] = code
         data["created_by"] = user
         return WarehouseMaster.objects.create(**data)
+
+
+class TaxService(BaseService):
+    DEFAULT_TAX_RATES = [
+        {"tax_name": "GST 0% (Exempt)", "tax_code": "GST_0", "tax_percent": "0.00", "cgst_percent": "0.00", "sgst_percent": "0.00", "igst_percent": "0.00", "hsn_sac_code": "", "is_default": False},
+        {"tax_name": "GST 5% (Yarn)", "tax_code": "GST_5", "tax_percent": "5.00", "cgst_percent": "2.50", "sgst_percent": "2.50", "igst_percent": "5.00", "hsn_sac_code": "5205", "is_default": True},
+        {"tax_name": "GST 12% (Fabrics)", "tax_code": "GST_12", "tax_percent": "12.00", "cgst_percent": "6.00", "sgst_percent": "6.00", "igst_percent": "12.00", "hsn_sac_code": "5208", "is_default": False},
+        {"tax_name": "GST 18% (Jobwork/Services)", "tax_code": "GST_18", "tax_percent": "18.00", "cgst_percent": "9.00", "sgst_percent": "9.00", "igst_percent": "18.00", "hsn_sac_code": "9988", "is_default": False},
+        {"tax_name": "GST 28% (Special)", "tax_code": "GST_28", "tax_percent": "28.00", "cgst_percent": "14.00", "sgst_percent": "14.00", "igst_percent": "28.00", "hsn_sac_code": "", "is_default": False},
+    ]
+
+    @classmethod
+    @transaction.atomic
+    def seed_company_taxes(cls, company_id: int, user: Optional[User] = None):
+        """Seed default GST tax rates for the company."""
+        from decimal import Decimal
+        taxes = []
+        for rate in cls.DEFAULT_TAX_RATES:
+            tax, _ = TaxMaster.objects.get_or_create(
+                company_id=company_id,
+                tax_code=rate["tax_code"],
+                defaults={
+                    "tax_name": rate["tax_name"],
+                    "tax_percent": Decimal(rate["tax_percent"]),
+                    "cgst_percent": Decimal(rate["cgst_percent"]),
+                    "sgst_percent": Decimal(rate["sgst_percent"]),
+                    "igst_percent": Decimal(rate["igst_percent"]),
+                    "hsn_sac_code": rate["hsn_sac_code"],
+                    "is_default": rate["is_default"],
+                    "created_by": user,
+                    "updated_by": user,
+                }
+            )
+            taxes.append(tax)
+        return taxes
+

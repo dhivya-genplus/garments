@@ -7,11 +7,45 @@ from apps.authentication.models import Company, FinancialYear
 from apps.masters.models import PartyMaster, YarnCountMaster, ColorShadeMaster
 
 
+class company_yarn_type_table(UppercaseModel):
+    """
+    Company-specific Yarn Process / Type Configuration: tc_company_yarn_type
+    Allows each tenant company to activate/deactivate specific yarn types
+    (e.g., Grey, Dyed, Melange, Blended) and defines conditional field requirements.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="yarn_type_configs")
+    yarn_type = models.CharField(max_length=20, choices=YarnCategory.CHOICES, db_index=True)
+    display_name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    # Dynamic Field Behavior Flags
+    requires_color_shade = models.BooleanField(default=False, help_text="True if color shade/lab dip is mandatory (Dyed, Melange)")
+    requires_blend_ratio = models.BooleanField(default=False, help_text="True if fiber blend percentage is mandatory (Blended, Melange)")
+    requires_ply_twists = models.BooleanField(default=False, help_text="True if ply count and twists per inch are relevant (Wound/TFO)")
+    requires_slub_pattern = models.BooleanField(default=False, help_text="True if slub pattern profile is relevant (Slub/Fancy)")
+    requires_core_denier = models.BooleanField(default=False, help_text="True if elastane denier is relevant (Core-Spun/Lycra)")
+
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_yarn_type_configs")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="updated_yarn_type_configs")
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tc_company_yarn_type"
+        verbose_name = "Company Yarn Type Configuration"
+        verbose_name_plural = "Company Yarn Type Configurations"
+        unique_together = ("company", "yarn_type")
+        ordering = ["yarn_type"]
+
+    def __str__(self):
+        return f"{self.company.name} - {self.display_name} ({'Active' if self.is_active else 'Inactive'})"
+
+
 class parent_po_table(UppercaseModel):
     """
     Primary Header: tm_yarn_po
     Primary document capturing yarn order header, spinning mill details,
-    yarn type (Grey or Dyed Yarn), commercial summary, and authorization status.
+    yarn process type (Grey, Dyed, Melange, Blended, etc.), commercial summary, and authorization status.
     """
     po_number = models.CharField(max_length=30, unique=True, db_index=True)
     po_date = models.DateField(db_index=True)
@@ -20,7 +54,7 @@ class parent_po_table(UppercaseModel):
         choices=YarnCategory.CHOICES,
         default=YarnCategory.GREY,
         db_index=True,
-        help_text="Yarn Type: GREY (Grey Yarn) or DYED (Dyed Yarn)"
+        help_text="Yarn Process Type (Grey, Dyed, Melange, Blended, Wound, Slub, Core-Spun, Recycled)"
     )
     color_shade = models.ForeignKey(
         ColorShadeMaster,
@@ -28,7 +62,36 @@ class parent_po_table(UppercaseModel):
         null=True,
         blank=True,
         related_name="yarn_pos",
-        help_text="Required if yarn_type is DYED"
+        help_text="Required if yarn_type is DYED or MELANGE"
+    )
+    blend_ratio = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Fiber blend ratio (e.g. 65/35 PC, 85/15 Melange, 50/50 Cotton Modal)"
+    )
+    ply_count = models.IntegerField(
+        default=1,
+        help_text="Ply count (1 for Single, 2 for 2-ply doubled/TFO)"
+    )
+    twists_per_inch = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="TPI twist specification for wound/twisted yarns"
+    )
+    slub_pattern = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        help_text="Slub pattern profile code for slub/fancy yarns"
+    )
+    core_denier = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Core filament denier (e.g. 40D Spandex/Lycra)"
     )
     name = models.CharField(max_length=50, blank=True, null=True, help_text="Order reference name / description")
     company = models.ForeignKey(
@@ -213,7 +276,36 @@ class child_po_table(UppercaseModel):
         blank=True,
         related_name="po_line_items",
         db_column="color_shade_id",
-        help_text="Color shade if Dyed Yarn"
+        help_text="Color shade if Dyed or Melange Yarn"
+    )
+    blend_ratio = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Fiber blend ratio (e.g. 65/35 PC, 85/15 Melange)"
+    )
+    ply_count = models.IntegerField(
+        default=1,
+        help_text="Ply count (1 for Single, 2 for 2-ply doubled/TFO)"
+    )
+    twists_per_inch = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="TPI twist specification for wound/twisted yarns"
+    )
+    slub_pattern = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        help_text="Slub pattern profile code for slub/fancy yarns"
+    )
+    core_denier = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        help_text="Core filament denier (e.g. 40D Spandex/Lycra)"
     )
     bag = models.IntegerField(default=0, help_text="Number of bags ordered for this count")
     per_bag = models.DecimalField(

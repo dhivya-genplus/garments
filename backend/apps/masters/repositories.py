@@ -2,7 +2,7 @@ from typing import Optional
 from django.db.models import QuerySet
 from core.base_repositories import CompanyScopedRepository
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
     ProcessMaster, WarehouseMaster
 )
@@ -23,10 +23,6 @@ class YarnCountRepository(CompanyScopedRepository[YarnCountMaster]):
     model = YarnCountMaster
 
 
-class YarnTypeRepository(CompanyScopedRepository[YarnTypeMaster]):
-    model = YarnTypeMaster
-
-
 class ColorShadeRepository(CompanyScopedRepository[ColorShadeMaster]):
     model = ColorShadeMaster
 
@@ -37,7 +33,7 @@ class YarnRepository(CompanyScopedRepository[YarnMaster]):
     @classmethod
     def get_for_company(cls, company_id: int) -> QuerySet[YarnMaster]:
         return cls.get_queryset().filter(company_id=company_id).select_related(
-            "yarn_type", "yarn_count", "color_shade", "uom"
+            "yarn_count", "color_shade", "uom"
         )
 
     @classmethod

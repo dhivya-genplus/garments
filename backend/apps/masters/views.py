@@ -6,22 +6,23 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from core.permissions import IsCompanyUser, HasModulePrivilege
 from core.constants import ModulePermissions, UserRoles
 from apps.masters.models import (
-    UnitOfMeasurement, PartyMaster, YarnCountMaster, YarnTypeMaster,
+    UnitOfMeasurement, PartyMaster, YarnCountMaster,
     ColorShadeMaster, YarnMaster, FabricTypeMaster, FabricMaster,
-    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table
+    ProcessMaster, WarehouseMaster, quality_program_table, sub_quality_program_table,
+    TaxMaster
 )
 from apps.masters.serializers import (
-    UOMSerializer, PartyMasterSerializer, YarnCountSerializer, YarnTypeSerializer,
+    UOMSerializer, PartyMasterSerializer, YarnCountSerializer,
     ColorShadeSerializer, YarnMasterSerializer, FabricTypeSerializer,
     FabricMasterSerializer, ProcessMasterSerializer, WarehouseMasterSerializer,
-    QualityProgramSerializer, SubQualityProgramSerializer
+    QualityProgramSerializer, SubQualityProgramSerializer, TaxMasterSerializer
 )
 from apps.masters.services import (
     UOMService, PartyService, YarnService, FabricService,
     ProcessService, WarehouseService
 )
 from apps.masters.repositories import (
-    UOMRepository, PartyRepository, YarnCountRepository, YarnTypeRepository,
+    UOMRepository, PartyRepository, YarnCountRepository,
     ColorShadeRepository, YarnRepository, FabricTypeRepository, FabricRepository,
     ProcessRepository, WarehouseRepository
 )
@@ -110,25 +111,6 @@ class YarnCountViewSet(BaseMasterViewSet):
         return Response(YarnCountSerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
-class YarnTypeViewSet(BaseMasterViewSet):
-    required_module = ModulePermissions.MASTERS_YARN
-    serializer_class = YarnTypeSerializer
-    search_fields = ['name', 'code', 'description']
-    filterset_fields = ['is_active']
-    ordering_fields = ['name', 'code', 'created_on']
-
-    def get_queryset(self):
-        company_id = self.get_company_id()
-        return YarnTypeRepository.get_for_company(company_id) if company_id else YarnTypeRepository.list_all()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        company_id = self.get_company_id()
-        instance = YarnTypeRepository.create(company_id=company_id, created_by=request.user, **serializer.validated_data)
-        return Response(YarnTypeSerializer(instance).data, status=status.HTTP_201_CREATED)
-
-
 class ColorShadeViewSet(BaseMasterViewSet):
     required_module = ModulePermissions.MASTERS_COLOR
     serializer_class = ColorShadeSerializer
@@ -148,11 +130,22 @@ class ColorShadeViewSet(BaseMasterViewSet):
         return Response(ColorShadeSerializer(instance).data, status=status.HTTP_201_CREATED)
 
 
+import django_filters
+
+class YarnFilterSet(django_filters.FilterSet):
+    category = django_filters.CharFilter(field_name="category", lookup_expr="iexact")
+    yarn_type = django_filters.CharFilter(field_name="category", lookup_expr="iexact")
+
+    class Meta:
+        model = YarnMaster
+        fields = ["category", "yarn_type", "yarn_count", "color_shade", "is_active"]
+
+
 class YarnMasterViewSet(BaseMasterViewSet):
     required_module = ModulePermissions.MASTERS_YARN
     serializer_class = YarnMasterSerializer
-    search_fields = ['yarn_code', 'yarn_type__name', 'yarn_count__count', 'description']
-    filterset_fields = ['category', 'yarn_type', 'yarn_count', 'color_shade', 'is_active']
+    filterset_class = YarnFilterSet
+    search_fields = ['yarn_code', 'yarn_count__count', 'color_shade__color_name', 'description']
     ordering_fields = ['yarn_code', 'created_on']
 
     def get_queryset(self):
@@ -281,5 +274,25 @@ class SubQualityProgramViewSet(ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.soft_delete(user=self.request.user)
+
+
+class TaxMasterViewSet(BaseMasterViewSet):
+    required_module = ModulePermissions.MASTERS_PARTY
+    serializer_class = TaxMasterSerializer
+    search_fields = ['tax_code', 'tax_name', 'hsn_sac_code']
+    filterset_fields = ['is_active', 'is_default']
+    ordering_fields = ['tax_percent', 'tax_name', 'created_on']
+
+    def get_queryset(self):
+        company_id = self.get_company_id()
+        qs = TaxMaster.objects.filter(is_deleted=False)
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs.order_by('tax_percent', 'tax_name')
+
+    def perform_create(self, serializer):
+        company_id = self.get_company_id()
+        serializer.save(company_id=company_id, created_by=self.request.user)
+
 
 

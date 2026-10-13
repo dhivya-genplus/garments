@@ -5,7 +5,7 @@ from apps.authentication.views import (
     LoginView, CurrentUserProfileView, ChangePasswordView,
     SwitchFinancialYearView, AvailableModulesView,
     CompanyViewSet, FinancialYearViewSet, AdminUserViewSet,
-    EmployeeUserViewSet, RoleViewSet
+    EmployeeUserViewSet, EmployeeProfileViewSet, RoleViewSet
 )
 
 router = DefaultRouter()
@@ -13,6 +13,7 @@ router.register(r'companies', CompanyViewSet, basename='company')
 router.register(r'financial-years', FinancialYearViewSet, basename='financial-year')
 router.register(r'admin-users', AdminUserViewSet, basename='admin-user')
 router.register(r'employees', EmployeeUserViewSet, basename='employee')
+router.register(r'employee-profiles', EmployeeProfileViewSet, basename='employee-profile')
 router.register(r'roles', RoleViewSet, basename='role')
 
 urlpatterns = [
