@@ -92,6 +92,9 @@ class PriceListItem(UppercaseModel):
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"), help_text="Discount percentage (e.g. 2.50%)")
     net_rate = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Net rate after discount (auto-computed)")
 
+    # Lead Times & MOQ
+    procurement_days = models.PositiveIntegerField(default=0, help_text="Procurement lead time in days")
+    moq = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), help_text="Minimum Order Quantity (MOQ)")
     lead_time_days = models.IntegerField(default=0)
     remarks = models.CharField(max_length=255, blank=True, null=True)
 
@@ -136,7 +139,9 @@ class PriceListItem(UppercaseModel):
 class PriceListJobRule(UppercaseModel):
     """
     Job Work Conversion Rates & Rules: tm_price_list_job_rule
-    Captures subcontract rates and technical parameters for Knitting, Dyeing, Printing, Cutting, and Stitching.
+    Captures subcontract rates, lead times (procurement days, process days),
+    MOQ thresholds, small lot surcharges, and technical parameters for Knitting,
+    Dyeing, Printing, Cutting, and Stitching.
     """
     company_id = models.BigIntegerField(db_index=True)
     price_list_id = models.BigIntegerField(db_index=True, help_text="Reference to tm_price_list.id")
@@ -161,6 +166,12 @@ class PriceListJobRule(UppercaseModel):
     # Surcharges & Modifiers
     lycra_surcharge = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Lycra plating surcharge per Kg")
     special_finish_surcharge = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Bio-polishing / Silicon finish surcharge")
+    small_lot_surcharge = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Surcharge per unit when order quantity is below MOQ")
+
+    # Operational Lead Times & MOQ
+    procurement_days = models.PositiveIntegerField(default=0, help_text="Raw material / transit lead time in days (e.g. yarn dispatch to knitter, greige to dyer)")
+    process_days = models.PositiveIntegerField(default=0, help_text="Subcontract conversion turnaround time (TAT) in days")
+    moq = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), help_text="Minimum Order Quantity required for this job work process (e.g. 250.000 Kg or 500 Pcs)")
 
     # Tier Slabs
     min_quantity = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), help_text="Lower bound of quantity slab")
@@ -186,7 +197,8 @@ class PriceListJobRule(UppercaseModel):
     def __str__(self):
         lycra_str = " + Lycra" if self.is_lycra_plated else ""
         shade_str = f" [{self.shade_category}]" if self.shade_category else ""
-        return f"JobRule #{self.id} [Stage #{self.process_stage_id}]{shade_str}{lycra_str} @ Rs.{self.job_rate}"
+        moq_str = f" (MOQ {self.moq})" if self.moq else ""
+        return f"JobRule #{self.id} [Stage #{self.process_stage_id}]{shade_str}{lycra_str} @ Rs.{self.job_rate}{moq_str}"
 
     def soft_delete(self, user_id=None):
         self.record_status = "D"

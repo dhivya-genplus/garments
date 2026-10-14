@@ -6,13 +6,17 @@ from django.contrib.auth import get_user_model
 from core.constants import UserRoles, PartyTypes, WarehouseTypes, ProcessProgramStatus, ModulePermissions
 from apps.authentication.models import Company, FinancialYear, Role, Privilege
 from apps.masters.models import PartyMaster, WarehouseMaster, UnitOfMeasurement, YarnCountMaster, FabricTypeMaster, FabricMaster
+from core.exceptions import ValidationError, ConflictError, ResourceNotFound
 from apps.process.models import (
     parent_process_stage_table,
     parent_process_program_table,
+    JobWorkMaster,
+    JobWorkPartyConfiguration,
 )
 from apps.process.services import (
     ProcessStageService,
     ProcessProgramService,
+    JobWorkService,
 )
 
 User = get_user_model()
@@ -274,3 +278,391 @@ class ProcessProgramWorkflowTests(TestCase):
         self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED)
         # Verify date is formatted as DMY in the response
         self.assertEqual(create_resp.data["data"]["program_date"], "25/06/2026")
+
+
+class JobWorkMasterAndLeadTimeTests(TestCase):
+    def setUp(self):
+        import datetime
+        self.client = APIClient()
+
+        # 1. Company & FY
+        self.company = Company.objects.create(
+            name="Tirupur Apparel Innovations Ltd",
+            code="TAI-01",
+            city="Tirupur",
+            state="Tamil Nadu",
+        )
+        self.fy = FinancialYear.objects.create(
+            company=self.company,
+            name="FY 2026-2027",
+            code="FY2627",
+            start_date="2026-04-01",
+            end_date="2027-03-31",
+            is_current=True,
+        )
+
+        # 2. Roles & User Setup
+        self.role = Role.objects.create(
+            company=self.company,
+            name="Planning Manager",
+            code="PLAN_MGR",
+        )
+        for mod in [
+            ModulePermissions.PROCESS_STAGE,
+            ModulePermissions.PROCESS_PROGRAM,
+        ]:
+            Privilege.objects.create(
+                role=self.role,
+                module=mod,
+                can_create=True,
+                can_read=True,
+                can_update=True,
+                can_delete=True,
+                can_approve=True,
+            )
+
+        self.user = User.objects.create_user(
+            username="plan_head",
+            email="plan@tai.com",
+            password="password123",
+            company=self.company,
+            active_financial_year=self.fy,
+            custom_role=self.role,
+            role=UserRoles.COMPANY_USER,
+        )
+        self.client.force_authenticate(user=self.user)
+
+        # 3. UOMs
+        self.uom_kg = UnitOfMeasurement.objects.create(
+            company=self.company,
+            code="KGS",
+            name="Kilograms",
+        )
+        self.uom_pcs = UnitOfMeasurement.objects.create(
+            company=self.company,
+            code="PCS",
+            name="Pieces",
+        )
+
+        # 4. Process Stages
+        ProcessStageService.seed_default_stages(self.company.id, self.user)
+        self.stage_knit = parent_process_stage_table.objects.get(company=self.company, code="KNITTING")
+        self.stage_dye = parent_process_stage_table.objects.get(company=self.company, code="DYEING")
+
+        # 5. Job Worker Parties
+        self.knitter = PartyMaster.objects.create(
+            company=self.company,
+            party_type=PartyTypes.KNITTING_UNIT,
+            code="KNIT-ANN",
+            name="Annai Knitting Mills",
+            city="Tirupur",
+        )
+        self.dyer = PartyMaster.objects.create(
+            company=self.company,
+            party_type=PartyTypes.DYEING_UNIT,
+            code="DYE-RNB",
+            name="Rainbow Dyeing Unit",
+            city="Tirupur",
+        )
+
+    def test_01_create_job_work_master_sequential_lead_time(self):
+        """Test creating a valid JobWorkMaster with auto-calculated sequential lead time."""
+        data = {
+            "job_work_code": "JW-KNIT-SJ-24",
+            "job_work_name": "Single Jersey 24GG Knitting Conversion",
+            "process_stage_id": self.stage_knit.id,
+            "job_work_category": "KNITTING",
+            "material_type": "YARN",
+            "uom_id": self.uom_kg.id,
+            "min_order_qty": Decimal("100.000"),
+            "max_order_qty": Decimal("1000.000"),
+            "procurement_days": 2,
+            "processing_days": 3,
+            "quality_inspection_days": 1,
+            "transportation_days": 1,
+            "standard_rate": Decimal("18.0000"),
+        }
+        jw = JobWorkService.create_job_work(data, self.company.id, self.user.id)
+
+        self.assertEqual(jw.job_work_code, "JW-KNIT-SJ-24")
+        # Sequential lead time: 2 + 3 + 1 + 1 = 7 days
+        self.assertEqual(jw.total_estimated_lead_time, 7)
+        self.assertEqual(jw.standard_rate, Decimal("18.0000"))
+        self.assertEqual(jw.record_status, "A")
+
+    def test_02_duplicate_job_work_code_rejected(self):
+        """Test that duplicate job work codes within the same company are rejected."""
+        data = {
+            "job_work_code": "JW-KNIT-TEST",
+            "job_work_name": "Test Knitting",
+            "process_stage_id": self.stage_knit.id,
+            "job_work_category": "KNITTING",
+            "material_type": "YARN",
+            "uom_id": self.uom_kg.id,
+        }
+        JobWorkService.create_job_work(data.copy(), self.company.id, self.user.id)
+
+        with self.assertRaises(ConflictError):
+            JobWorkService.create_job_work(data.copy(), self.company.id, self.user.id)
+
+    def test_03_moq_and_capacity_validation_rules(self):
+        """Test MOQ > 0 and Max Order Qty >= MOQ rules."""
+        base_data = {
+            "job_work_code": "JW-VAL-1",
+            "job_work_name": "Validation Test",
+            "process_stage_id": self.stage_knit.id,
+            "job_work_category": "KNITTING",
+            "material_type": "YARN",
+            "uom_id": self.uom_kg.id,
+        }
+
+        # 1. Zero MOQ rejected
+        bad_moq = base_data.copy()
+        bad_moq["min_order_qty"] = Decimal("0.000")
+        with self.assertRaises(ValidationError):
+            JobWorkService.create_job_work(bad_moq, self.company.id, self.user.id)
+
+        # 2. Max < MOQ rejected
+        bad_max = base_data.copy()
+        bad_max["job_work_code"] = "JW-VAL-2"
+        bad_max["min_order_qty"] = Decimal("500.000")
+        bad_max["max_order_qty"] = Decimal("200.000")
+        with self.assertRaises(ValidationError):
+            JobWorkService.create_job_work(bad_max, self.company.id, self.user.id)
+
+        # 3. Max == MOQ allowed
+        good_equal = base_data.copy()
+        good_equal["job_work_code"] = "JW-VAL-3"
+        good_equal["min_order_qty"] = Decimal("500.000")
+        good_equal["max_order_qty"] = Decimal("500.000")
+        jw = JobWorkService.create_job_work(good_equal, self.company.id, self.user.id)
+        self.assertEqual(jw.min_order_qty, jw.max_order_qty)
+
+    def test_04_party_configuration_vendor_specific_lead_times(self):
+        """Test binding a specific vendor with negotiated rates and turnaround times."""
+        import datetime
+        jw = JobWorkService.create_job_work(
+            {
+                "job_work_code": "JW-KNIT-VEND",
+                "job_work_name": "Knitting with Vendor",
+                "process_stage_id": self.stage_knit.id,
+                "job_work_category": "KNITTING",
+                "material_type": "YARN",
+                "uom_id": self.uom_kg.id,
+                "min_order_qty": Decimal("100.000"),
+                "standard_rate": Decimal("18.0000"),
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        cfg_data = {
+            "job_work_id": jw.id,
+            "party_id": self.knitter.id,
+            "uom_id": self.uom_kg.id,
+            "min_order_qty": Decimal("300.000"),
+            "max_order_qty": Decimal("3000.000"),
+            "procurement_days": 2,
+            "processing_days": 3,
+            "quality_inspection_days": 1,
+            "transportation_days": 1,
+            "agreed_rate": Decimal("16.5000"),
+            "small_lot_surcharge": Decimal("2.0000"),
+            "effective_from": datetime.date(2026, 4, 1),
+            "effective_to": datetime.date(2027, 3, 31),
+        }
+        cfg = JobWorkService.create_party_config(cfg_data, self.company.id, self.user.id)
+
+        self.assertEqual(cfg.agreed_rate, Decimal("16.5000"))
+        self.assertEqual(cfg.small_lot_surcharge, Decimal("2.0000"))
+        self.assertEqual(cfg.total_estimated_lead_time, 7)
+
+    def test_05_order_validation_below_moq_with_surcharge(self):
+        """Test order validation when proposed quantity is below vendor MOQ."""
+        import datetime
+        jw = JobWorkService.create_job_work(
+            {
+                "job_work_code": "JW-DYE-MOQ",
+                "job_work_name": "Dyeing MOQ Test",
+                "process_stage_id": self.stage_dye.id,
+                "job_work_category": "DYEING",
+                "material_type": "GREY_FABRIC",
+                "uom_id": self.uom_kg.id,
+                "min_order_qty": Decimal("100.000"),
+                "standard_rate": Decimal("35.0000"),
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        JobWorkService.create_party_config(
+            {
+                "job_work_id": jw.id,
+                "party_id": self.dyer.id,
+                "uom_id": self.uom_kg.id,
+                "min_order_qty": Decimal("200.000"),
+                "max_order_qty": Decimal("2000.000"),
+                "agreed_rate": Decimal("32.0000"),
+                "small_lot_surcharge": Decimal("5.0000"),
+                "effective_from": datetime.date(2026, 4, 1),
+                "effective_to": datetime.date(2027, 3, 31),
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        # Propose 150 kg (< 200 kg vendor MOQ)
+        val = JobWorkService.validate_job_work_order(
+            company_id=self.company.id,
+            job_work_id=jw.id,
+            quantity=Decimal("150.000"),
+            party_id=self.dyer.id,
+        )
+
+        self.assertTrue(val["is_below_moq"])
+        self.assertFalse(val["is_capacity_exceeded"])
+        # Base: 32.0000 + Surcharge: 5.0000 = 37.0000
+        self.assertEqual(Decimal(val["effective_unit_rate"]), Decimal("37.0000"))
+        self.assertIn("Small lot surcharge", val["warning_message"])
+
+    def test_06_order_validation_exceeding_capacity(self):
+        """Test order validation when proposed quantity exceeds vendor maximum capacity."""
+        import datetime
+        jw = JobWorkService.create_job_work(
+            {
+                "job_work_code": "JW-CAP-TEST",
+                "job_work_name": "Capacity Test",
+                "process_stage_id": self.stage_knit.id,
+                "job_work_category": "KNITTING",
+                "material_type": "YARN",
+                "uom_id": self.uom_kg.id,
+                "min_order_qty": Decimal("100.000"),
+                "max_order_qty": Decimal("1000.000"),
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        val = JobWorkService.validate_job_work_order(
+            company_id=self.company.id,
+            job_work_id=jw.id,
+            quantity=Decimal("1500.000"),
+        )
+        self.assertFalse(val["is_valid"])
+        self.assertTrue(val["is_capacity_exceeded"])
+        self.assertIn("exceeds maximum batch capacity", val["warning_message"])
+
+    def test_07_milestone_schedule_calculation_sequential_and_fast_track(self):
+        """Test computing sequential vs fast-track overlapping milestone delivery dates."""
+        import datetime
+        jw = JobWorkService.create_job_work(
+            {
+                "job_work_code": "JW-LEAD-SCHED",
+                "job_work_name": "Schedule Lead Time Test",
+                "process_stage_id": self.stage_dye.id,
+                "job_work_category": "DYEING",
+                "material_type": "GREY_FABRIC",
+                "uom_id": self.uom_kg.id,
+                "procurement_days": 2,
+                "processing_days": 4,
+                "quality_inspection_days": 1,
+                "transportation_days": 1,
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        # 1. Sequential: 2 + 4 + 1 + 1 = 8 days
+        sched_seq = JobWorkService.calculate_schedule(
+            company_id=self.company.id,
+            job_work_id=jw.id,
+            order_date="2026-05-01",
+            is_fast_track=False,
+        )
+        self.assertEqual(sched_seq["total_lead_time_days"], 8)
+        self.assertEqual(sched_seq["schedule_milestones"]["target_delivery_date"], "2026-05-09")
+
+        # 2. Fast-Track: QC overlaps with final day -> 2 + 4 + 0 + 1 = 7 days
+        sched_ft = JobWorkService.calculate_schedule(
+            company_id=self.company.id,
+            job_work_id=jw.id,
+            order_date="2026-05-01",
+            is_fast_track=True,
+        )
+        self.assertEqual(sched_ft["total_lead_time_days"], 7)
+        self.assertEqual(sched_ft["schedule_milestones"]["target_delivery_date"], "2026-05-08")
+
+    def test_08_soft_delete_job_work_and_cascade_configs(self):
+        """Test soft deletion marks record_status='D' on master and cascades to vendor configs."""
+        import datetime
+        jw = JobWorkService.create_job_work(
+            {
+                "job_work_code": "JW-DEL-TEST",
+                "job_work_name": "Deletion Test",
+                "process_stage_id": self.stage_knit.id,
+                "job_work_category": "KNITTING",
+                "material_type": "YARN",
+                "uom_id": self.uom_kg.id,
+            },
+            self.company.id,
+            self.user.id
+        )
+        cfg = JobWorkService.create_party_config(
+            {
+                "job_work_id": jw.id,
+                "party_id": self.knitter.id,
+                "uom_id": self.uom_kg.id,
+                "effective_from": datetime.date(2026, 4, 1),
+                "effective_to": datetime.date(2027, 3, 31),
+            },
+            self.company.id,
+            self.user.id
+        )
+
+        JobWorkService.delete_job_work(jw.id, self.company.id, self.user.id)
+
+        jw.refresh_from_db()
+        cfg.refresh_from_db()
+        self.assertEqual(jw.record_status, "D")
+        self.assertEqual(cfg.record_status, "D")
+
+    def test_09_api_endpoints_and_seed_defaults(self):
+        """Test REST API endpoints for job works, schedule calculation, and seed defaults."""
+        # 1. Seed default job works via API
+        seed_resp = self.client.post("/api/v1/process/job-works/seed-defaults/")
+        self.assertEqual(seed_resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(seed_resp.data["data"]) >= 2)
+
+        # 2. List job works via API
+        list_resp = self.client.get("/api/v1/process/job-works/")
+        self.assertEqual(list_resp.status_code, status.HTTP_200_OK)
+        results = list_resp.data.get("results") or list_resp.data.get("data") or list_resp.data
+        self.assertTrue(len(results) >= 2)
+
+        first_jw = results[0]
+        jw_id = first_jw["id"]
+
+        # 3. Validate order via API action
+        val_resp = self.client.post(
+            "/api/v1/process/job-works/validate-order/",
+            data={
+                "job_work_id": jw_id,
+                "quantity": "500.000",
+            },
+            format="json",
+        )
+        self.assertEqual(val_resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(val_resp.data["data"]["is_valid"])
+
+        # 4. Calculate schedule via API action with DMY date
+        sched_resp = self.client.post(
+            "/api/v1/process/job-works/calculate-schedule/",
+            data={
+                "job_work_id": jw_id,
+                "order_date": "10/05/2026",
+                "is_fast_track": False,
+            },
+            format="json",
+        )
+        self.assertEqual(sched_resp.status_code, status.HTTP_200_OK)
+        self.assertIn("target_delivery_date", sched_resp.data["data"]["schedule_milestones"])

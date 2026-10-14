@@ -149,6 +149,22 @@ class PriceListService:
             if max_qty_dec < min_qty:
                 raise ValidationError("max_quantity cannot be less than min_quantity.")
 
+        moq = Decimal(str(data.get("moq", "0.000")))
+        if moq < Decimal("0.000"):
+            raise ValidationError("MOQ cannot be negative.")
+
+        small_lot_sc = Decimal(str(data.get("small_lot_surcharge", "0.0000")))
+        if small_lot_sc < Decimal("0.0000"):
+            raise ValidationError("Small lot surcharge cannot be negative.")
+
+        proc_days = int(data.get("procurement_days", 0) or 0)
+        if proc_days < 0:
+            raise ValidationError("Procurement days cannot be negative.")
+
+        proc_time = int(data.get("process_days", 0) or 0)
+        if proc_time < 0:
+            raise ValidationError("Process days cannot be negative.")
+
         data["company_id"] = company_id
         data["price_list_id"] = price_list_id
         data["created_by"] = user_id
@@ -167,6 +183,24 @@ class PriceListService:
             job_rate = Decimal(str(data["job_rate"]))
             if job_rate < Decimal("0.00"):
                 raise ValidationError("Job rate cannot be negative.")
+
+        if "moq" in data:
+            moq = Decimal(str(data["moq"]))
+            if moq < Decimal("0.000"):
+                raise ValidationError("MOQ cannot be negative.")
+
+        if "small_lot_surcharge" in data:
+            small_lot_sc = Decimal(str(data["small_lot_surcharge"]))
+            if small_lot_sc < Decimal("0.0000"):
+                raise ValidationError("Small lot surcharge cannot be negative.")
+
+        if "procurement_days" in data:
+            if int(data["procurement_days"] or 0) < 0:
+                raise ValidationError("Procurement days cannot be negative.")
+
+        if "process_days" in data:
+            if int(data["process_days"] or 0) < 0:
+                raise ValidationError("Process days cannot be negative.")
 
         if user_id:
             data["updated_by"] = user_id
@@ -794,7 +828,7 @@ class PricingResolutionService:
                     if matched_items:
                         best = matched_items[0]
                         pl = next(p for p in party_lists if p.id == best.price_list_id)
-                        return cls._format_result(best, pl, source="PARTY_SPECIFIC", is_slab_applied=True)
+                        return cls._format_result(best, pl, source="PARTY_SPECIFIC", is_slab_applied=True, quantity=qty)
 
                 # Attempt match without slab (base rate)
                 matched_items = list(PriceListItemRepository.find_matching_items(
@@ -810,7 +844,7 @@ class PricingResolutionService:
                 if matched_items:
                     best = matched_items[0]
                     pl = next(p for p in party_lists if p.id == best.price_list_id)
-                    return cls._format_result(best, pl, source="PARTY_SPECIFIC", is_slab_applied=False)
+                    return cls._format_result(best, pl, source="PARTY_SPECIFIC", is_slab_applied=False, quantity=qty)
 
         # Tier 3 & 4: General Base Price List Resolution
         general_lists = list(PriceListRepository.find_active_general_lists(
@@ -836,7 +870,7 @@ class PricingResolutionService:
                 if matched_items:
                     best = matched_items[0]
                     pl = next(p for p in general_lists if p.id == best.price_list_id)
-                    return cls._format_result(best, pl, source="GENERAL", is_slab_applied=True)
+                    return cls._format_result(best, pl, source="GENERAL", is_slab_applied=True, quantity=qty)
 
             # Attempt match without slab in general list
             matched_items = list(PriceListItemRepository.find_matching_items(
@@ -852,7 +886,7 @@ class PricingResolutionService:
             if matched_items:
                 best = matched_items[0]
                 pl = next(p for p in general_lists if p.id == best.price_list_id)
-                return cls._format_result(best, pl, source="GENERAL", is_slab_applied=False)
+                return cls._format_result(best, pl, source="GENERAL", is_slab_applied=False, quantity=qty)
 
         # Tier 5: Fallback / Unresolved
         return {
@@ -861,6 +895,10 @@ class PricingResolutionService:
             "base_rate": None,
             "discount_percent": "0.00",
             "net_rate": None,
+            "procurement_days": 0,
+            "lead_time_days": 0,
+            "moq": "0.000",
+            "is_below_moq": False,
             "pricing_source": "MANUAL",
             "price_list_id": None,
             "price_list_code": None,
@@ -905,13 +943,25 @@ class PricingResolutionService:
         })
 
     @staticmethod
-    def _format_result(item: PriceListItem, price_list: PriceList, source: str, is_slab_applied: bool) -> Dict[str, Any]:
+    def _format_result(item: PriceListItem, price_list: PriceList, source: str, is_slab_applied: bool, quantity: Optional[Decimal] = None) -> Dict[str, Any]:
+        item_moq = Decimal(str(getattr(item, "moq", 0) or 0))
+        is_below_moq = False
+        if quantity is not None and item_moq > Decimal("0.000") and Decimal(str(quantity)) < item_moq:
+            is_below_moq = True
+
+        procurement_days = int(getattr(item, "procurement_days", 0) or 0)
+        lead_time_days = int(getattr(item, "lead_time_days", 0) or 0)
+
         return {
             "is_resolved": True,
             "resolved_rate": str(item.net_rate),
             "base_rate": str(item.base_rate),
             "discount_percent": str(item.discount_percent),
             "net_rate": str(item.net_rate),
+            "procurement_days": procurement_days,
+            "lead_time_days": lead_time_days,
+            "moq": str(item_moq),
+            "is_below_moq": is_below_moq,
             "pricing_source": source,
             "price_list_id": price_list.id,
             "price_list_code": price_list.price_list_code,
@@ -986,7 +1036,8 @@ class PricingResolutionService:
                         pl = next(p for p in party_lists if p.id == best.price_list_id)
                         return cls._format_job_rule_result(
                             best, pl, source="PARTY_SPECIFIC", is_slab_applied=True,
-                            is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested
+                            is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested,
+                            quantity=qty
                         )
 
                 # Attempt match without slab (base rate)
@@ -1007,7 +1058,8 @@ class PricingResolutionService:
                     pl = next(p for p in party_lists if p.id == best.price_list_id)
                     return cls._format_job_rule_result(
                         best, pl, source="PARTY_SPECIFIC", is_slab_applied=False,
-                        is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested
+                        is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested,
+                        quantity=qty
                     )
 
         # Tier 3 & 4: General Base Price List Resolution
@@ -1038,7 +1090,8 @@ class PricingResolutionService:
                     pl = next(p for p in general_lists if p.id == best.price_list_id)
                     return cls._format_job_rule_result(
                         best, pl, source="GENERAL", is_slab_applied=True,
-                        is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested
+                        is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested,
+                        quantity=qty
                     )
 
             # Attempt match without slab in general list
@@ -1059,7 +1112,8 @@ class PricingResolutionService:
                 pl = next(p for p in general_lists if p.id == best.price_list_id)
                 return cls._format_job_rule_result(
                     best, pl, source="GENERAL", is_slab_applied=False,
-                    is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested
+                    is_lycra_plated=is_lycra_plated, special_finish_requested=special_finish_requested,
+                    quantity=qty
                 )
 
         # Tier 5: Process Stage Master Standard Rate Fallback
@@ -1076,8 +1130,14 @@ class PricingResolutionService:
                     "job_rate": rate_str,
                     "lycra_surcharge": "0.0000",
                     "special_finish_surcharge": "0.0000",
+                    "small_lot_surcharge": "0.0000",
                     "total_rate": rate_str,
                     "allowed_loss_percent": loss_str,
+                    "procurement_days": 0,
+                    "process_days": 0,
+                    "total_lead_time_days": 0,
+                    "moq": "0.000",
+                    "is_below_moq": False,
                     "pricing_source": "STAGE_STANDARD",
                     "price_list_id": None,
                     "price_list_code": None,
@@ -1094,8 +1154,14 @@ class PricingResolutionService:
                         "base_job_rate": rate_str,
                         "lycra_surcharge": "0.0000",
                         "special_finish_surcharge": "0.0000",
+                        "small_lot_surcharge": "0.0000",
                         "total_effective_rate": rate_str,
-                        "allowed_loss_percent": loss_str
+                        "allowed_loss_percent": loss_str,
+                        "procurement_days": 0,
+                        "process_days": 0,
+                        "total_lead_time_days": 0,
+                        "moq": "0.000",
+                        "is_below_moq": False
                     },
                     "message": f"Resolved from Stage Master standard rate for {stage.name}."
                 }
@@ -1110,8 +1176,14 @@ class PricingResolutionService:
             "job_rate": None,
             "lycra_surcharge": "0.0000",
             "special_finish_surcharge": "0.0000",
+            "small_lot_surcharge": "0.0000",
             "total_rate": None,
             "allowed_loss_percent": "0.00",
+            "procurement_days": 0,
+            "process_days": 0,
+            "total_lead_time_days": 0,
+            "moq": "0.000",
+            "is_below_moq": False,
             "pricing_source": "MANUAL",
             "price_list_id": None,
             "price_list_code": None,
@@ -1135,12 +1207,25 @@ class PricingResolutionService:
         source: str,
         is_slab_applied: bool,
         is_lycra_plated: Optional[bool] = None,
-        special_finish_requested: Optional[bool] = None
+        special_finish_requested: Optional[bool] = None,
+        quantity: Optional[Decimal] = None
     ) -> Dict[str, Any]:
         base_rate = Decimal(str(rule.job_rate or 0))
         lycra_sc = Decimal(str(rule.lycra_surcharge or 0)) if is_lycra_plated else Decimal("0.0000")
         finish_sc = Decimal(str(rule.special_finish_surcharge or 0)) if special_finish_requested else Decimal("0.0000")
-        total_rate = (base_rate + lycra_sc + finish_sc).quantize(Decimal("0.0001"))
+
+        # MOQ and small lot surcharge calculation
+        rule_moq = Decimal(str(rule.moq or 0))
+        is_below_moq = False
+        small_lot_sc = Decimal("0.0000")
+        if quantity is not None and rule_moq > Decimal("0.000") and Decimal(str(quantity)) < rule_moq:
+            is_below_moq = True
+            small_lot_sc = Decimal(str(rule.small_lot_surcharge or 0))
+
+        total_rate = (base_rate + lycra_sc + finish_sc + small_lot_sc).quantize(Decimal("0.0001"))
+        procurement_days = int(rule.procurement_days or 0)
+        process_days = int(rule.process_days or 0)
+        total_lead_time_days = procurement_days + process_days
 
         return {
             "is_resolved": True,
@@ -1149,8 +1234,14 @@ class PricingResolutionService:
             "job_rate": str(base_rate),
             "lycra_surcharge": str(lycra_sc),
             "special_finish_surcharge": str(finish_sc),
+            "small_lot_surcharge": str(small_lot_sc),
             "total_rate": str(total_rate),
             "allowed_loss_percent": str(rule.allowed_loss_percent),
+            "procurement_days": procurement_days,
+            "process_days": process_days,
+            "total_lead_time_days": total_lead_time_days,
+            "moq": str(rule_moq),
+            "is_below_moq": is_below_moq,
             "pricing_source": source,
             "price_list_id": price_list.id,
             "price_list_code": price_list.price_list_code,
@@ -1167,7 +1258,13 @@ class PricingResolutionService:
                 "base_job_rate": str(base_rate),
                 "lycra_surcharge": str(lycra_sc),
                 "special_finish_surcharge": str(finish_sc),
+                "small_lot_surcharge": str(small_lot_sc),
                 "total_effective_rate": str(total_rate),
-                "allowed_loss_percent": str(rule.allowed_loss_percent)
+                "allowed_loss_percent": str(rule.allowed_loss_percent),
+                "procurement_days": procurement_days,
+                "process_days": process_days,
+                "total_lead_time_days": total_lead_time_days,
+                "moq": str(rule_moq),
+                "is_below_moq": is_below_moq
             }
         }

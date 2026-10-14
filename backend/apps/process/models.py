@@ -204,3 +204,210 @@ class child_process_program_recipe_table(UppercaseModel):
 
     def __str__(self):
         return f"{self.item_name} - {self.dosage_value} {self.dosage_unit} [{self.process_step}]"
+
+
+class JobWorkMaster(UppercaseModel):
+    """
+    Job Work Operation Master: tm_job_work
+    Centralized catalog of subcontract operations across fabric processing and garmenting:
+    Circular Knitting, Soft-flow Dyeing, Printing, Cutting, Stitching, Finishing.
+    Configures operational lead times (procurement, processing, inspection, transportation),
+    order quantity thresholds (MOQ, max capacity, standard batch size), and benchmark rates.
+    """
+    company_id = models.BigIntegerField(db_index=True)
+    job_work_code = models.CharField(max_length=50, db_index=True, help_text="e.g. JW-KNIT-SJ-24, JW-DYE-REACT-DK")
+    job_work_name = models.CharField(max_length=150, help_text="e.g. Single Jersey 24GG Knitting Conversion")
+    process_stage_id = models.BigIntegerField(db_index=True, help_text="Reference to mx_process_stage.id")
+    job_work_category = models.CharField(
+        max_length=40,
+        db_index=True,
+        choices=[
+            ("KNITTING", "Circular / Flat Knitting"),
+            ("DYEING", "Fabric Dyeing & Processing"),
+            ("COMPACTING", "Compacting & Heat Setting"),
+            ("PRINTING", "Screen / Rotary Printing"),
+            ("CUTTING", "Fabric Lay Cutting"),
+            ("STITCHING", "Garment CMT Assembly"),
+            ("FINISHING", "Washing, Ironing & Packing"),
+        ]
+    )
+    material_type = models.CharField(
+        max_length=40,
+        db_index=True,
+        choices=[
+            ("YARN", "Raw Yarn"),
+            ("GREY_FABRIC", "Grey Fabric Rolls"),
+            ("DYED_FABRIC", "Dyed / Finished Fabric"),
+            ("CUT_PANEL", "Cut Garment Panels"),
+            ("GARMENT", "Semi/Finished Garments"),
+        ],
+        default="GREY_FABRIC"
+    )
+    description = models.TextField(blank=True, null=True)
+    uom_id = models.BigIntegerField(db_index=True, help_text="Reference to mx_uom.id (KG, MTR, PCS)")
+
+    # Order Quantity Configuration
+    min_order_qty = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("100.000"), help_text="Minimum Order Quantity (MOQ)")
+    max_order_qty = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, help_text="Maximum Order Capacity per batch/window")
+    standard_batch_qty = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), help_text="Standard batch / vessel run size")
+
+    # Time & Lead-Time Configuration (Days)
+    procurement_days = models.PositiveIntegerField(default=0, help_text="Raw material staging & transit buffer (days)")
+    processing_days = models.PositiveIntegerField(default=0, help_text="Standard production cycle turnaround time (days)")
+    quality_inspection_days = models.PositiveIntegerField(default=0, help_text="Inward batch QC & lab testing turnaround (days)")
+    transportation_days = models.PositiveIntegerField(default=0, help_text="Inter-facility road transit buffer (days)")
+    total_estimated_lead_time = models.PositiveIntegerField(default=0, help_text="Auto-computed sequential sum (days)")
+    standard_delivery_days = models.PositiveIntegerField(default=0, help_text="Contractual delivery promise SLA (days)")
+
+    # Commercial Configuration
+    standard_rate = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Benchmark subcontract charge per UOM (INR)")
+    rate_valid_from = models.DateField(null=True, blank=True)
+    rate_valid_to = models.DateField(null=True, blank=True)
+
+    is_active = models.BooleanField(default=True, db_index=True)
+    remarks = models.CharField(max_length=255, blank=True, null=True)
+
+    record_status = models.CharField(max_length=1, default="A", db_index=True)  # 'A'=Active, 'I'=Inactive, 'D'=Deleted
+    created_by = models.BigIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_by = models.BigIntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tm_job_work"
+        verbose_name = "Job Work Master"
+        verbose_name_plural = "Job Work Masters"
+        ordering = ["job_work_code"]
+        indexes = [
+            models.Index(fields=["company_id", "job_work_category", "record_status"]),
+            models.Index(fields=["company_id", "material_type", "record_status"]),
+            models.Index(fields=["company_id", "process_stage_id", "record_status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company_id", "job_work_code"],
+                condition=~models.Q(record_status="D"),
+                name="uq_tm_job_work_code"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.job_work_code} - {self.job_work_name} ({self.total_estimated_lead_time}d lead time)"
+
+    def clean(self):
+        if self.min_order_qty is not None and self.min_order_qty <= Decimal("0.000"):
+            from core.exceptions import ValidationError
+            raise ValidationError("Minimum Order Quantity (MOQ) must be greater than zero.")
+
+        if self.max_order_qty is not None and self.min_order_qty is not None:
+            if self.max_order_qty < self.min_order_qty:
+                from core.exceptions import ValidationError
+                raise ValidationError("Maximum Order Quantity cannot be less than Minimum Order Quantity (MOQ).")
+
+        self.total_estimated_lead_time = (
+            (self.procurement_days or 0)
+            + (self.processing_days or 0)
+            + (self.quality_inspection_days or 0)
+            + (self.transportation_days or 0)
+        )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def soft_delete(self, user_id=None):
+        self.record_status = "D"
+        if user_id:
+            self.updated_by = user_id
+        self.save(update_fields=["record_status", "updated_by", "updated_at"])
+
+
+class JobWorkPartyConfiguration(UppercaseModel):
+    """
+    Job Worker Specific Planning & Commercial Configuration: tm_job_work_party_config
+    Binds an external job worker (knitter, dyer, printer, cutter, stitcher) to a specific
+    Job Work Operation with negotiated capacity, MOQ, unit rates, and turnaround times.
+    """
+    company_id = models.BigIntegerField(db_index=True)
+    job_work_id = models.BigIntegerField(db_index=True, help_text="Reference to tm_job_work.id")
+    party_id = models.BigIntegerField(db_index=True, help_text="Reference to mx_party.id (Subcontract Job Worker)")
+    uom_id = models.BigIntegerField(db_index=True, help_text="Reference to mx_uom.id")
+
+    # Vendor-Specific Capacity & Thresholds
+    min_order_qty = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("100.000"), help_text="Vendor negotiated MOQ")
+    max_order_qty = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, help_text="Vendor maximum order capacity ceiling")
+    daily_capacity_qty = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), help_text="Vendor daily throughput capacity")
+
+    # Vendor-Specific Lead Times (Days)
+    procurement_days = models.PositiveIntegerField(default=0, help_text="Material transit lead time to vendor unit (days)")
+    processing_days = models.PositiveIntegerField(default=0, help_text="Vendor production conversion turnaround time (days)")
+    quality_inspection_days = models.PositiveIntegerField(default=0, help_text="Vendor lot QC inspection turnaround (days)")
+    transportation_days = models.PositiveIntegerField(default=0, help_text="Vendor finished goods return logistics (days)")
+    total_estimated_lead_time = models.PositiveIntegerField(default=0, help_text="Auto-computed total sequential TAT (days)")
+
+    # Commercial Agreement
+    agreed_rate = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Agreed subcontract conversion rate per UOM (INR)")
+    small_lot_surcharge = models.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"), help_text="Extra surcharge per unit when order qty is below MOQ")
+    allowed_loss_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"), help_text="Contractual allowed process loss %")
+
+    effective_from = models.DateField(db_index=True)
+    effective_to = models.DateField(db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    remarks = models.CharField(max_length=255, blank=True, null=True)
+
+    record_status = models.CharField(max_length=1, default="A", db_index=True)
+    created_by = models.BigIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_by = models.BigIntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "tm_job_work_party_config"
+        verbose_name = "Job Work Party Configuration"
+        verbose_name_plural = "Job Work Party Configurations"
+        ordering = ["-effective_from", "-id"]
+        indexes = [
+            models.Index(fields=["company_id", "job_work_id", "party_id", "record_status"]),
+            models.Index(fields=["company_id", "effective_from", "effective_to", "record_status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company_id", "job_work_id", "party_id"],
+                condition=models.Q(record_status="A"),
+                name="uq_tm_job_work_party_active"
+            )
+        ]
+
+    def __str__(self):
+        return f"PartyConfig: JW #{self.job_work_id} -> Party #{self.party_id} @ Rs.{self.agreed_rate} ({self.total_estimated_lead_time}d)"
+
+    def clean(self):
+        if self.min_order_qty is not None and self.min_order_qty <= Decimal("0.000"):
+            from core.exceptions import ValidationError
+            raise ValidationError("Minimum Order Quantity (MOQ) must be greater than zero.")
+
+        if self.max_order_qty is not None and self.min_order_qty is not None:
+            if self.max_order_qty < self.min_order_qty:
+                from core.exceptions import ValidationError
+                raise ValidationError("Maximum Order Quantity cannot be less than Minimum Order Quantity (MOQ).")
+
+        if self.effective_from and self.effective_to and self.effective_from > self.effective_to:
+            from core.exceptions import ValidationError
+            raise ValidationError("effective_from date cannot be after effective_to date.")
+
+        self.total_estimated_lead_time = (
+            (self.procurement_days or 0)
+            + (self.processing_days or 0)
+            + (self.quality_inspection_days or 0)
+            + (self.transportation_days or 0)
+        )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def soft_delete(self, user_id=None):
+        self.record_status = "D"
+        if user_id:
+            self.updated_by = user_id
+        self.save(update_fields=["record_status", "updated_by", "updated_at"])

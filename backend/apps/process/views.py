@@ -9,14 +9,21 @@ from core.exceptions import ValidationError
 from apps.process.models import (
     parent_process_stage_table,
     parent_process_program_table,
+    JobWorkMaster,
+    JobWorkPartyConfiguration,
 )
 from apps.process.serializers import (
     ParentProcessStageSerializer,
     ParentProcessProgramSerializer,
+    JobWorkSerializer,
+    JobWorkPartyConfigSerializer,
+    JobWorkOrderValidationSerializer,
+    JobWorkScheduleCalculationSerializer,
 )
 from apps.process.services import (
     ProcessStageService,
     ProcessProgramService,
+    JobWorkService,
 )
 
 
@@ -150,3 +157,163 @@ class ProcessProgramViewSet(BaseProcessViewSet):
             company_id=self.get_company_id(),
         )
         return Response({"success": True, "data": data}, status=status.HTTP_200_OK)
+
+
+class JobWorkViewSet(BaseProcessViewSet):
+    """
+    Job Work Operation Master API.
+    Provides CRUD, order validation against MOQ / capacity thresholds,
+    milestone lead-time delivery schedule calculation, and seeding.
+    """
+    module_name = ModulePermissions.PROCESS_STAGE
+    serializer_class = JobWorkSerializer
+    filterset_fields = ["job_work_category", "material_type", "is_active", "process_stage_id"]
+    search_fields = ["job_work_code", "job_work_name", "description"]
+    ordering_fields = ["job_work_code", "job_work_name", "total_estimated_lead_time", "standard_rate"]
+
+    def get_queryset(self):
+        return JobWorkMaster.objects.filter(
+            company_id=self.get_company_id(),
+            record_status="A"
+        ).order_by("job_work_code")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job_work = JobWorkService.create_job_work(
+            data=serializer.validated_data,
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {"success": True, "data": JobWorkSerializer(job_work).data},
+            status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, partial=kwargs.get("partial", False))
+        serializer.is_valid(raise_exception=True)
+        job_work = JobWorkService.update_job_work(
+            job_work_id=int(kwargs.get("pk")),
+            data=serializer.validated_data,
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {"success": True, "data": JobWorkSerializer(job_work).data},
+            status=status.HTTP_200_OK
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        JobWorkService.delete_job_work(
+            job_work_id=int(kwargs.get("pk")),
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {"success": True, "message": f"Job Work #{kwargs.get('pk')} deleted successfully."},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=["post"], url_path="validate-order")
+    def validate_order(self, request):
+        serializer = JobWorkOrderValidationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = JobWorkService.validate_job_work_order(
+            company_id=self.get_company_id(),
+            job_work_id=serializer.validated_data["job_work_id"],
+            quantity=serializer.validated_data["quantity"],
+            party_id=serializer.validated_data.get("party_id"),
+            uom_id=serializer.validated_data.get("uom_id"),
+        )
+        return Response({"success": True, "data": result}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="calculate-schedule")
+    def calculate_schedule(self, request):
+        serializer = JobWorkScheduleCalculationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = JobWorkService.calculate_schedule(
+            company_id=self.get_company_id(),
+            job_work_id=serializer.validated_data["job_work_id"],
+            order_date=serializer.validated_data["order_date"],
+            quantity=serializer.validated_data.get("quantity"),
+            party_id=serializer.validated_data.get("party_id"),
+            is_fast_track=serializer.validated_data.get("is_fast_track", False),
+        )
+        return Response({"success": True, "data": result}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="seed-defaults")
+    def seed_defaults(self, request):
+        masters = JobWorkService.seed_default_job_works(
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {
+                "success": True,
+                "message": f"Successfully seeded {len(masters)} default job work operations and vendor terms.",
+                "data": JobWorkSerializer(masters, many=True).data
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class JobWorkPartyConfigViewSet(BaseProcessViewSet):
+    """
+    Job Worker Specific Terms and Capacity Configuration API.
+    """
+    module_name = ModulePermissions.PROCESS_STAGE
+    serializer_class = JobWorkPartyConfigSerializer
+    filterset_fields = ["job_work_id", "party_id", "is_active"]
+    search_fields = ["remarks"]
+    ordering_fields = ["effective_from", "agreed_rate", "total_estimated_lead_time"]
+
+    def get_queryset(self):
+        return JobWorkPartyConfiguration.objects.filter(
+            company_id=self.get_company_id(),
+            record_status="A"
+        ).order_by("-effective_from", "-id")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        config = JobWorkService.create_party_config(
+            data=serializer.validated_data,
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {"success": True, "data": JobWorkPartyConfigSerializer(config).data},
+            status=status.HTTP_201_CREATED
+        )
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, partial=kwargs.get("partial", False))
+        serializer.is_valid(raise_exception=True)
+        config = JobWorkService.update_party_config(
+            config_id=int(kwargs.get("pk")),
+            data=serializer.validated_data,
+            company_id=self.get_company_id(),
+            user_id=request.user.id
+        )
+        return Response(
+            {"success": True, "data": JobWorkPartyConfigSerializer(config).data},
+            status=status.HTTP_200_OK
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        config = JobWorkPartyConfiguration.objects.filter(
+            id=int(kwargs.get("pk")),
+            company_id=self.get_company_id(),
+            record_status="A"
+        ).first()
+        if not config:
+            return Response(
+                {"success": False, "error": {"code": "NOT_FOUND", "message": "Configuration not found"}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        config.soft_delete(request.user.id)
+        return Response(
+            {"success": True, "message": f"Job Work Party Configuration #{kwargs.get('pk')} deleted successfully."},
+            status=status.HTTP_200_OK
+        )

@@ -23,6 +23,8 @@ class PriceListItemSerializer(serializers.ModelSerializer):
             "base_rate",
             "discount_percent",
             "net_rate",
+            "procurement_days",
+            "moq",
             "lead_time_days",
             "remarks",
             "record_status",
@@ -43,6 +45,8 @@ class PriceListItemCreateSerializer(serializers.Serializer):
     max_quantity = serializers.DecimalField(max_digits=18, decimal_places=3, required=False, allow_null=True)
     base_rate = serializers.DecimalField(max_digits=18, decimal_places=4)
     discount_percent = serializers.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    procurement_days = serializers.IntegerField(default=0, min_value=0)
+    moq = serializers.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), min_value=Decimal("0.000"))
     lead_time_days = serializers.IntegerField(default=0)
     remarks = serializers.CharField(max_length=255, required=False, allow_blank=True, allow_null=True)
 
@@ -81,6 +85,10 @@ class PriceListJobRuleSerializer(serializers.ModelSerializer):
             "allowed_loss_percent",
             "lycra_surcharge",
             "special_finish_surcharge",
+            "small_lot_surcharge",
+            "procurement_days",
+            "process_days",
+            "moq",
             "min_quantity",
             "max_quantity",
             "record_status",
@@ -106,6 +114,10 @@ class PriceListJobRuleCreateSerializer(serializers.Serializer):
     allowed_loss_percent = serializers.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
     lycra_surcharge = serializers.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"))
     special_finish_surcharge = serializers.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"))
+    small_lot_surcharge = serializers.DecimalField(max_digits=18, decimal_places=4, default=Decimal("0.0000"))
+    procurement_days = serializers.IntegerField(default=0, min_value=0)
+    process_days = serializers.IntegerField(default=0, min_value=0)
+    moq = serializers.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), min_value=Decimal("0.000"))
     min_quantity = serializers.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"))
     max_quantity = serializers.DecimalField(max_digits=18, decimal_places=3, required=False, allow_null=True)
 

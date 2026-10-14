@@ -1,10 +1,14 @@
+from decimal import Decimal
 from rest_framework import serializers
 from apps.process.models import (
     parent_process_stage_table,
     parent_process_program_table,
     child_process_program_input_table,
     child_process_program_recipe_table,
+    JobWorkMaster,
+    JobWorkPartyConfiguration,
 )
+from apps.masters.models import UnitOfMeasurement, PartyMaster
 
 
 class ChildProcessProgramInputSerializer(serializers.ModelSerializer):
@@ -136,3 +140,167 @@ class ParentProcessProgramSerializer(serializers.ModelSerializer):
             "created_on",
             "updated_on",
         ]
+
+
+class JobWorkSerializer(serializers.ModelSerializer):
+    rate_valid_from = serializers.DateField(
+        format="%d/%m/%Y", input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"], required=False, allow_null=True
+    )
+    rate_valid_to = serializers.DateField(
+        format="%d/%m/%Y", input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"], required=False, allow_null=True
+    )
+    process_stage_name = serializers.SerializerMethodField()
+    process_stage_code = serializers.SerializerMethodField()
+    uom_code = serializers.SerializerMethodField()
+    job_work_category_display = serializers.CharField(source="get_job_work_category_display", read_only=True)
+    material_type_display = serializers.CharField(source="get_material_type_display", read_only=True)
+
+    class Meta:
+        model = JobWorkMaster
+        fields = [
+            "id",
+            "company_id",
+            "job_work_code",
+            "job_work_name",
+            "process_stage_id",
+            "process_stage_name",
+            "process_stage_code",
+            "job_work_category",
+            "job_work_category_display",
+            "material_type",
+            "material_type_display",
+            "description",
+            "uom_id",
+            "uom_code",
+            "min_order_qty",
+            "max_order_qty",
+            "standard_batch_qty",
+            "procurement_days",
+            "processing_days",
+            "quality_inspection_days",
+            "transportation_days",
+            "total_estimated_lead_time",
+            "standard_delivery_days",
+            "standard_rate",
+            "rate_valid_from",
+            "rate_valid_to",
+            "is_active",
+            "remarks",
+            "created_by",
+            "created_at",
+            "updated_by",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "total_estimated_lead_time",
+            "created_by",
+            "created_at",
+            "updated_by",
+            "updated_at",
+        ]
+
+    def get_process_stage_name(self, obj):
+        stage = parent_process_stage_table.objects.filter(id=obj.process_stage_id).first()
+        return stage.name if stage else None
+
+    def get_process_stage_code(self, obj):
+        stage = parent_process_stage_table.objects.filter(id=obj.process_stage_id).first()
+        return stage.code if stage else None
+
+    def get_uom_code(self, obj):
+        uom = UnitOfMeasurement.objects.filter(id=obj.uom_id).first()
+        return uom.code if uom else None
+
+
+class JobWorkPartyConfigSerializer(serializers.ModelSerializer):
+    effective_from = serializers.DateField(
+        format="%d/%m/%Y", input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"]
+    )
+    effective_to = serializers.DateField(
+        format="%d/%m/%Y", input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"]
+    )
+    job_work_code = serializers.SerializerMethodField()
+    job_work_name = serializers.SerializerMethodField()
+    party_name = serializers.SerializerMethodField()
+    party_code = serializers.SerializerMethodField()
+    uom_code = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobWorkPartyConfiguration
+        fields = [
+            "id",
+            "company_id",
+            "job_work_id",
+            "job_work_code",
+            "job_work_name",
+            "party_id",
+            "party_name",
+            "party_code",
+            "uom_id",
+            "uom_code",
+            "min_order_qty",
+            "max_order_qty",
+            "daily_capacity_qty",
+            "procurement_days",
+            "processing_days",
+            "quality_inspection_days",
+            "transportation_days",
+            "total_estimated_lead_time",
+            "agreed_rate",
+            "small_lot_surcharge",
+            "allowed_loss_percent",
+            "effective_from",
+            "effective_to",
+            "is_active",
+            "remarks",
+            "created_by",
+            "created_at",
+            "updated_by",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "total_estimated_lead_time",
+            "created_by",
+            "created_at",
+            "updated_by",
+            "updated_at",
+        ]
+
+    def get_job_work_code(self, obj):
+        jw = JobWorkMaster.objects.filter(id=obj.job_work_id).first()
+        return jw.job_work_code if jw else None
+
+    def get_job_work_name(self, obj):
+        jw = JobWorkMaster.objects.filter(id=obj.job_work_id).first()
+        return jw.job_work_name if jw else None
+
+    def get_party_name(self, obj):
+        p = PartyMaster.objects.filter(id=obj.party_id).first()
+        return p.name if p else None
+
+    def get_party_code(self, obj):
+        p = PartyMaster.objects.filter(id=obj.party_id).first()
+        return p.code if p else None
+
+    def get_uom_code(self, obj):
+        uom = UnitOfMeasurement.objects.filter(id=obj.uom_id).first()
+        return uom.code if uom else None
+
+
+class JobWorkOrderValidationSerializer(serializers.Serializer):
+    job_work_id = serializers.IntegerField(required=True)
+    quantity = serializers.DecimalField(max_digits=18, decimal_places=3, required=True)
+    party_id = serializers.IntegerField(required=False, allow_null=True)
+    uom_id = serializers.IntegerField(required=False, allow_null=True)
+
+
+class JobWorkScheduleCalculationSerializer(serializers.Serializer):
+    job_work_id = serializers.IntegerField(required=True)
+    order_date = serializers.DateField(
+        format="%d/%m/%Y", input_formats=["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"], required=True
+    )
+    quantity = serializers.DecimalField(max_digits=18, decimal_places=3, required=False, allow_null=True)
+    party_id = serializers.IntegerField(required=False, allow_null=True)
+    is_fast_track = serializers.BooleanField(default=False)
