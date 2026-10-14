@@ -134,4 +134,17 @@ Pagination: Standard page/page_size (`meta: { page: 1, page_size: 20, total_coun
 | `DELETE` | `/api/v1/process/programs/{id}/` | `process_program` | Cancel Process Program (if production has not commenced) |
 | `GET` | `/api/v1/process/programs/{id}/summary/` | `process_program` | Live reconciliation (Planned Input vs Expected Output vs Received Output) |
 
+### 8. Commercial Pricing & Job Work Valuation Engine
+| Method | Path | Privilege Code | Description |
+|---|---|---|---|
+| `GET, POST` | `/api/v1/pricing/lists/` | `pricing_manage` | Create / List Price Lists (Purchase, Sales, Job Work, Party, General) |
+| `GET, PUT` | `/api/v1/pricing/lists/{id}/` | `pricing_manage` | Retrieve / Update Price List header and validity dates |
+| `DELETE` | `/api/v1/pricing/lists/{id}/` | `pricing_manage` | Soft delete Price List (blocked if active documents bound) |
+| `GET, POST` | `/api/v1/pricing/lists/{id}/items/` | `pricing_manage` | Configure itemized rates, volume slabs & discount % |
+| `GET, POST` | `/api/v1/pricing/lists/{id}/job-rules/` | `pricing_manage` | Configure Job Work conversion rules (Knitting, Dyeing, Stitching) |
+| `POST` | `/api/v1/pricing/resolve/` | `IsAuthenticated` | Unified Rate Engine Lookup (resolves exact rate for PO/Sales/Job Card) |
+| `POST` | `/api/v1/pricing/resolve-batch/` | `IsAuthenticated` | Batch lookup resolving up to 50 document lines in single query |
+| `GET` | `/api/v1/pricing/audit/` | `pricing_view` | Audit log of manual rate overrides and supervisor authorizations |
+
+
 

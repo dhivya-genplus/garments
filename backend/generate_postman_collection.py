@@ -23,7 +23,8 @@ collection = {
         {"key": "customer_party_id", "value": "5", "type": "string"},
         {"key": "voucher_id", "value": "1", "type": "string"},
         {"key": "process_stage_id", "value": "1", "type": "string"},
-        {"key": "process_program_id", "value": "1", "type": "string"}
+        {"key": "process_program_id", "value": "1", "type": "string"},
+        {"key": "price_list_id", "value": "2", "type": "string"}
     ],
     "auth": {
         "type": "bearer",
@@ -1483,6 +1484,396 @@ collection = {
                             "raw": "{{base_url}}/api/v1/process/programs/{{process_program_id}}/",
                             "host": ["{{base_url}}"],
                             "path": ["api", "v1", "process", "programs", "{{process_program_id}}", ""]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Commercial Pricing & Price Lists",
+            "item": [
+                {
+                    "name": "8.1 List All Price Lists",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "X-Company-ID", "value": "{{company_id}}"}],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.2 Seed Default Price Lists",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/seed-defaults/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "seed-defaults", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.3 Get Price List Details (Header & Slabs)",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "X-Company-ID", "value": "{{company_id}}"}],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", "{{price_list_id}}", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.4 Create Custom Purchase Price List",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "price_list_code": "PL-PUR-CUSTOM-2026",
+                                "price_list_name": "Custom Yarn Procurement Rates",
+                                "list_type": "PURCHASE",
+                                "scope": "GENERAL",
+                                "valid_from": "2026-10-01",
+                                "valid_to": "2027-03-31",
+                                "is_default": False,
+                                "items": [
+                                    {
+                                        "item_type": "YARN",
+                                        "yarn_count_id": 1,
+                                        "yarn_type": "GREY",
+                                        "min_quantity": "0.000",
+                                        "max_quantity": "2000.000",
+                                        "base_rate": "278.0000",
+                                        "discount_percent": "2.00"
+                                    }
+                                ]
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.5 Add Volume Slab Item Line to Price List",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "item_type": "YARN",
+                                "yarn_count_id": 1,
+                                "yarn_type": "GREY",
+                                "min_quantity": "2001.000",
+                                "max_quantity": "10000.000",
+                                "base_rate": "270.0000",
+                                "discount_percent": "3.50",
+                                "remarks": "Volume order tier 2"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/items/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", "{{price_list_id}}", "items", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.6 Rate Resolution - Mill Party Contract Priority",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "PURCHASE",
+                                "party_id": 1,
+                                "doc_date": "2026-10-15",
+                                "yarn_count_id": 1,
+                                "yarn_type": "GREY",
+                                "quantity": "1500.000"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.7 Rate Resolution - General Base List Fallback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "PURCHASE",
+                                "party_id": 2,
+                                "doc_date": "2026-10-15",
+                                "yarn_count_id": 1,
+                                "yarn_type": "GREY",
+                                "quantity": "800.000"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.8 Rate Resolution - Volume Slab Matching (>5000 Kg)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "PURCHASE",
+                                "party_id": 2,
+                                "doc_date": "2026-10-15",
+                                "yarn_count_id": 1,
+                                "yarn_type": "GREY",
+                                "quantity": "6500.000"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.9 Rate Resolution - Commercial Sales Customer Contract",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "SALES",
+                                "party_id": 5,
+                                "doc_date": "2026-10-15",
+                                "yarn_count_id": 1,
+                                "yarn_type": "GREY",
+                                "quantity": "2500.000"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10 List All Pricing Audit Logs (Company-wide)",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "X-Company-ID", "value": "{{company_id}}"}],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "audit", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10a Record Rate Override Audit Log",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "document_type": "YARN_PO",
+                                "document_id": 2,
+                                "line_item_id": 1,
+                                "resolved_price_list_id": 1,
+                                "resolved_rule_id": 1,
+                                "system_rate": "275.0000",
+                                "actual_rate": "268.0000",
+                                "override_reason": "Director approved special spot discount",
+                                "approved_by": 1
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "audit", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10b Pricing Audit Log by Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "X-Company-ID", "value": "{{company_id}}"}],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/?document_type=YARN_PO&document_id=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "audit", ""],
+                            "query": [
+                                {"key": "document_type", "value": "YARN_PO"},
+                                {"key": "document_id", "value": "1"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.11 List Job Work Rules for Price List",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "X-Company-ID", "value": "{{company_id}}"}],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/job-rules/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", "{{price_list_id}}", "job-rules", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.12 Add Job Work Conversion Rule",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "process_stage_id": 1,
+                                "fabric_type_id": 1,
+                                "machine_gauge": "24GG",
+                                "dia_range": "24-34",
+                                "job_rate": "18.5000",
+                                "allowed_loss_percent": "2.50",
+                                "lycra_surcharge": "4.0000",
+                                "min_quantity": "0.000",
+                                "max_quantity": "5000.000"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/job-rules/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "lists", "{{price_list_id}}", "job-rules", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.13 Rate Resolution - Job Work Knitting with Lycra Plating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "JOB_WORK",
+                                "process_stage_id": 1,
+                                "fabric_type_id": 1,
+                                "machine_gauge": "24GG",
+                                "is_lycra_plated": True,
+                                "quantity": "1500.000",
+                                "doc_date": "2026-10-15"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.14 Rate Resolution - Job Work Dyeing by Shade Depth (Dark + Bio-wash)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "JOB_WORK",
+                                "process_stage_id": 2,
+                                "shade_category": "DARK",
+                                "special_finish_requested": True,
+                                "quantity": "2000.000",
+                                "doc_date": "2026-10-15"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
+                        }
+                    }
+                },
+                {
+                    "name": "8.15 Rate Resolution - Job Work Party Knitter Contract Priority",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "X-Company-ID", "value": "{{company_id}}"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": json.dumps({
+                                "context_type": "JOB_WORK",
+                                "party_id": 3,
+                                "process_stage_id": 1,
+                                "fabric_type_id": 1,
+                                "doc_date": "2026-10-15"
+                            }, indent=4)
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "pricing", "resolve", ""]
                         }
                     }
                 }

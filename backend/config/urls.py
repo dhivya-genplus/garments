@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/v1/knitting/', include('apps.knitting.urls')),
     path('api/v1/process/', include('apps.process.urls')),
     path('api/v1/ledger/', include('apps.ledger.urls')),
+    path('api/v1/pricing/', include('apps.pricing.urls')),
 ]

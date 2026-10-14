@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.knitting',
     'apps.process',
     'apps.ledger',
+    'apps.pricing',
 ]
 
 MIDDLEWARE = [

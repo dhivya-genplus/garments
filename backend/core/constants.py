@@ -56,6 +56,10 @@ class ModulePermissions:
     LEDGER_STOCK = "ledger_stock"
     LEDGER_CURRENCY = "ledger_currency"
 
+    # Commercial Pricing & Price Lists
+    PRICING_MANAGE = "pricing_manage"
+    PRICING_VIEW = "pricing_view"
+
     # All Modules List
     ALL_MODULES = [
         (COMPANY_MANAGEMENT, "Company Management"),
@@ -87,6 +91,8 @@ class ModulePermissions:
         (PROCESS_PROGRAM, "Production Process Program (Job Orders)"),
         (LEDGER_STOCK, "Stage Stock Ledger (Physical In/Out)"),
         (LEDGER_CURRENCY, "Currency General Ledger (Double-Entry Dr/Cr)"),
+        (PRICING_MANAGE, "Commercial Pricing & Price Lists Management"),
+        (PRICING_VIEW, "Price Lists View & Rate Audit"),
     ]
 
 
@@ -284,4 +290,43 @@ class GreyFabricOutwardTypes:
         (DYEING, "Grey Fabric Outward for Dyeing"),
         (RETURN, "Grey Fabric Return (to Knitter/Trader)"),
     ]
+
+
+class PriceListType:
+    PURCHASE = "PURCHASE"
+    SALES = "SALES"
+    JOB_WORK = "JOB_WORK"
+
+    CHOICES = [
+        (PURCHASE, "Purchase Price List"),
+        (SALES, "Sales Price List"),
+        (JOB_WORK, "Job Work Price List"),
+    ]
+
+
+class PriceListScope:
+    GENERAL = "GENERAL"
+    PARTY_SPECIFIC = "PARTY_SPECIFIC"
+
+    CHOICES = [
+        (GENERAL, "General Base Price List"),
+        (PARTY_SPECIFIC, "Party-Specific Price List"),
+    ]
+
+
+class PriceListItemType:
+    YARN = "YARN"
+    FABRIC = "FABRIC"
+    GARMENT = "GARMENT"
+    TRIM = "TRIM"
+    PROCESS = "PROCESS"
+
+    CHOICES = [
+        (YARN, "Yarn"),
+        (FABRIC, "Fabric"),
+        (GARMENT, "Garment / Style"),
+        (TRIM, "Trims / Accessories"),
+        (PROCESS, "Process Service"),
+    ]
+
 

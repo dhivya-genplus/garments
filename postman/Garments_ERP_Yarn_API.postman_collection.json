@@ -80,6 +80,11 @@
             "key": "process_program_id",
             "value": "1",
             "type": "string"
+        },
+        {
+            "key": "price_list_id",
+            "value": "2",
+            "type": "string"
         }
     ],
     "auth": {
@@ -2324,6 +2329,545 @@
                                 "process",
                                 "programs",
                                 "{{process_program_id}}",
+                                ""
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Commercial Pricing & Price Lists",
+            "item": [
+                {
+                    "name": "8.1 List All Price Lists",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.2 Seed Default Price Lists",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/seed-defaults/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "seed-defaults",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.3 Get Price List Details (Header & Slabs)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                "{{price_list_id}}",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.4 Create Custom Purchase Price List",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"price_list_code\": \"PL-PUR-CUSTOM-2026\",\n    \"price_list_name\": \"Custom Yarn Procurement Rates\",\n    \"list_type\": \"PURCHASE\",\n    \"scope\": \"GENERAL\",\n    \"valid_from\": \"2026-10-01\",\n    \"valid_to\": \"2027-03-31\",\n    \"is_default\": false,\n    \"items\": [\n        {\n            \"item_type\": \"YARN\",\n            \"yarn_count_id\": 1,\n            \"yarn_type\": \"GREY\",\n            \"min_quantity\": \"0.000\",\n            \"max_quantity\": \"2000.000\",\n            \"base_rate\": \"278.0000\",\n            \"discount_percent\": \"2.00\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.5 Add Volume Slab Item Line to Price List",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"item_type\": \"YARN\",\n    \"yarn_count_id\": 1,\n    \"yarn_type\": \"GREY\",\n    \"min_quantity\": \"2001.000\",\n    \"max_quantity\": \"10000.000\",\n    \"base_rate\": \"270.0000\",\n    \"discount_percent\": \"3.50\",\n    \"remarks\": \"Volume order tier 2\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/items/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                "{{price_list_id}}",
+                                "items",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.6 Rate Resolution - Mill Party Contract Priority",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"PURCHASE\",\n    \"party_id\": 1,\n    \"doc_date\": \"2026-10-15\",\n    \"yarn_count_id\": 1,\n    \"yarn_type\": \"GREY\",\n    \"quantity\": \"1500.000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.7 Rate Resolution - General Base List Fallback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"PURCHASE\",\n    \"party_id\": 2,\n    \"doc_date\": \"2026-10-15\",\n    \"yarn_count_id\": 1,\n    \"yarn_type\": \"GREY\",\n    \"quantity\": \"800.000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.8 Rate Resolution - Volume Slab Matching (>5000 Kg)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"PURCHASE\",\n    \"party_id\": 2,\n    \"doc_date\": \"2026-10-15\",\n    \"yarn_count_id\": 1,\n    \"yarn_type\": \"GREY\",\n    \"quantity\": \"6500.000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.9 Rate Resolution - Commercial Sales Customer Contract",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"SALES\",\n    \"party_id\": 5,\n    \"doc_date\": \"2026-10-15\",\n    \"yarn_count_id\": 1,\n    \"yarn_type\": \"GREY\",\n    \"quantity\": \"2500.000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10 List All Pricing Audit Logs (Company-wide)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "audit",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10a Record Rate Override Audit Log",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"document_type\": \"YARN_PO\",\n    \"document_id\": 2,\n    \"line_item_id\": 1,\n    \"resolved_price_list_id\": 1,\n    \"resolved_rule_id\": 1,\n    \"system_rate\": \"275.0000\",\n    \"actual_rate\": \"268.0000\",\n    \"override_reason\": \"Director approved special spot discount\",\n    \"approved_by\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "audit",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.10b Pricing Audit Log by Document",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/audit/?document_type=YARN_PO&document_id=1",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "audit",
+                                ""
+                            ],
+                            "query": [
+                                {
+                                    "key": "document_type",
+                                    "value": "YARN_PO"
+                                },
+                                {
+                                    "key": "document_id",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.11 List Job Work Rules for Price List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/job-rules/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                "{{price_list_id}}",
+                                "job-rules",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.12 Add Job Work Conversion Rule",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"process_stage_id\": 1,\n    \"fabric_type_id\": 1,\n    \"machine_gauge\": \"24GG\",\n    \"dia_range\": \"24-34\",\n    \"job_rate\": \"18.5000\",\n    \"allowed_loss_percent\": \"2.50\",\n    \"lycra_surcharge\": \"4.0000\",\n    \"min_quantity\": \"0.000\",\n    \"max_quantity\": \"5000.000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/lists/{{price_list_id}}/job-rules/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "lists",
+                                "{{price_list_id}}",
+                                "job-rules",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.13 Rate Resolution - Job Work Knitting with Lycra Plating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"JOB_WORK\",\n    \"process_stage_id\": 1,\n    \"fabric_type_id\": 1,\n    \"machine_gauge\": \"24GG\",\n    \"is_lycra_plated\": true,\n    \"quantity\": \"1500.000\",\n    \"doc_date\": \"2026-10-15\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.14 Rate Resolution - Job Work Dyeing by Shade Depth (Dark + Bio-wash)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"JOB_WORK\",\n    \"process_stage_id\": 2,\n    \"shade_category\": \"DARK\",\n    \"special_finish_requested\": true,\n    \"quantity\": \"2000.000\",\n    \"doc_date\": \"2026-10-15\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
+                                ""
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "8.15 Rate Resolution - Job Work Party Knitter Contract Priority",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Company-ID",
+                                "value": "{{company_id}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"context_type\": \"JOB_WORK\",\n    \"party_id\": 3,\n    \"process_stage_id\": 1,\n    \"fabric_type_id\": 1,\n    \"doc_date\": \"2026-10-15\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/pricing/resolve/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "pricing",
+                                "resolve",
                                 ""
                             ]
                         }

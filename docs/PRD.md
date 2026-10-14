@@ -45,21 +45,29 @@
 - **US-4.4.1 (Sales Tax Invoice)**: Given customer orders, the sales team issues commercial invoices calculating CGST, SGST, or IGST, deducting stock from the designated godown.
 - **US-4.4.2 (Customer Sales Return)**: When goods are returned by a client, the return is accepted, re-crediting physical bags and weight back into active godown stock.
 
+### 4.5 Commercial Pricing, Price Lists & Job Work Valuation
+- **US-4.5.1 (Multi-Type Price Lists)**: The system manages Purchase, Sales, Job Work, Party-Specific, and General Base Price Lists with validity date windows, currency, and quantity slabs. Detailed specification documented in [PRICE_LISTS_SPECIFICATION.md](file:///d:/Codebase/Garments/docs/PRICE_LISTS_SPECIFICATION.md).
+- **US-4.5.2 (Textile Job Work Pricing Matrix)**: Subcontracted operations (Knitting, Dyeing, Printing, Compacting, Cutting, Stitching) maintain rate matrices based on fabric structure, gauge, count, Lycra plating, shade depth, and garment style complexity.
+- **US-4.5.3 (Deterministic Rate Determination Engine)**: Automatic 7-step priority resolution (Party Spec + Slab -> Party General -> General List + Slab -> Master Fallback -> Manual Override with audit trail `ta_pricing_audit`).
+
 ## 5. Reports
 - PO Status and Balance Ledger.
 - Godown Stock Register (Gross, Tare, Net Weight, and Bag counts).
 - Inward GRN vs Outward DC Reconciliation.
 - Sales and GST Tax Register.
+- Price List Comparison and Rate Audit Register.
 
 ## 6. Integrations
 - REST API integration for web application, mobile warehouse terminals, and external accounting systems.
 
 ## 7. Non-Functional Requirements
-- **Response Time**: < 200ms for read endpoints; < 500ms for multi-item atomic transactions.
+- **Response Time**: < 200ms for read endpoints; < 500ms for multi-item atomic transactions; < 20ms for rate resolution engine.
 - **Concurrency**: Safe multi-user stock deductions via `select_for_update()`.
-- **Auditability**: Complete audit logs (`created_by`, `updated_by`, `deleted_by`) on all transactional and master records.
+- **Auditability**: Complete audit logs (`created_by`, `updated_by`, `deleted_by`, `ta_pricing_audit`) on all transactional, pricing, and master records.
 
 ## 8. Version History
 | Version | Date | Change | Approved by |
 |---|---|---|---|
 | v1.0 | 03/10/2026 | Initial PRD baseline and module definitions | Product Owner |
+| v1.1 | 05/10/2026 | Production Process Engine & Dual Stock/Ledger | Product Owner |
+| v1.2 | 14/10/2026 | Price Lists & Job Work Pricing Engine Specification | Product Owner |

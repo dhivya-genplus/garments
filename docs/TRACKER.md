@@ -18,10 +18,13 @@ Status values: Not started • Ready • In progress • In review • Testing �
 | 6 | Knitting & Grey Fabric Production | Deployed | 05/10/2026 | Yes |
 | 7 | Production Process Engine (Knitting, Dyeing, Cutting) | Deployed | 05/10/2026 | Yes |
 | 8 | Dual Stock & Currency Ledger Engine | Deployed | 05/10/2026 | Yes |
+| 9 | Commercial Pricing & Job Work Valuation Engine | Ready | 14/10/2026 | Pending |
 
 ## Tickets
 | Ticket | Module | Title | PRD ref | Status | Owner | Agent | Branch / PR | E2E | Reviewer | Release | AI usage | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
+| T9-001 | 9 | Unified Price Lists (Purchase, Sales, Job Work, Party & General) | §4.5 | Merged | Pricing Team | Builder-API | main | Yes | Lead | v1.2.0 | High | tm_price_list, tm_price_list_item, tm_price_list_job_rule, ta_pricing_audit, seed_defaults |
+| T9-002 | 9 | Job Work Subcontract Conversion Rate Engine & Multi-Tier Resolution API | §4.5 | In review | Pricing Team | Builder-API | feature/T9-002-engine | Yes | Lead | v1.2.0 | High | /api/v1/pricing/resolve/ (Yarn & Job Work), job-rules CRUD, 13 automated tests passed |
 | T0-001 | 0 | Workspace, base models, standard JSON envelope | §1 | Merged | Core Team | Architect | main | Yes | Lead | v1.0.0 | High | TimeStamped, SoftDelete, Uppercase |
 | T0-002 | 0 | Tenant & Financial Year Middleware | §3 | Merged | Core Team | Builder-API | main | Yes | Lead | v1.0.0 | High | TenantMiddleware, X-Company-ID |
 | T1-001 | 1 | Custom User, Role, Privilege, SimpleJWT Auth | §2 | Merged | Auth Team | Builder-API | main | Yes | Lead | v1.0.0 | High | 18 permission modules |
