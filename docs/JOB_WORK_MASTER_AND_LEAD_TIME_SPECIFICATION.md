@@ -53,11 +53,13 @@ flowchart TD
     end
 
     subgraph Dyeing_Stage [3. Dyeing & Processing Subcontract]
+
         GFStock --> GFOut[Grey Fabric Outward Challan]
         PP_Dye[Process Program: Dyeing tm_process_program] --> GFOut
         GFOut --> DyeHouse[External Dye House: Rainbow Dyeing]
         DyeHouse --> DFIn[Dyed Fabric Inward GRN]
         DFIn --> DFStock[(Dyed Fabric Stock tm_dyed_fabric_stock)]
+
     end
 
     subgraph Garmenting_Stage [4. Cutting, Printing & CMT Stitching]

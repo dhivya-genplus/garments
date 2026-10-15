@@ -6,6 +6,9 @@
 
 Status values: Not started • Ready • In progress • In review • Testing • Revision • Blocked • Merged • Deployed
 
+> [!NOTE]
+> **Frontend & UI Workflows Tracker**: See [UI_TRACKER.md](UI_TRACKER.md) (or download the full Excel workbook [TRACKER.xlsx](TRACKER.xlsx)) for page-by-page screen specifications, component readiness, visual mockups, and client-side implementation roadmaps.
+
 ## Modules
 | # | Module | Status | Gate passed on | UAT sign-off |
 |---|---|---|---|---|
