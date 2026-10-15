@@ -273,6 +273,7 @@ class YarnSalesReturnService(BaseService):
     Re-adds customer returned yarn into live stock atomically.
     """
 
+
     @staticmethod
     def generate_return_number(company_id: int) -> str:
         now = timezone.now()
