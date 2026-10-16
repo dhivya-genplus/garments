@@ -26,6 +26,7 @@ This screen enables the commercial desk and godown receiving team to accept yarn
 
 ---
 
+
 ## 2. Module Details, Screen ID, Route, Access Privileges, and API Endpoints
 
 ### 2.1 Core Metadata
