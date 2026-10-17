@@ -133,6 +133,25 @@ class Command(BaseCommand):
             employee.custom_role = op_role
             employee.set_password("123456")
             employee.save()
+            if not employee.employee:
+                from apps.authentication.models import Employee
+                emp_obj, _ = Employee.objects.get_or_create(
+                    company=company,
+                    employee_code=employee.employee_code or "EMP-001",
+                    defaults={
+                        "first_name": employee.first_name or "Company",
+                        "last_name": employee.last_name or "Employee",
+                        "email": employee.email,
+                        "phone": employee.phone or "+91 9876543001",
+                        "department": employee.department or "Yarn & Knitting Production",
+                        "designation": employee.designation or "Master Data Entry Operator",
+                        "status": "ACTIVE",
+                        "is_active": True,
+                        "created_by": company_admin,
+                    }
+                )
+                employee.employee = emp_obj
+                employee.save(update_fields=['employee'])
             self.stdout.write(self.style.SUCCESS(f"Updated Employee User: {employee_email} / 123456"))
 
         # 6. Masters Data

@@ -29,6 +29,7 @@ class ModulePermissions:
 
     # Purchase
     PURCHASE_YARN_PO = "purchase_yarn_po"
+    PURCHASE_YARN_PO_RETURN = "purchase_yarn_po_return"
 
     # Inventory
     INVENTORY_YARN_INWARD = "inventory_yarn_inward"
@@ -75,6 +76,7 @@ class ModulePermissions:
         (MASTERS_COLOR, "Color / Shade Master"),
         (MASTERS_WAREHOUSE, "Warehouse / Location Master"),
         (PURCHASE_YARN_PO, "Yarn Purchase Order"),
+        (PURCHASE_YARN_PO_RETURN, "Yarn Purchase Order Return (Debit Note)"),
         (INVENTORY_YARN_INWARD, "Yarn Inward (GRN)"),
         (INVENTORY_YARN_OUTWARD, "Yarn Outward (Knitting/Dyeing/Return)"),
         (INVENTORY_YARN_STOCK, "Yarn Stock Ledger"),
@@ -169,20 +171,140 @@ class YarnOutwardTypes:
 class PartyTypes:
     MILL = "MILL"
     TRADER = "TRADER"
+    BROKER = "BROKER"
+    SUPPLIER = "SUPPLIER"
+    CUSTOMER = "CUSTOMER"
     KNITTING_UNIT = "KNITTING_UNIT"
     DYEING_UNIT = "DYEING_UNIT"
-    CUSTOMER = "CUSTOMER"
-    SUPPLIER = "SUPPLIER"
     JOB_WORKER = "JOB_WORKER"
+    SUBCONTRACTOR = "SUBCONTRACTOR"
+    TRANSPORTER = "TRANSPORTER"
 
     CHOICES = [
         (MILL, "Yarn / Fabric Mill"),
         (TRADER, "Trader"),
+        (BROKER, "Broker / Agent"),
+        (SUPPLIER, "Supplier / Vendor"),
+        (CUSTOMER, "Customer / Buyer"),
         (KNITTING_UNIT, "Knitting Unit"),
         (DYEING_UNIT, "Dyeing / Processing Unit"),
-        (CUSTOMER, "Customer"),
-        (SUPPLIER, "Supplier / Vendor"),
         (JOB_WORKER, "Job Worker"),
+        (SUBCONTRACTOR, "Subcontractor"),
+        (TRANSPORTER, "Transporter"),
+    ]
+
+
+class PartyCategory:
+    MANUFACTURER = "MANUFACTURER"
+    TRADER = "TRADER"
+    BROKER = "BROKER"
+    WHOLESALER = "WHOLESALER"
+    RETAILER = "RETAILER"
+    JOB_WORKER = "JOB_WORKER"
+    OTHER = "OTHER"
+
+    CHOICES = [
+        (MANUFACTURER, "Manufacturer"),
+        (TRADER, "Trader"),
+        (BROKER, "Broker"),
+        (WHOLESALER, "Wholesaler"),
+        (RETAILER, "Retailer"),
+        (JOB_WORKER, "Job Worker"),
+        (OTHER, "Other"),
+    ]
+
+
+class AddressTypes:
+    REGISTERED = "REGISTERED"
+    BILLING = "BILLING"
+    DELIVERY = "DELIVERY"
+    BRANCH = "BRANCH"
+
+    CHOICES = [
+        (REGISTERED, "Registered Office"),
+        (BILLING, "Billing Address"),
+        (DELIVERY, "Delivery / Shipping Address"),
+        (BRANCH, "Branch / Unit Location"),
+    ]
+
+
+class GstRegistrationType:
+    REGULAR = "REGULAR"
+    COMPOSITION = "COMPOSITION"
+    UNREGISTERED = "UNREGISTERED"
+    CONSUMER = "CONSUMER"
+    OVERSEAS = "OVERSEAS"
+    SPECIAL_ECONOMIC_ZONE = "SEZ"
+
+    CHOICES = [
+        (REGULAR, "Regular Registered Business"),
+        (COMPOSITION, "Composition Scheme"),
+        (UNREGISTERED, "Unregistered Entity"),
+        (CONSUMER, "Consumer"),
+        (OVERSEAS, "Overseas / Import-Export"),
+        (SPECIAL_ECONOMIC_ZONE, "Special Economic Zone (SEZ)"),
+    ]
+
+
+class GstTreatment:
+    TAXABLE = "TAXABLE"
+    EXEMPT = "EXEMPT"
+    NIL_RATED = "NIL_RATED"
+    NON_GST = "NON_GST"
+
+    CHOICES = [
+        (TAXABLE, "Taxable Goods / Services"),
+        (EXEMPT, "Exempt from GST"),
+        (NIL_RATED, "Nil Rated (0%)"),
+        (NON_GST, "Non-GST Supply"),
+    ]
+
+
+class PaymentModes:
+    NEFT_RTGS = "NEFT_RTGS"
+    CHEQUE = "CHEQUE"
+    LC = "LC"
+    UPI = "UPI"
+    CASH = "CASH"
+
+    CHOICES = [
+        (NEFT_RTGS, "NEFT / RTGS / Net Banking"),
+        (CHEQUE, "Cheque / Demand Draft"),
+        (LC, "Letter of Credit (LC)"),
+        (UPI, "UPI / Digital Payment"),
+        (CASH, "Cash"),
+    ]
+
+
+class VerificationStatus:
+    UNVERIFIED = "UNVERIFIED"
+    VERIFIED = "VERIFIED"
+    FAILED = "FAILED"
+
+    CHOICES = [
+        (UNVERIFIED, "Unverified / Pending"),
+        (VERIFIED, "Verified"),
+        (FAILED, "Verification Failed / Rejected"),
+    ]
+
+
+class PartyDocumentTypes:
+    GST_CERT = "GST_CERT"
+    PAN_CARD = "PAN_CARD"
+    MSME_CERT = "MSME_CERT"
+    BANK_PROOF = "BANK_PROOF"
+    QUALITY_CERT = "QUALITY_CERT"
+    RATE_CONTRACT = "RATE_CONTRACT"
+    OTHER = "OTHER"
+
+    CHOICES = [
+        (GST_CERT, "GST Registration Certificate"),
+        (PAN_CARD, "PAN Card Copy"),
+        (MSME_CERT, "MSME / Udyam Certificate"),
+        (BANK_PROOF, "Cancelled Cheque / Bank Statement"),
+        (QUALITY_CERT, "Quality / Compliance Certificate"),
+        (RATE_CONTRACT, "Rate Contract / Agreement"),
+        (OTHER, "Other Supporting Document"),
     ]
 
 
@@ -328,5 +450,118 @@ class PriceListItemType:
         (TRIM, "Trims / Accessories"),
         (PROCESS, "Process Service"),
     ]
+
+
+class YarnDefectReasons:
+    COUNT_VARIATION = "COUNT_VARIATION"
+    LOW_CSP = "LOW_CSP"
+    HIGH_HAIRINESS = "HIGH_HAIRINESS"
+    COLOR_SHADE_DEFECT = "COLOR_SHADE_DEFECT"
+    DAMAGED_CONES = "DAMAGED_CONES"
+    EXCESS_MOISTURE = "EXCESS_MOISTURE"
+
+    CHOICES = [
+        (COUNT_VARIATION, "Count Variation (> ±2.5%)"),
+        (LOW_CSP, "Low CSP (Strength below standard)"),
+        (HIGH_HAIRINESS, "High Hairiness (H-value > 6.2)"),
+        (COLOR_SHADE_DEFECT, "Color / Shade Variation (Delta E > 0.8)"),
+        (DAMAGED_CONES, "Damaged / Crushed Cones / Transit Defect"),
+        (EXCESS_MOISTURE, "Excess Moisture Regain (> 8.5%)"),
+    ]
+
+
+YARN_KNITTING_PIPELINE_ROUTING = [
+    {
+        "yarn_category": YarnCategory.GREY,
+        "yarn_description": "Raw / Ecru Cotton, Blends",
+        "intended_end_fabric": "Solid-color T-shirts, tops, and basic apparel",
+        "knitting_process_setup": "Circular single jersey machines (plain knit)",
+        "inward_output_stage": FabricCategory.GREY,
+        "inward_output_description": "Grey Fabric (GREY_FABRIC) - Greige rolls / thans",
+        "next_production_pipeline": "Sent to dye house for scouring, bleaching, and batch/piece dyeing (soft-flow)",
+    },
+    {
+        "yarn_category": YarnCategory.GREY,
+        "yarn_description": "Raw / Ecru with Elastane attachment",
+        "intended_end_fabric": "Stretch T-shirts, leggings, activewear",
+        "knitting_process_setup": "Single jersey machines with elastane attachment (e.g., 20D/40D Lycra)",
+        "inward_output_stage": FabricCategory.GREY,
+        "inward_output_description": "Grey Fabric (GREY_FABRIC) - Greige Lycra single jersey",
+        "next_production_pipeline": "Sent for heat-setting (stenter), scouring, and piece dyeing",
+    },
+    {
+        "yarn_category": YarnCategory.GREY,
+        "yarn_description": "Raw / Ecru",
+        "intended_end_fabric": "Polo shirt bodies, tennis tees",
+        "knitting_process_setup": "Pique / honeycomb / Lacoste circular machines",
+        "inward_output_stage": FabricCategory.GREY,
+        "inward_output_description": "Grey Fabric (GREY_FABRIC) - Greige pique rolls",
+        "next_production_pipeline": "Batch dyeing, bio-polishing, compacting",
+    },
+    {
+        "yarn_category": YarnCategory.GREY,
+        "yarn_description": "Raw / Ecru Cotton / Blends",
+        "intended_end_fabric": "Winter hoodies, sweatshirts, joggers",
+        "knitting_process_setup": "2-thread or 3-thread fleece machines (face, tie, and loop yarn)",
+        "inward_output_stage": FabricCategory.GREY,
+        "inward_output_description": "Grey Fabric (GREY_FABRIC) - Greige fleece rolls",
+        "next_production_pipeline": "Scouring, dyeing, loop raising/brushing (fleece nap)",
+    },
+    {
+        "yarn_category": YarnCategory.GREY,
+        "yarn_description": "Raw / Ecru Combed Cotton",
+        "intended_end_fabric": "Premium tees, babywear, double-sided knitwear",
+        "knitting_process_setup": "Interlock circular knitting machines",
+        "inward_output_stage": FabricCategory.GREY,
+        "inward_output_description": "Grey Fabric (GREY_FABRIC) - Greige interlock rolls",
+        "next_production_pipeline": "Batch dyeing, softening, compacting",
+    },
+    {
+        "yarn_category": YarnCategory.DYED,
+        "yarn_description": "Package/Cone-Dyed Yarn",
+        "intended_end_fabric": "Horizontal striped T-shirts, rugby shirts",
+        "knitting_process_setup": "Circular machines with multiple feeders alternating colored yarn cones (feeder stripe)",
+        "inward_output_stage": FabricCategory.DYED,
+        "inward_output_description": "Yarn-Dyed Fabric (DYED_FABRIC) - Striped rolls ready without batch dyeing",
+        "next_production_pipeline": "Direct scouring, tentering/stenter finishing, and compacting (no piece dyeing required)",
+    },
+    {
+        "yarn_category": YarnCategory.DYED,
+        "yarn_description": "Package/Cone-Dyed Yarn",
+        "intended_end_fabric": "Branded polo bodies with custom chest bands",
+        "knitting_process_setup": "Auto-striper circular knitting machines with programmable finger selectors (engineered stripes)",
+        "inward_output_stage": FabricCategory.DYED,
+        "inward_output_description": "Yarn-Dyed Fabric (DYED_FABRIC) - Engineered stripe rolls",
+        "next_production_pipeline": "Slitting, finishing, stenter, compacting",
+    },
+    {
+        "yarn_category": YarnCategory.DYED,
+        "yarn_description": "Package/Cone-Dyed Yarn",
+        "intended_end_fabric": "Polo neck collars and sleeve cuffs with tipping lines",
+        "knitting_process_setup": "Flatbed knitting machines (e.g., Shima Seiki, Stoll)",
+        "inward_output_stage": "TRIM",
+        "inward_output_description": "Flat Knit Trims / Collars (TRIM / FABRIC) - Pieces or collar strips",
+        "next_production_pipeline": "Ironing, cutting, inspection, directly attached during garment stitching",
+    },
+    {
+        "yarn_category": YarnCategory.DYED,
+        "yarn_description": "Package/Cone-Dyed Yarn",
+        "intended_end_fabric": "Multi-color textured patterns, knit cardigans, sweaters",
+        "knitting_process_setup": "Electronic jacquard circular or flat knitting machines",
+        "inward_output_stage": FabricCategory.DYED,
+        "inward_output_description": "Jacquard Knit Fabric (DYED_FABRIC) - Patterned rolls / panels",
+        "next_production_pipeline": "Steam relaxing, washing/softening, compacting",
+    },
+    {
+        "yarn_category": YarnCategory.MELANGE,
+        "yarn_description": "Fibre-dyed blend (Heather)",
+        "intended_end_fabric": "Heather grey athletic T-shirts, joggers, gym wear",
+        "knitting_process_setup": "Circular single jersey, fleece, or French terry machines",
+        "inward_output_stage": FabricCategory.DYED,
+        "inward_output_description": "Melange Fabric (DYED_FABRIC) - Grey/color heather rolls",
+        "next_production_pipeline": "Scouring, softening, compacting (no piece-dye bath needed)",
+    },
+]
+
 
 

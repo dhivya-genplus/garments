@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
@@ -68,20 +69,28 @@ class UOMViewSet(BaseMasterViewSet):
 class PartyMasterViewSet(BaseMasterViewSet):
     required_module = ModulePermissions.MASTERS_PARTY
     serializer_class = PartyMasterSerializer
-    search_fields = ['code', 'name', 'contact_person', 'phone', 'email', 'gst_number', 'city']
-    filterset_fields = ['party_type', 'is_active', 'city', 'state']
-    ordering_fields = ['name', 'code', 'created_on']
+    search_fields = ['code', 'name', 'display_name', 'contact_person', 'phone', 'email', 'gst_number', 'pan_number', 'city']
+    filterset_fields = ['party_type', 'party_category', 'is_active', 'city', 'state', 'gst_registration_type']
+    ordering_fields = ['name', 'code', 'created_on', 'credit_limit', 'city']
 
     def get_queryset(self):
         company_id = self.get_company_id()
-        return PartyRepository.get_for_company(company_id) if company_id else PartyRepository.list_all()
+        qs = PartyRepository.get_for_company(company_id) if company_id else PartyRepository.list_all()
+
+        # Multi-role filter support: ?role=KNITTING_UNIT matches primary party_type OR assigned role
+        role = self.request.query_params.get('role')
+        if role:
+            from django.db.models import Q
+            qs = qs.filter(Q(party_type=role) | Q(roles__role=role, roles__is_deleted=False)).distinct()
+
+        return qs
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         company_id = self.get_company_id()
         instance = PartyService.create_party(company_id, serializer.validated_data, request.user)
-        return Response(PartyMasterSerializer(instance).data, status=status.HTTP_201_CREATED)
+        return Response(PartyMasterSerializer(instance, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -89,7 +98,45 @@ class PartyMasterViewSet(BaseMasterViewSet):
         serializer.is_valid(raise_exception=True)
         company_id = self.get_company_id()
         updated = PartyService.update_party(instance.id, company_id, serializer.validated_data, request.user)
-        return Response(PartyMasterSerializer(updated).data, status=status.HTTP_200_OK)
+        return Response(PartyMasterSerializer(updated, context={'request': request}).data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        company_id = self.get_company_id()
+        deactivated = PartyService.deactivate_party(instance.id, company_id, request.user)
+        return Response(
+            {"message": f"Party '{deactivated.name}' ({deactivated.code}) deactivated successfully."},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'], url_path='deactivate')
+    def deactivate(self, request, pk=None):
+        instance = self.get_object()
+        company_id = self.get_company_id()
+        deactivated = PartyService.deactivate_party(instance.id, company_id, request.user)
+        return Response(
+            {"message": f"Party '{deactivated.name}' ({deactivated.code}) deactivated successfully.", "is_active": False},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['get'], url_path='ledger-summary')
+    def ledger_summary(self, request, pk=None):
+        instance = self.get_object()
+        company_id = self.get_company_id()
+        summary = PartyService.get_party_financial_summary(instance.id, company_id)
+        return Response(summary, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='assign-price-lists')
+    def assign_price_lists(self, request, pk=None):
+        instance = self.get_object()
+        company_id = self.get_company_id()
+        pl_data = {
+            "default_purchase_price_list_id": request.data.get("default_purchase_price_list_id"),
+            "default_sales_price_list_id": request.data.get("default_sales_price_list_id"),
+            "default_job_work_price_list_id": request.data.get("default_job_work_price_list_id"),
+        }
+        updated = PartyService.update_party(instance.id, company_id, pl_data, request.user)
+        return Response(PartyMasterSerializer(updated, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
 class YarnCountViewSet(BaseMasterViewSet):

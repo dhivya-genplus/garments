@@ -10,14 +10,16 @@ from core.constants import ModulePermissions, UserRoles
 from apps.purchase.models import (
     company_yarn_type_table,
     parent_po_table, child_po_table, yarn_po_delivery_table,
-    yarn_po_balance_table
+    yarn_po_balance_table,
+    parent_yarn_po_return_table, child_yarn_po_return_table,
 )
 from apps.purchase.serializers import (
     CompanyYarnTypeSerializer,
     ParentPOSerializer, ParentPOCreateSerializer, ChildPOSerializer,
-    YarnPODeliverySerializer, YarnPOBalanceSerializer
+    YarnPODeliverySerializer, YarnPOBalanceSerializer,
+    ParentYarnPoReturnSerializer, ChildYarnPoReturnSerializer,
 )
-from apps.purchase.services import YarnPOService
+from apps.purchase.services import YarnPOService, YarnPoReturnService
 from apps.purchase.repositories import YarnPORepository
 
 
@@ -235,4 +237,102 @@ class CompanyYarnTypeViewSet(ModelViewSet):
         configs = YarnPOService.seed_company_yarn_types(company_id, request.user if request.user.is_authenticated else None)
         serializer = CompanyYarnTypeSerializer(configs, many=True)
         return Response({"success": True, "message": "Default yarn types seeded successfully.", "data": serializer.data})
+
+
+class YarnPoReturnViewSet(ModelViewSet):
+    """
+    API endpoint for Yarn PO Returns (Vendor Rejection Outwards & Debit Notes).
+    Handles outward returns of defective yarn back to spinning mills with atomic stock deduction
+    and balanced Debit Note voucher creation.
+    """
+    permission_classes = [IsCompanyUser, HasModulePrivilege]
+    required_module = ModulePermissions.PURCHASE_YARN_PO_RETURN
+    serializer_class = ParentYarnPoReturnSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['return_number', 'debit_note_number', 'party__name', 'remarks', 'defect_notes']
+    filterset_fields = ['yarn_type', 'party', 'warehouse', 'yarn_count', 'defect_reason', 'is_authorized', 'status']
+    ordering_fields = ['return_date', 'return_number', 'total_debit_amount', 'created_on']
+
+    def get_company_id(self):
+        user = self.request.user
+        if (getattr(user, 'is_superadmin', False) or getattr(user, 'role', '') == UserRoles.SUPER_ADMIN or user.is_superuser) and self.request.query_params.get('company_id'):
+            return int(self.request.query_params.get('company_id'))
+        if getattr(self.request, 'company', None):
+            return self.request.company.id
+        if getattr(user, 'company', None):
+            return user.company.id
+        return None
+
+    def get_queryset(self):
+        company_id = self.get_company_id()
+        qs = (
+            parent_yarn_po_return_table.objects
+            .select_related("company", "cfyear", "party", "po", "inward", "warehouse", "yarn_count", "color_shade")
+            .prefetch_related("line_items")
+            .filter(status=1)
+        )
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs.order_by("-return_date", "-id")
+
+    def update(self, request, *args, **kwargs):
+        return Response(
+            {
+                "success": False,
+                "error": {
+                    "code": "IMMUTABLE_RECORD",
+                    "message": "Posted Yarn PO Returns and Debit Notes are immutable financial records and cannot be directly modified. Adjustments require formal compensatory cancellation/reversal.",
+                }
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {
+                "success": False,
+                "error": {
+                    "code": "IMMUTABLE_RECORD",
+                    "message": "Direct deletion of posted Yarn PO Returns is prohibited. Use the formal compensatory cancellation action (/cancel/) to reverse stock and debit note vouchers.",
+                }
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def create(self, request, *args, **kwargs):
+        company_id = self.get_company_id()
+        if not company_id:
+            return Response(
+                {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Company context is required."}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        po_return = YarnPoReturnService.create_po_return(
+            data=request.data,
+            company_id=company_id,
+            user=request.user
+        )
+        return Response(
+            {"success": True, "data": ParentYarnPoReturnSerializer(po_return).data},
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel_return(self, request, pk=None):
+        company_id = self.get_company_id()
+        if not company_id:
+            return Response(
+                {"success": False, "error": {"code": "VALIDATION_ERROR", "message": "Company context is required."}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        po_return = YarnPoReturnService.cancel_po_return(pk, company_id, user=request.user)
+        return Response({
+            "success": True,
+            "message": f"Yarn PO Return {po_return.return_number} cancelled and stock/voucher reversed.",
+            "data": ParentYarnPoReturnSerializer(po_return).data
+        })
+
+
 

@@ -1,7 +1,13 @@
 from decimal import Decimal
 from django.db import models
+from django.conf import settings
 from core.base_models import SoftDeleteModel
-from core.constants import PartyTypes, YarnCategory, FabricCategory, ProcessTypes, WarehouseTypes
+from core.constants import (
+    PartyTypes, PartyCategory, AddressTypes, GstRegistrationType,
+    GstTreatment, PaymentModes, VerificationStatus, PartyDocumentTypes,
+    YarnCategory, FabricCategory, ProcessTypes, WarehouseTypes
+)
+from core.utils.encryption import EncryptedCharField
 from apps.authentication.models import Company
 
 class UnitOfMeasurement(SoftDeleteModel):
@@ -24,26 +30,71 @@ class UnitOfMeasurement(SoftDeleteModel):
 
 class PartyMaster(SoftDeleteModel):
     """
-    Parties across the supply chain: Mills, Traders, Knitting Units,
-    Dyeing Units, Customers, Suppliers, Job Workers.
+    Parties across the textile supply chain: Mills, Traders, Knitting Units,
+    Dyeing Units, Customers, Suppliers, Job Workers, Subcontractors, Brokers, Transporters.
     """
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="parties")
     party_type = models.CharField(max_length=30, choices=PartyTypes.CHOICES, db_index=True)
     code = models.CharField(max_length=50, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
+    display_name = models.CharField(max_length=255, blank=True)
+    party_category = models.CharField(max_length=30, choices=PartyCategory.CHOICES, default=PartyCategory.MANUFACTURER, db_index=True)
+    parent_party = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name="child_parties")
+    remarks = models.TextField(blank=True)
+
+    # Primary Contact & Flat legacy fields (kept synced for backward compatibility)
     contact_person = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
+    whatsapp_number = models.CharField(max_length=30, blank=True)
+    website = models.URLField(max_length=255, blank=True)
+
+    # Statutory & Tax Information
+    gst_registration_type = models.CharField(max_length=30, choices=GstRegistrationType.CHOICES, default=GstRegistrationType.REGULAR, db_index=True)
     gst_number = models.CharField(max_length=20, blank=True, db_index=True)
-    pan_number = models.CharField(max_length=20, blank=True)
+    pan_number = models.CharField(max_length=20, blank=True, db_index=True)
+    cin_number = models.CharField(max_length=30, blank=True, help_text="Corporate Identification Number / LLPIN")
+    msme_number = models.CharField(max_length=50, blank=True, help_text="MSME / Udyam Registration No")
+    tax_applicable = models.BooleanField(default=True)
+    default_gst_treatment = models.CharField(max_length=30, choices=GstTreatment.CHOICES, default=GstTreatment.TAXABLE)
+    tds_applicable = models.BooleanField(default=False)
+    tds_section = models.CharField(max_length=20, blank=True, help_text="e.g. 194C, 194Q")
+    export_import_classification = models.CharField(max_length=50, blank=True, help_text="IEC Code / SEZ")
+    country_of_tax_registration = models.CharField(max_length=100, default="India")
+    tax_verification_status = models.CharField(max_length=20, choices=VerificationStatus.CHOICES, default=VerificationStatus.UNVERIFIED)
+
+    # Address Flat legacy fields (kept synced with default/registered address)
     address_line1 = models.CharField(max_length=255, blank=True)
     address_line2 = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100, blank=True)
-    state = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True, db_index=True)
+    state = models.CharField(max_length=100, blank=True, db_index=True)
     pincode = models.CharField(max_length=20, blank=True)
+
+    # Commercial & Price List Configuration
+    default_purchase_price_list = models.ForeignKey('pricing.PriceList', on_delete=models.SET_NULL, null=True, blank=True, related_name="parties_default_purchase")
+    default_sales_price_list = models.ForeignKey('pricing.PriceList', on_delete=models.SET_NULL, null=True, blank=True, related_name="parties_default_sales")
+    default_job_work_price_list = models.ForeignKey('pricing.PriceList', on_delete=models.SET_NULL, null=True, blank=True, related_name="parties_default_job_work")
+    currency = models.CharField(max_length=10, default="INR")
+    payment_terms = models.CharField(max_length=100, blank=True, help_text="e.g. Net 30, Against Delivery")
     credit_days = models.PositiveIntegerField(default=0)
-    credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    opening_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    credit_limit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"))
+    rebate_tier = models.CharField(max_length=50, blank=True, help_text="Tier 1, Tier 2, etc.")
+    default_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    freight_terms = models.CharField(max_length=50, blank=True, help_text="Ex-Mill, FOR Destination, Paid by Buyer")
+    rate_contract_number = models.CharField(max_length=50, blank=True)
+    contract_start_date = models.DateField(null=True, blank=True)
+    contract_end_date = models.DateField(null=True, blank=True)
+    price_approval_required = models.BooleanField(default=False)
+
+    # Accounting & Ledger Configuration
+    ledger_account_code = models.CharField(max_length=50, blank=True, help_text="Chart of accounts code, e.g. 2001, 1002")
+    default_purchase_account = models.CharField(max_length=50, blank=True)
+    default_sales_account = models.CharField(max_length=50, blank=True)
+    default_job_work_expense_account = models.CharField(max_length=50, blank=True)
+    opening_balance = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"))
+    opening_balance_type = models.CharField(max_length=10, choices=[('DR', 'Debit (Receivable)'), ('CR', 'Credit (Payable)')], default='CR')
+    opening_balance_date = models.DateField(null=True, blank=True)
+
     is_active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
@@ -54,10 +105,187 @@ class PartyMaster(SoftDeleteModel):
         ordering = ["name"]
         indexes = [
             models.Index(fields=["company", "party_type", "is_active", "is_deleted"]),
+            models.Index(fields=["company", "party_category", "is_active"]),
+            models.Index(fields=["gst_number"]),
         ]
 
     def __str__(self):
-        return f"{self.name} ({self.get_party_type_display()})"
+        disp = self.display_name or self.name
+        return f"{disp} ({self.get_party_type_display()})"
+
+
+class PartyRole(SoftDeleteModel):
+    """
+    Multiple Business Roles per Party: mx_party_role
+    Allows a party to be e.g. both a Supplier, Customer, Knitter, and Mill without duplicating party records.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_roles")
+    party = models.ForeignKey(PartyMaster, on_delete=models.CASCADE, related_name="roles")
+    role = models.CharField(max_length=30, choices=PartyTypes.CHOICES, db_index=True)
+    is_primary = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "mx_party_role"
+        verbose_name = "Party Business Role"
+        verbose_name_plural = "Party Business Roles"
+        unique_together = ("party", "role")
+        ordering = ["-is_primary", "role"]
+
+    def __str__(self):
+        pri = " [Primary]" if self.is_primary else ""
+        return f"{self.party.name} - {self.get_role_display()}{pri}"
+
+
+class PartyContact(SoftDeleteModel):
+    """
+    Multiple Contacts per Party: mx_party_contact
+    Captures primary, accounts, dispatch, technical, and management contacts.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_contacts")
+    party = models.ForeignKey(PartyMaster, on_delete=models.CASCADE, related_name="contacts")
+    contact_person = models.CharField(max_length=150)
+    designation = models.CharField(max_length=100, blank=True)
+    mobile = models.CharField(max_length=30, db_index=True)
+    alternate_mobile = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True, db_index=True)
+    alternate_email = models.EmailField(blank=True)
+    whatsapp_number = models.CharField(max_length=30, blank=True)
+    website = models.URLField(max_length=255, blank=True)
+    is_primary = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "mx_party_contact"
+        verbose_name = "Party Contact"
+        verbose_name_plural = "Party Contacts"
+        ordering = ["-is_primary", "contact_person"]
+
+    def __str__(self):
+        pri = " [Primary]" if self.is_primary else ""
+        return f"{self.contact_person} ({self.designation or 'Contact'}){pri}"
+
+
+class PartyAddress(SoftDeleteModel):
+    """
+    Multiple Addresses per Party: mx_party_address
+    Captures Registered, Billing, Delivery / Shipping, and Factory / Branch addresses.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_addresses")
+    party = models.ForeignKey(PartyMaster, on_delete=models.CASCADE, related_name="addresses")
+    address_type = models.CharField(max_length=20, choices=AddressTypes.CHOICES, default=AddressTypes.REGISTERED, db_index=True)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=100, default="India")
+    state = models.CharField(max_length=100, db_index=True)
+    district = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, db_index=True)
+    area_locality = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=20)
+    gst_state_code = models.CharField(max_length=2, blank=True, help_text="2-digit Indian GST State code (e.g. 33)")
+    is_default = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "mx_party_address"
+        verbose_name = "Party Address"
+        verbose_name_plural = "Party Addresses"
+        ordering = ["-is_default", "address_type"]
+
+    def __str__(self):
+        return f"{self.get_address_type_display()} - {self.city}, {self.state} ({self.pincode})"
+
+
+class PartyBankDetail(SoftDeleteModel):
+    """
+    Bank & Payment Details per Party: mx_party_bank
+    Captures bank accounts, IFSC, UPI.
+    Sensitive account number is encrypted via EncryptedCharField and masked in read APIs.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_banks")
+    party = models.ForeignKey(PartyMaster, on_delete=models.CASCADE, related_name="bank_details")
+    bank_name = models.CharField(max_length=150)
+    branch_name = models.CharField(max_length=150, blank=True)
+    account_holder_name = models.CharField(max_length=150)
+    account_number = EncryptedCharField(max_length=512, help_text="Encrypted Bank Account Number")
+    ifsc_code = models.CharField(max_length=20, db_index=True)
+    upi_id = models.CharField(max_length=100, blank=True)
+    preferred_payment_mode = models.CharField(max_length=30, choices=PaymentModes.CHOICES, default=PaymentModes.NEFT_RTGS)
+    beneficiary_verification_status = models.CharField(max_length=20, choices=VerificationStatus.CHOICES, default=VerificationStatus.UNVERIFIED)
+    is_default = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "mx_party_bank"
+        verbose_name = "Party Bank Detail"
+        verbose_name_plural = "Party Bank Details"
+        ordering = ["-is_default", "bank_name"]
+
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_holder_name} ({self.ifsc_code})"
+
+    @property
+    def masked_account_number(self):
+        acc = str(self.account_number or "")
+        if len(acc) > 4:
+            return "X" * (len(acc) - 4) + acc[-4:]
+        return "XXXX" if acc else ""
+
+
+class PartyCapability(SoftDeleteModel):
+    """
+    Textile & Job Work Processing Capabilities: mx_party_capability
+    Provides conditional operational information for Knitting Units, Dyeing Units, Mills, and Job Workers.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_capabilities")
+    party = models.OneToOneField(PartyMaster, on_delete=models.CASCADE, related_name="capability")
+    processes_performed = models.ManyToManyField('ProcessMaster', blank=True, related_name="capable_parties")
+    yarn_counts_handled = models.ManyToManyField('YarnCountMaster', blank=True, related_name="capable_parties")
+    fabric_types_handled = models.ManyToManyField('FabricTypeMaster', blank=True, related_name="capable_parties")
+    machine_types = models.CharField(max_length=255, blank=True, help_text="e.g. 24GG 30-inch circular knit machines, soft-flow dyeing vessels")
+    production_capacity = models.DecimalField(max_digits=15, decimal_places=3, default=Decimal("0.000"), help_text="Daily/Monthly capacity")
+    capacity_uom = models.ForeignKey('UnitOfMeasurement', on_delete=models.SET_NULL, null=True, blank=True, related_name="party_capacity_uoms")
+    min_job_work_qty = models.DecimalField(max_digits=15, decimal_places=3, default=Decimal("0.000"))
+    max_job_work_qty = models.DecimalField(max_digits=15, decimal_places=3, default=Decimal("0.000"))
+    standard_processing_days = models.PositiveIntegerField(default=0, help_text="Standard turnaround time in days")
+    procurement_lead_time_days = models.PositiveIntegerField(default=0, help_text="Lead time in days")
+    default_uom = models.ForeignKey('UnitOfMeasurement', on_delete=models.SET_NULL, null=True, blank=True, related_name="party_default_uoms")
+    quality_certifications = models.CharField(max_length=255, blank=True, help_text="e.g. GOTS, OEKO-TEX Standard 100, BCI")
+    sample_approval_required = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "mx_party_capability"
+        verbose_name = "Party Textile Capability"
+        verbose_name_plural = "Party Textile Capabilities"
+
+    def __str__(self):
+        return f"Capabilities of {self.party.name}"
+
+
+class PartyDocument(SoftDeleteModel):
+    """
+    Statutory, Quality & Contract Documents: mx_party_document
+    Stores GST certificates, PAN card copies, MSME certificates, bank proofs, rate contracts.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="party_documents")
+    party = models.ForeignKey(PartyMaster, on_delete=models.CASCADE, related_name="documents")
+    document_type = models.CharField(max_length=30, choices=PartyDocumentTypes.CHOICES, default=PartyDocumentTypes.OTHER, db_index=True)
+    document_number = models.CharField(max_length=100, blank=True)
+    file_attachment = models.FileField(upload_to="party_documents/%Y/%m/", null=True, blank=True)
+    issue_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    verification_status = models.CharField(max_length=20, choices=VerificationStatus.CHOICES, default=VerificationStatus.UNVERIFIED)
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="verified_party_documents")
+    verified_at = models.DateTimeField(null=True, blank=True)
+    remarks = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "mx_party_document"
+        verbose_name = "Party Document"
+        verbose_name_plural = "Party Documents"
+        ordering = ["-created_on"]
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} - {self.party.name} ({self.document_number or 'No No.'})"
 
 
 class YarnCountMaster(SoftDeleteModel):

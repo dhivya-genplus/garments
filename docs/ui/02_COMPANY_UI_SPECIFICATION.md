@@ -19,11 +19,12 @@ In the Garments ERP & CRM platform, the Company entity is the single foundationa
 
 ### 1.2 Scope
 - **Entities Handled**:
-  - Company Tenant Entity: [`Company`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`sys_company`).
-  - Financial Year Entity: [`FinancialYear`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`sys_financial_year`).
-  - System Roles & Privileges: [`Role`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`sys_role`) and [`Privilege`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`sys_privilege`).
+  - Company Tenant Entity: [`Company`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`company`).
+  - Financial Year Entity: [`FinancialYear`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`financial_year`).
+  - System Roles & Privileges: [`Role`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`user_role`) and [`Privilege`](file:///d:/Codebase/Garments/backend/apps/authentication/models.py) (`user_privilege`).
 - **Country Pack**: India (`IN`) — Indian Rupee (`₹`), Indian numerical grouping (`12,34,567.89`), Date format (`DD/MM/YYYY`), GST State codes (01 to 37), PAN extraction regex.
 - **Target Route**: `/administration/company` (Next.js route: `app/(app)/administration/company/page.tsx`).
+
 
 ---
 

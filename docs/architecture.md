@@ -39,11 +39,11 @@ HTTP Request (Client)
 
 | Domain | Table Prefix | Table Name | Purpose |
 |---|---|---|---|
-| **System** | `sys_` | `sys_company` | Multi-tenant company account |
-| **System** | `sys_` | `sys_financial_year` | Fiscal accounting years |
-| **System** | `sys_` | `sys_role` | Roles grouping permissions |
-| **System** | `sys_` | `sys_privilege` | Granular CRUD module privileges |
-| **System** | `sys_` | `sys_user` | User entities |
+| **System** | `sys_` | `company` | Multi-tenant company account |
+| **System** | `sys_` | `financial_year` | Fiscal accounting years |
+| **System** | `sys_` | `user_role` | Roles grouping permissions |
+| **System** | `sys_` | `user_privilege` | Granular CRUD module privileges |
+| **System** | `sys_` | `employee` | User / Employee entities |
 | **Masters** | `tm_` | `tm_uom` | Units of measurement |
 | **Masters** | `tm_` | `tm_party` | Mills, Traders, Dyers, Knitters, Customers |
 | **Masters** | `tm_` | `tm_yarn_count` | Yarn counts (30s, 34s, 40s) |
@@ -60,6 +60,8 @@ HTTP Request (Client)
 | **Procurement** | `tx_` | `tx_child_po` | Purchase Order line items |
 | **Procurement** | `tx_` | `tx_delivery_schedule` | Split delivery date lots |
 | **Procurement** | `vw_` | `view_yarn_po_balance` | Unmanaged live PO vs Inward balance view |
+| **Procurement** | `tm_` | `tm_yarn_po_return` | Yarn PO Return & Debit Note to Spinning Mill |
+| **Procurement** | `tx_` | `tx_yarn_po_return` | Itemized Yarn PO Return line items |
 | **Inventory** | `tm_` | `tm_yarn_stock` | Godown Stock Ledger (Bags & Weight) |
 | **Inventory** | `tx_` | `tx_parent_yarn_inward` | GRN Inward headers |
 | **Inventory** | `tx_` | `tx_child_yarn_inward` | Inward line item breakdown |
@@ -81,3 +83,24 @@ HTTP Request (Client)
 | **ADR-03** | Stock Invariant Control | Optimistic checks vs Row-level database locks | `select_for_update()` in `@transaction.atomic` | Prevents race conditions during concurrent stock dispatches, ensuring stock bag counts and weights never drop below zero. |
 | **ADR-04** | Transaction Deletions | Hard delete vs Logical soft-delete vs Service cancellation | Service Cancellation with Stock Rollback | Hard deletes leave orphan stock records; soft delete alone doesn't reverse balances. Cancellation services atomically reverse ledger adjustments. |
 | **ADR-05** | Response Format | Variable shapes vs Standardized JSON envelopes | `StandardJSONRenderer` | Standardizes all client integrations with uniform `{ success, data, meta }` and `{ success, error }` envelopes. |
+| **ADR-06** | Yarn PO Returns Separation | Embedded in Sales Return vs Outward DC vs Dedicated Module | Dedicated Service & Workflow (`tm_yarn_po_return`) | Returning yarn to spinning mills involves QC laboratory defect categorization, supplier AP debit notes, and input tax credit reversals. Coupling it with customer sales returns creates accounting and privilege violations. |
+
+---
+
+## 4. Authoritative Textile Domain Mapping: Yarn Category &rarr; Knitting Setup &rarr; Output Fabric &rarr; Downstream Pipeline
+
+The manufacturing pipeline engine enforces technical validation based on input yarn categories:
+
+| Input Yarn Category | Intended Knitting Usage / End Fabric Output | Knitting Process / Machine Setup | Inward Stage Received (Output from Knitting) | Next Production Stage / Pipeline |
+|---|---|---|---|---|
+| **Grey Yarn** *(Raw / Ecru Cotton, Blends)* | Solid-color T-shirts, tops, and basic apparel | Circular single jersey machines (plain knit) | **Grey Fabric (`GREY_FABRIC`)** *(Greige rolls / thans)* | Sent to dye house for scouring, bleaching, and batch/piece dyeing (soft-flow) |
+| **Grey Yarn** *(Raw / Ecru)* | Stretch T-shirts, leggings, activewear | Single jersey machines with elastane attachment (e.g., 20D/40D Lycra) | **Grey Fabric (`GREY_FABRIC`)** *(Greige Lycra single jersey)* | Sent for heat-setting (stenter), scouring, and piece dyeing |
+| **Grey Yarn** *(Raw / Ecru)* | Polo shirt bodies, tennis tees | Pique / honeycomb / Lacoste circular machines | **Grey Fabric (`GREY_FABRIC`)** *(Greige pique rolls)* | Batch dyeing, bio-polishing, compacting |
+| **Grey Yarn** *(Raw / Ecru)* | Winter hoodies, sweatshirts, joggers | 2-thread or 3-thread fleece machines (face, tie, and loop yarn) | **Grey Fabric (`GREY_FABRIC`)** *(Greige fleece rolls)* | Scouring, dyeing, loop raising/brushing (fleece nap) |
+| **Grey Yarn** *(Raw / Ecru)* | Premium tees, babywear, double-sided knitwear | Interlock circular knitting machines | **Grey Fabric (`GREY_FABRIC`)** *(Greige interlock rolls)* | Batch dyeing, softening, compacting |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Horizontal striped T-shirts, rugby shirts | Circular machines with multiple feeders alternating colored yarn cones (feeder stripe) | **Yarn-Dyed Fabric (`DYED_FABRIC`)** *(Striped rolls ready without batch dyeing)* | Direct scouring, tentering/stenter finishing, and compacting (no piece dyeing required) |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Branded polo bodies with custom chest bands | Auto-striper circular knitting machines with programmable finger selectors (engineered stripes) | **Yarn-Dyed Fabric (`DYED_FABRIC`)** *(Engineered stripe rolls)* | Slitting, finishing, stenter, compacting |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Polo neck collars and sleeve cuffs with tipping lines | Flatbed knitting machines (e.g., Shima Seiki, Stoll) | **Flat Knit Trims / Collars (`TRIM` / `FABRIC`)** *(Pieces or collar strips)* | Ironing, cutting, inspection, directly attached during garment stitching |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Multi-color textured patterns, knit cardigans, sweaters | Electronic jacquard circular or flat knitting machines | **Jacquard Knit Fabric (`DYED_FABRIC`)** *(Patterned rolls / panels)* | Steam relaxing, washing/softening, compacting |
+| **Melange Yarn** *(Fibre-dyed blend)* | Heather grey athletic T-shirts, joggers, gym wear | Circular single jersey, fleece, or French terry machines | **Melange Fabric (`DYED_FABRIC`)** *(Grey/color heather rolls)* | Scouring, softening, compacting (no piece-dye bath needed) |
+

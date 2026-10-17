@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from core.base_models import SoftDeleteModel, TimeStampedModel
 from core.constants import UserRoles, ModulePermissions
+from core.utils.encryption import EncryptedCharField
 
 class Company(SoftDeleteModel):
-    name = models.CharField(max_length=255, db_index=True)
+    name = EncryptedCharField(max_length=512, db_index=True)
     code = models.CharField(max_length=50, unique=True, db_index=True)
     legal_name = models.CharField(max_length=255, blank=True)
     gst_number = models.CharField(max_length=20, blank=True, db_index=True)
@@ -21,9 +22,9 @@ class Company(SoftDeleteModel):
     subscription_end_date = models.DateField(null=True, blank=True)
 
     class Meta:
-        db_table = "sys_company"
+        db_table = "company"
         verbose_name_plural = "Companies"
-        ordering = ["name"]
+        ordering = ["code"]
         indexes = [
             models.Index(fields=["code", "is_active", "is_deleted"]),
         ]
@@ -47,7 +48,7 @@ class FinancialYear(SoftDeleteModel):
     description = models.TextField(blank=True)
 
     class Meta:
-        db_table = "sys_financial_year"
+        db_table = "financial_year"
         verbose_name = "Financial Year"
         verbose_name_plural = "Financial Years"
         unique_together = ("company", "code")
@@ -68,7 +69,7 @@ class Role(SoftDeleteModel):
     is_system_role = models.BooleanField(default=False)
 
     class Meta:
-        db_table = "sys_role"
+        db_table = "user_role"
         ordering = ["name"]
         unique_together = ("company", "code")
 
@@ -88,7 +89,7 @@ class Privilege(SoftDeleteModel):
     can_export = models.BooleanField(default=False)
 
     class Meta:
-        db_table = "sys_privilege"
+        db_table = "user_privilege"
         unique_together = ("role", "module")
         indexes = [
             models.Index(fields=["role", "module"]),
@@ -169,7 +170,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
-        db_table = "sys_user"
+        db_table = "employee"
         ordering = ["-date_joined"]
         indexes = [
             models.Index(fields=["email", "role", "is_deleted"]),

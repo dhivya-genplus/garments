@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Price List Contract — Garments ERP & CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-subtle: #172033;
+            --bg-input: #1f293d;
+            --border-color: #243049;
+            --border-hover: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-primary-hover: #2563eb;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --badge-green-bg: rgba(16, 185, 129, 0.12);
+            --badge-green-text: #34d399;
+            --badge-blue-bg: rgba(59, 130, 246, 0.12);
+            --badge-blue-text: #60a5fa;
+            --badge-purple-bg: rgba(139, 92, 246, 0.12);
+            --badge-purple-text: #c084fc;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navigation Bar */
+        .top-navbar {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: #ffffff;
+            font-family: var(--font-heading);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: -2px;
+        }
+
+        .nav-breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .nav-breadcrumbs span.sep {
+            color: var(--text-muted);
+        }
+
+        .nav-breadcrumbs span.active {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Container */
+        .page-container {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px 24px;
+        }
+
+        /* Party Switcher Bar */
+        .party-switch-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .party-switch-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .party-switch-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-party-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-party-select:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            background: var(--bg-card-subtle);
+        }
+
+        .btn-party-select.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.2));
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+            font-weight: 600;
+        }
+
+        /* Header Card */
+        .contract-header-card {
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(23, 32, 51, 0.95));
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contract-header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+        }
+
+        .header-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .contract-meta-left {
+            flex: 1;
+        }
+
+        .badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .badge-priority1 {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-status-active {
+            background: var(--badge-green-bg);
+            color: var(--badge-green-text);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-status-active .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+            box-shadow: 0 0 8px var(--accent-emerald);
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.3); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .badge-type {
+            background: var(--badge-blue-bg);
+            color: var(--badge-blue-text);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-scope {
+            background: var(--badge-purple-bg);
+            color: var(--badge-purple-text);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .contract-title {
+            font-family: var(--font-heading);
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .contract-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 800px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        /* Party Summary Info Grid */
+        .party-info-grid {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+        }
+
+        .info-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .info-val {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .info-val.highlight-cyan {
+            color: var(--accent-cyan);
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-hover);
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .icon-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .icon-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .icon-purple { background: rgba(139, 92, 246, 0.15); color: #c084fc; }
+        .icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .kpi-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kpi-number {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .kpi-subtext {
+            font-size: 11px;
+            color: var(--accent-emerald);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* Main Workspace Split (Table + Interactive Simulator) */
+        .workspace-split {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1080px) {
+            .workspace-split {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Card */
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .panel-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(17, 24, 39, 0.5);
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-badge {
+            font-size: 11px;
+            background: var(--bg-input);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            color: var(--text-secondary);
+        }
+
+        /* Data Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(31, 41, 61, 0.4);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .item-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .item-spec {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .slab-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .rate-cell {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .discount-badge {
+            font-size: 11px;
+            color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .fallback-rate {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            margin-left: 6px;
+        }
+
+        .advantage-badge {
+            font-size: 11px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* Live Pricing Resolution Simulator Panel */
+        .simulator-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .form-control, .form-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .form-check label {
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .btn-simulate {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb, #0891b2);
+            color: #ffffff;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-simulate:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Simulator Result Card */
+        .sim-result-box {
+            background: linear-gradient(135deg, rgba(31, 41, 61, 0.7), rgba(17, 24, 39, 0.9));
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+        }
+
+        .sim-result-box.matched {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(17, 24, 39, 0.9));
+        }
+
+        .sim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sim-status {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sim-rate-display {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .sim-rate-val {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .sim-rate-unit {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .sim-breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+        }
+
+        .sim-breakdown-row:last-child {
+            border-bottom: none;
+        }
+
+        .sim-breakdown-val {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sim-breakdown-val.savings {
+            color: var(--accent-emerald);
+        }
+
+        .resolution-trace {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .resolution-trace span.matched-rule {
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        /* Audit Log Section */
+        .audit-section {
+            margin-top: 24px;
+        }
+
+        .audit-timeline {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 30px;
+            bottom: -16px;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 2px solid var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--accent-cyan);
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: #ffffff;
+        }
+
+        .timeline-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .timeline-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+        <div class="navbar-brand">
+            <div class="brand-logo">G</div>
+            <div>
+                <div class="brand-title">Garments ERP & CRM</div>
+                <div class="brand-subtitle">Commercial Pricing & Valuation</div>
+            </div>
+        </div>
+
+        <div class="nav-breadcrumbs">
+            <span>Commercial Pricing</span>
+            <span class="sep">/</span>
+            <span>Party Price Lists</span>
+            <span class="sep">/</span>
+            <span class="active" id="breadcrumbCode">PL-PUR-LAKSHMI-2026</span>
+        </div>
+
+        <div class="nav-actions">
+            <button class="btn btn-secondary" onclick="exportSamplePdf()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export PDF
+            </button>
+            <button class="btn btn-primary" onclick="alert('Pricing Revision modal opened. Changes are staged into ta_pricing_audit before commitment.')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Revise Contract Rates
+            </button>
+        </div>
+    </header>
+
+    <main class="page-container">
+
+        <!-- Party Contract Selector Bar -->
+        <section class="party-switch-bar">
+            <div class="party-switch-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Switch Seeded Party Contract Sample:
+            </div>
+            <div class="party-switch-buttons">
+                <button class="btn-party-select active" id="btnParty1" onclick="switchPartyContract('mill')">
+                    🏭 Lakshmi Spinning Mills Ltd (Yarn Purchase)
+                </button>
+                <button class="btn-party-select" id="btnParty2" onclick="switchPartyContract('buyer')">
+                    👕 Classic Polo Retail Brands (Sales Contract)
+                </button>
+                <button class="btn-party-select" id="btnParty3" onclick="switchPartyContract('knitter')">
+                    🧵 Annai Knitting Works (Job Work Subcontract)
+                </button>
+            </div>
+        </section>
+
+        <!-- Contract Header Master Card -->
+        <section class="contract-header-card">
+            <div class="header-top-row">
+                <div class="contract-meta-left">
+                    <div class="badge-row">
+                        <span class="badge badge-priority1">★ Priority 1 Resolution Hierarchy</span>
+                        <span class="badge badge-scope">Scope: PARTY_SPECIFIC</span>
+                        <span class="badge badge-type" id="headerListTypeBadge">PURCHASE CONTRACT</span>
+                        <span class="badge badge-status-active">
+                            <span class="pulse-dot"></span>
+                            ACTIVE
+                        </span>
+                    </div>
+                    <h1 class="contract-title" id="headerContractTitle">Lakshmi Spinning Mills Ltd — Annual Yarn Procurement Contract</h1>
+                    <p class="contract-subtitle" id="headerContractDesc">Direct spinning mill agreed contract supply rates for high-count combed cotton cone yarn with tiered bulk order quantity rebates.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="alert('Rate History and audit trail downloaded.')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                        Audit History
+                    </button>
+                </div>
+            </div>
+
+            <!-- Party Metadata Details -->
+            <div class="party-info-grid">
+                <div class="info-col">
+                    <span class="info-label">Price List Code</span>
+                    <span class="info-val highlight-cyan" id="metaCode">PL-PUR-LAKSHMI-2026</span>
+                </div>
+                <div class="info-col">
+                    <span class="info-label">Contracted Party</span>
+                    <span class="info-val" id="metaParty">Lakshmi Spinning Mills Ltd (#1042)</span>
+                </div>
+                <div class="info-col">
+                    <span class="info-label">Party Role</span>
+                    <span class="info-val" id="metaPartyRole">Spinning Mill / Raw Material Vendor</span>
+                </div>
+                <div class="info-col">
+                    <span class="info-label">Validity Window</span>
+                    <span class="info-val" id="metaValidity">01/04/2026 – 31/03/2027 (FY 2026-27)</span>
+                </div>
+                <div class="info-col">
+                    <span class="info-label">Currency & Terms</span>
+                    <span class="info-val" id="metaTerms">INR (₹) • Net 30 Days</span>
+                </div>
+                <div class="info-col">
+                    <span class="info-label">GSTIN / State</span>
+                    <span class="info-val" id="metaGstin">33AAACL1234F1Z8 • Tamil Nadu (33)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Metrics Grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue">📋</div>
+                <div class="kpi-content">
+                    <span class="kpi-number" id="kpiItemsCount">3 Contract Lines</span>
+                    <span class="kpi-label">Active Slabs & Rules</span>
+                    <span class="kpi-subtext">Verified & Locked</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-emerald">💰</div>
+                <div class="kpi-content">
+                    <span class="kpi-number" id="kpiAvgRate">₹261.50 / Kg</span>
+                    <span class="kpi-label">Contract Base Rate (30s)</span>
+                    <span class="kpi-subtext" id="kpiAdvantage">3.6% Savings vs General List</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-purple">🔗</div>
+                <div class="kpi-content">
+                    <span class="kpi-number" id="kpiBindings">4 Documents Bound</span>
+                    <span class="kpi-label">Active POs / Inward GRNs</span>
+                    <span class="kpi-subtext">Auto-Audited on Inward</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-amber">🛡️</div>
+                <div class="kpi-content">
+                    <span class="kpi-number">Zero Override</span>
+                    <span class="kpi-label">Compliance Pass Rate</span>
+                    <span class="kpi-subtext">100% Rate Conformance</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Split -->
+        <div class="workspace-split">
+
+            <!-- Left Panel: Multi-Tier Slabs Table -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span id="tablePanelHeading">Contracted Items & Multi-Tier Slabs</span>
+                        <span class="panel-badge" id="tableRowCount">3 Active Rows</span>
+                    </div>
+                    <button class="btn btn-secondary" style="padding: 5px 12px; font-size: 12px;" onclick="alert('Add slab row to price list')">
+                        + Add Slab
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="contractDataTable">
+                        <thead>
+                            <tr id="tableHeaderRow">
+                                <th>Item / Count</th>
+                                <th>Quantity Slab Range</th>
+                                <th>Party Contract Rate</th>
+                                <th>General Market Rate</th>
+                                <th>Contract Advantage</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Panel: Interactive Rate Resolution Sandbox -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                        Rate Resolution Simulator
+                    </div>
+                    <span class="panel-badge" style="color: var(--accent-cyan);">Live Engine</span>
+                </div>
+
+                <div class="simulator-body">
+                    <div class="form-group">
+                        <label class="form-label" id="simItemLabel">Select Item / Count:</label>
+                        <select class="form-select" id="simSelectCount" onchange="runLiveSimulation()">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Order Quantity (Kg / Pcs):</label>
+                        <input type="number" class="form-control" id="simQty" value="3500" step="100" min="1" oninput="runLiveSimulation()">
+                    </div>
+
+                    <div class="form-group" id="simJobWorkOptions" style="display: none;">
+                        <label class="form-label">Machine & Plating Options:</label>
+                        <div class="form-check">
+                            <input type="checkbox" id="simLycraCheck" onchange="runLiveSimulation()">
+                            <label for="simLycraCheck">Lycra / Spandex Plated (+₹3.50/Kg)</label>
+                        </div>
+                    </div>
+
+                    <button class="btn-simulate" onclick="runLiveSimulation()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Simulate Rate Resolution
+                    </button>
+
+                    <!-- Simulation Result Card -->
+                    <div class="sim-result-box matched" id="simResultBox">
+                        <div class="sim-header">
+                            <span class="sim-status">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Resolved Rate:
+                            </span>
+                            <span class="panel-badge" id="simMatchedSlab">2,001 - 10,000 Kg</span>
+                        </div>
+
+                        <div class="sim-rate-display">
+                            <span class="sim-rate-val" id="simEffectiveRate">₹258.00</span>
+                            <span class="sim-rate-unit" id="simUnitText">/ Kg (Excl. GST)</span>
+                        </div>
+
+                        <div class="sim-breakdown-row">
+                            <span>Contract Base Rate:</span>
+                            <span class="sim-breakdown-val" id="simBaseRate">₹258.00 / Kg</span>
+                        </div>
+                        <div class="sim-breakdown-row" id="simSurchargeRow" style="display: none;">
+                            <span>Lycra Plating Surcharge:</span>
+                            <span class="sim-breakdown-val">+₹3.50 / Kg</span>
+                        </div>
+                        <div class="sim-breakdown-row">
+                            <span>Total Estimated Order:</span>
+                            <span class="sim-breakdown-val" id="simTotalOrderVal">₹9,03,000.00</span>
+                        </div>
+                        <div class="sim-breakdown-row">
+                            <span>Estimated Savings:</span>
+                            <span class="sim-breakdown-val savings" id="simTotalSavings">₹59,500.00 vs General List</span>
+                        </div>
+
+                        <div class="resolution-trace">
+                            <strong>Engine Path:</strong><br>
+                            &gt; <span class="matched-rule" id="simHierarchyRule">Rule 1: Party-Specific Contract</span><br>
+                            &gt; Matched: <span id="simPartyRef">Lakshmi Spinning Mills (#1042)</span><br>
+                            &gt; Status: <span style="color: #34d399;">Resolved Deterministically</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contract Revision & Audit Trail Register -->
+        <section class="panel-card audit-section">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    Audit Trail & Contract Amendment Log (`ta_pricing_audit`)
+                </div>
+                <span class="panel-badge">Immutable Ledger</span>
+            </div>
+
+            <div class="audit-timeline" id="auditTimeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot">✓</div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-title">Annual Contract Baseline Rate Approved</span>
+                            <span class="timeline-time">01/04/2026 10:30 AM IST</span>
+                        </div>
+                        <div class="timeline-desc">
+                            Standard contract lock approved by <strong>General Manager (Purchase)</strong> for FY 2026-27. Linked to Master Contract Agreement #LAK-CON-2026-01. Rate: ₹265/Kg (0–2k Kg) and ₹258/Kg (2k–10k Kg).
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot">★</div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-title">Bulk Order Spot Concession Override</span>
+                            <span class="timeline-time">12/04/2026 04:15 PM IST</span>
+                        </div>
+                        <div class="timeline-desc">
+                            Document: <strong>YARN_PO #108</strong> • System Rate: ₹275.00/Kg &rarr; Actual Rate: ₹268.00/Kg (-₹7.00/Kg). Reason: <em>"Managing Director approved spot bulk quantity concession for 15,000 Kg single-lot dispatch"</em>. Override approved by: <strong>Superadmin (UID #1)</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Data for 3 Sample Party Contracts
+        const contractsData = {
+            mill: {
+                code: 'PL-PUR-LAKSHMI-2026',
+                title: 'Lakshmi Spinning Mills Ltd — Annual Yarn Procurement Contract',
+                desc: 'Direct spinning mill agreed contract supply rates for high-count combed cotton cone yarn with tiered bulk order quantity rebates.',
+                type: 'PURCHASE CONTRACT',
+                typeBadge: 'PURCHASE CONTRACT',
+                partyName: 'Lakshmi Spinning Mills Ltd (#1042)',
+                partyRole: 'Spinning Mill / Raw Material Vendor',
+                validity: '01/04/2026 – 31/03/2027 (FY 2026-27)',
+                terms: 'INR (₹) • Net 30 Days',
+                gstin: '33AAACL1234F1Z8 • Tamil Nadu (33)',
+                kpiItems: '3 Contract Lines',
+                kpiAvgRate: '₹261.50 / Kg',
+                kpiAdvantage: '3.6% Savings vs General List',
+                kpiBindings: '4 Documents Bound',
+                items: [
+                    {
+                        item: '30s Combed Cotton Cone Yarn',
+                        spec: 'Yarn Type: GREY | Count: 30s | CSP: 3050',
+                        slab: '0 – 2,000 Kg',
+                        minQty: 0,
+                        maxQty: 2000,
+                        partyRate: 265.00,
+                        generalRate: 275.00,
+                        discount: '3.6%',
+                        advantage: '₹10.00 / Kg Cheaper'
+                    },
+                    {
+                        item: '30s Combed Cotton Cone Yarn (Bulk Slab)',
+                        spec: 'Yarn Type: GREY | Count: 30s | CSP: 3050',
+                        slab: '2,001 – 10,000 Kg',
+                        minQty: 2001,
+                        maxQty: 10000,
+                        partyRate: 258.00,
+                        generalRate: 268.00,
+                        discount: '3.7%',
+                        advantage: '₹10.00 / Kg Cheaper'
+                    },
+                    {
+                        item: '40s Combed Compact Cone Yarn',
+                        spec: 'Yarn Type: GREY | Count: 40s Compact',
+                        slab: 'Min 0 Kg (No slab limit)',
+                        minQty: 0,
+                        maxQty: 999999,
+                        partyRate: 298.00,
+                        generalRate: 310.00,
+                        discount: '3.8%',
+                        advantage: '₹12.00 / Kg Cheaper'
+                    }
+                ],
+                selectOptions: [
+                    { id: '30s_combed', label: '30s Combed Cotton Grey (Tiered Slabs)', base30s: 265.00, bulk30s: 258.00, genBase: 275.00, genBulk: 268.00 },
+                    { id: '40s_combed', label: '40s Combed Compact Grey', base30s: 298.00, bulk30s: 298.00, genBase: 310.00, genBulk: 310.00 }
+                ],
+                isJobWork: false
+            },
+            buyer: {
+                code: 'PL-SALES-CLASSIC-POLO',
+                title: 'Classic Polo Retail Brands — Annual Commercial Sales Contract',
+                desc: 'Negotiated commercial sales pricing for high-grade knitted single jersey and dyed yarn supplied to institutional garment buyer.',
+                type: 'SALES CONTRACT',
+                typeBadge: 'COMMERCIAL SALES',
+                partyName: 'Classic Polo Retail Brands (#2088)',
+                partyRole: 'Institutional Garment Brand / Domestic Buyer',
+                validity: '01/04/2026 – 31/03/2027 (FY 2026-27)',
+                terms: 'INR (₹) • Net 45 Days PDC',
+                gstin: '33AAACP9988G1Z1 • Tamil Nadu (33)',
+                kpiItems: '3 Commercial Lines',
+                kpiAvgRate: '₹315.60 / Kg',
+                kpiAdvantage: 'Negotiated Preferred Partner Rate',
+                kpiBindings: '6 Commercial Invoices',
+                items: [
+                    {
+                        item: '30s Combed Cotton Cone Yarn (Grey)',
+                        spec: 'Yarn Category: GREY | Standard Packing',
+                        slab: '1,000 – 5,000 Kg',
+                        minQty: 1000,
+                        maxQty: 5000,
+                        partyRate: 282.00,
+                        generalRate: 295.00,
+                        discount: '4.4%',
+                        advantage: 'Preferred Buyer Pricing'
+                    },
+                    {
+                        item: '30s Cotton Reactive Dyed Cone Yarn',
+                        spec: 'Yarn Category: DYED | Dark & Medium Shades',
+                        slab: 'Min 0 Kg (No slab limit)',
+                        minQty: 0,
+                        maxQty: 999999,
+                        partyRate: 345.00,
+                        generalRate: 360.00,
+                        discount: '4.1%',
+                        advantage: '₹15.00 / Kg Special Discount'
+                    },
+                    {
+                        item: '40s Combed Cotton Cone Yarn (Grey)',
+                        spec: 'Yarn Category: GREY | Fine Count',
+                        slab: 'Min 0 Kg (No slab limit)',
+                        minQty: 0,
+                        maxQty: 999999,
+                        partyRate: 320.00,
+                        generalRate: 335.00,
+                        discount: '4.5%',
+                        advantage: '₹15.00 / Kg Special Discount'
+                    }
+                ],
+                selectOptions: [
+                    { id: '30s_grey_sales', label: '30s Grey Yarn (1,000–5,000 Kg)', base30s: 282.00, bulk30s: 282.00, genBase: 295.00, genBulk: 288.00 },
+                    { id: '30s_dyed_sales', label: '30s Dyed Yarn (All Shades)', base30s: 345.00, bulk30s: 345.00, genBase: 360.00, genBulk: 360.00 },
+                    { id: '40s_grey_sales', label: '40s Grey Yarn Fine Count', base30s: 320.00, bulk30s: 320.00, genBase: 335.00, genBulk: 335.00 }
+                ],
+                isJobWork: false
+            },
+            knitter: {
+                code: 'PL-JOB-KNIT-ANNAI-2026',
+                title: 'Annai Knitting Works — Annual Subcontract Conversion Contract',
+                desc: 'Subcontract conversion tariff agreed per Kg for Circular Knitting, with specialized rules for Lycra plating and process shrinkage.',
+                type: 'JOB WORK CONVERSION',
+                typeBadge: 'JOB WORK CONTRACT',
+                partyName: 'Annai Knitting Works (#3015)',
+                partyRole: 'Knitting Unit / Subcontractor',
+                validity: '01/04/2026 – 31/03/2027 (FY 2026-27)',
+                terms: 'INR (₹) • Weekly Settlement',
+                gstin: '33AAKFA4422K1Z9 • Tirupur Sub-cluster',
+                kpiItems: '2 Conversion Rules',
+                kpiAvgRate: '₹17.75 / Kg',
+                kpiAdvantage: '₹2.00/Kg Below Open Market Rate',
+                kpiBindings: '12 Knitting Job Cards',
+                items: [
+                    {
+                        item: 'Single Jersey Knitting Conversion',
+                        spec: 'Gauge: 24GG / 28GG | Lycra Surcharge: +₹3.50/Kg | Allowed Loss: 2.0%',
+                        slab: 'Min 0 Kg',
+                        minQty: 0,
+                        maxQty: 999999,
+                        partyRate: 16.00,
+                        generalRate: 18.00,
+                        discount: '11.1%',
+                        advantage: '₹2.00 / Kg Cheaper'
+                    },
+                    {
+                        item: '1x1 Rib & 2x2 Rib Knitting Conversion',
+                        spec: 'Gauge: 18GG / 24GG | Lycra Surcharge: +₹4.00/Kg | Allowed Loss: 2.5%',
+                        slab: 'Min 0 Kg',
+                        minQty: 0,
+                        maxQty: 999999,
+                        partyRate: 19.50,
+                        generalRate: 22.00,
+                        discount: '11.3%',
+                        advantage: '₹2.50 / Kg Cheaper'
+                    }
+                ],
+                selectOptions: [
+                    { id: 'knit_sj', label: 'Single Jersey (24GG / 28GG)', base30s: 16.00, bulk30s: 16.00, genBase: 18.00, genBulk: 16.50 },
+                    { id: 'knit_rib', label: '1x1 Rib / 2x2 Rib (18GG/24GG)', base30s: 19.50, bulk30s: 19.50, genBase: 22.00, genBulk: 22.00 }
+                ],
+                isJobWork: true
+            }
+        };
+
+        let currentContractKey = 'mill';
+
+        function switchPartyContract(key) {
+            currentContractKey = key;
+            const data = contractsData[key];
+
+            // Update switcher buttons
+            document.querySelectorAll('.btn-party-select').forEach(b => b.classList.remove('active'));
+            if (key === 'mill') document.getElementById('btnParty1').classList.add('active');
+            if (key === 'buyer') document.getElementById('btnParty2').classList.add('active');
+            if (key === 'knitter') document.getElementById('btnParty3').classList.add('active');
+
+            // Update Headers
+            document.getElementById('breadcrumbCode').textContent = data.code;
+            document.getElementById('headerListTypeBadge').textContent = data.typeBadge;
+            document.getElementById('headerContractTitle').textContent = data.title;
+            document.getElementById('headerContractDesc').textContent = data.desc;
+
+            // Metadata
+            document.getElementById('metaCode').textContent = data.code;
+            document.getElementById('metaParty').textContent = data.partyName;
+            document.getElementById('metaPartyRole').textContent = data.partyRole;
+            document.getElementById('metaValidity').textContent = data.validity;
+            document.getElementById('metaTerms').textContent = data.terms;
+            document.getElementById('metaGstin').textContent = data.gstin;
+
+            // KPIs
+            document.getElementById('kpiItemsCount').textContent = data.kpiItems;
+            document.getElementById('kpiAvgRate').textContent = data.kpiAvgRate;
+            document.getElementById('kpiAdvantage').textContent = data.kpiAdvantage;
+            document.getElementById('kpiBindings').textContent = data.kpiBindings;
+
+            // Table
+            renderTable(data);
+
+            // Simulator Options
+            const sel = document.getElementById('simSelectCount');
+            sel.innerHTML = '';
+            data.selectOptions.forEach(opt => {
+                const optEl = document.createElement('option');
+                optEl.value = opt.id;
+                optEl.textContent = opt.label;
+                sel.appendChild(optEl);
+            });
+
+            // Job work options toggle
+            const jwBox = document.getElementById('simJobWorkOptions');
+            if (data.isJobWork) {
+                jwBox.style.display = 'block';
+                document.getElementById('simUnitText').textContent = '/ Kg (Conversion Fee)';
+            } else {
+                jwBox.style.display = 'none';
+                document.getElementById('simUnitText').textContent = '/ Kg (Excl. GST)';
+            }
+
+            runLiveSimulation();
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            document.getElementById('tableRowCount').textContent = `${data.items.length} Active Rows`;
+
+            data.items.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="item-cell">
+                            <span class="item-name">${row.item}</span>
+                            <span class="item-spec">${row.spec}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="slab-pill">${row.slab}</span>
+                    </td>
+                    <td>
+                        <span class="rate-cell">₹${row.partyRate.toFixed(2)}</span>
+                        <span class="discount-badge">${row.discount} Off</span>
+                    </td>
+                    <td>
+                        <span class="fallback-rate">₹${row.generalRate.toFixed(2)}</span>
+                    </td>
+                    <td>
+                        <span class="advantage-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            ${row.advantage}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="alert('Editing slab for ${row.item}')">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function runLiveSimulation() {
+            const data = contractsData[currentContractKey];
+            const selVal = document.getElementById('simSelectCount').value;
+            const qty = parseFloat(document.getElementById('simQty').value) || 0;
+            const opt = data.selectOptions.find(o => o.id === selVal) || data.selectOptions[0];
+
+            let effectiveRate = opt.base30s;
+            let generalRate = opt.genBase;
+            let slabLabel = '0 – 2,000 Kg Slab';
+
+            if (currentContractKey === 'mill') {
+                if (qty > 2000) {
+                    effectiveRate = opt.bulk30s;
+                    generalRate = opt.genBulk;
+                    slabLabel = '2,001 – 10,000 Kg Bulk Slab';
+                }
+            }
+
+            let lycraSurcharge = 0;
+            if (data.isJobWork && document.getElementById('simLycraCheck').checked) {
+                lycraSurcharge = 3.50;
+                document.getElementById('simSurchargeRow').style.display = 'flex';
+            } else {
+                document.getElementById('simSurchargeRow').style.display = 'none';
+            }
+
+            const finalUnitRate = effectiveRate + lycraSurcharge;
+            const finalGeneralUnitRate = generalRate + lycraSurcharge;
+            const totalOrder = finalUnitRate * qty;
+            const totalGeneral = finalGeneralUnitRate * qty;
+            const totalSavings = Math.max(0, totalGeneral - totalOrder);
+
+            document.getElementById('simEffectiveRate').textContent = `₹${finalUnitRate.toFixed(2)}`;
+            document.getElementById('simBaseRate').textContent = `₹${effectiveRate.toFixed(2)} / Kg`;
+            document.getElementById('simMatchedSlab').textContent = slabLabel;
+            document.getElementById('simTotalOrderVal').textContent = `₹${totalOrder.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('simTotalSavings').textContent = `₹${totalSavings.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})} vs General List`;
+            document.getElementById('simPartyRef').textContent = data.partyName;
+        }
+
+        function exportSamplePdf() {
+            window.print();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            switchPartyContract('mill');
+        });
+    </script>
+</body>
+</html>

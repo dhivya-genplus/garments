@@ -7,7 +7,7 @@ This directory contains the authoritative screen-by-screen UI specifications for
 
 ---
 
-## Screen Directory & Status Tracker (40 / 40 Complete — 100% Specification Readiness)
+## Screen Directory & Status Tracker (43 / 43 Complete — 100% Specification Readiness)
 
 | Screen ID | Page Name | Module | Route | Status | Spec Document |
 |---|---|---|---|---|---|
@@ -22,6 +22,7 @@ This directory contains the authoritative screen-by-screen UI specifications for
 | **`SCR-PROC-001-EDIT`**| **Yarn Purchase Order (PO) Edit Screen** | `Module 3: Procurement` | `/procurement/yarn-po/[id]/edit` | ✅ Complete | [04_YARN_PO_EDIT_WORKFLOW_SPECIFICATION.md](04_YARN_PO_EDIT_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-PROC-001-LIST`**| **Yarn Purchase Order (PO) List & Register** | `Module 3: Procurement` | `/procurement/yarn-po` | ✅ Complete | [05_YARN_PO_LIST_WORKFLOW_SPECIFICATION.md](05_YARN_PO_LIST_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-PROC-001-PRINT`**|**Yarn Purchase Order (PO) Print / PDF** | `Module 3: Procurement` | `/procurement/yarn-po/[id]/print` | ✅ Complete | [06_YARN_PO_PRINT_DOCUMENT_SPECIFICATION.md](06_YARN_PO_PRINT_DOCUMENT_SPECIFICATION.md) |
+| **`SCR-PROC-002-ADD`** | **Yarn PO Return & Debit Note Add Screen**| `Module 3: Procurement` | `/procurement/yarn-po-returns/new` | ✅ Complete | [43_YARN_PO_RETURN_ADD_WORKFLOW_SPECIFICATION.md](43_YARN_PO_RETURN_ADD_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-INVN-001-ADD`** | **Yarn Inward (GRN) Add Workflow** | `Module 4: Inventory` | `/inventory/yarn-inward/new` | ✅ Complete | [07_YARN_INWARD_ADD_WORKFLOW_SPECIFICATION.md](07_YARN_INWARD_ADD_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-INVN-001-EDIT`**| **Yarn Inward (GRN) Edit Screen** | `Module 4: Inventory` | `/inventory/yarn-inward/[id]/edit` | ✅ Complete | [08_YARN_INWARD_EDIT_WORKFLOW_SPECIFICATION.md](08_YARN_INWARD_EDIT_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-INVN-001-LIST`**| **Yarn Inward (GRN) List & Register** | `Module 4: Inventory` | `/inventory/yarn-inward` | ✅ Complete | [09_YARN_INWARD_LIST_WORKFLOW_SPECIFICATION.md](09_YARN_INWARD_LIST_WORKFLOW_SPECIFICATION.md) |
@@ -51,6 +52,8 @@ This directory contains the authoritative screen-by-screen UI specifications for
 | **`SCR-PRIC-001-LIST`**| **Yarn Price List Register & Management**| `Module 9: Pricing` | `/pricing/yarn-price-lists` | ✅ Complete | [25_YARN_PRICE_LIST_LIST_WORKFLOW_SPECIFICATION.md](25_YARN_PRICE_LIST_LIST_WORKFLOW_SPECIFICATION.md) |
 | **`SCR-PRIC-001-PRINT`**|**Yarn Price List (Rate Card) Print**| `Module 9: Pricing` | `/pricing/yarn-price-lists/[id]/print` | ✅ Complete | [26_YARN_PRICE_LIST_PRINT_DOCUMENT_SPECIFICATION.md](26_YARN_PRICE_LIST_PRINT_DOCUMENT_SPECIFICATION.md) |
 | **`SCR-PRIC-002`** | **Job Work Subcontract Conversion Matrix** | `Module 9: Pricing` | `/pricing/job-work-rules` | ✅ Complete | [37_JOB_WORK_MATRIX_UI_SPECIFICATION.md](37_JOB_WORK_MATRIX_UI_SPECIFICATION.md) |
+| **`SCR-PRIC-003`** | **Party Price List Contract Screen & Rate Sandbox** | `Module 9: Pricing` | `/pricing/party-price-lists/[id]` | ✅ Complete | [41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md](41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md) |
+| **`SCR-PRIC-004`** | **Multi-Party Price List Comparison Matrix** | `Module 9: Pricing` | `/pricing/party-comparison-matrix` | ✅ Complete | [42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md](42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md) |
 
 ---
 

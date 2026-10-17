@@ -1,5 +1,8 @@
 from django.contrib import admin
-from apps.purchase.models import parent_po_table, child_po_table, yarn_po_delivery_table
+from apps.purchase.models import (
+    parent_po_table, child_po_table, yarn_po_delivery_table,
+    parent_yarn_po_return_table, child_yarn_po_return_table
+)
 
 
 class ChildPOInline(admin.TabularInline):
@@ -82,3 +85,26 @@ class YarnPODeliveryAdmin(admin.ModelAdmin):
     list_display = ('id', 'tm_po', 'party', 'delivery_date', 'bag', 'quantity')
     list_filter = ('delivery_date', 'party')
     search_fields = ('tm_po__po_number', 'party__name')
+
+
+class ChildYarnPoReturnInline(admin.TabularInline):
+    model = child_yarn_po_return_table
+    extra = 1
+    fields = ('yarn_count', 'color_shade', 'lot_no', 'bag', 'per_bag', 'quantity', 'rate', 'amount')
+    readonly_fields = ('quantity', 'amount')
+
+
+@admin.register(parent_yarn_po_return_table)
+class ParentYarnPoReturnAdmin(admin.ModelAdmin):
+    list_display = ('return_number', 'return_date', 'party', 'yarn_count', 'defect_reason', 'quantity', 'total_debit_amount', 'debit_note_number', 'is_authorized')
+    list_filter = ('defect_reason', 'yarn_type', 'is_authorized', 'company', 'return_date')
+    search_fields = ('return_number', 'debit_note_number', 'party__name')
+    readonly_fields = ('subtotal', 'tax_amount', 'cgst_amount', 'sgst_amount', 'total_debit_amount', 'created_on', 'updated_on')
+    inlines = [ChildYarnPoReturnInline]
+
+
+@admin.register(child_yarn_po_return_table)
+class ChildYarnPoReturnAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tm_return', 'yarn_count', 'lot_no', 'bag', 'quantity', 'rate', 'amount')
+    search_fields = ('tm_return__return_number', 'lot_no')
+

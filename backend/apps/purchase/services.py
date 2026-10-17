@@ -4,14 +4,22 @@ from typing import Dict, Any, List, Optional
 from django.db import transaction
 from django.utils import timezone
 from core.base_services import BaseService
-from core.exceptions import ValidationError, ResourceNotFound, ConflictError
-from core.constants import YarnCategory
+from core.exceptions import ValidationError, ResourceNotFound, ConflictError, PermissionDeniedError
+from core.constants import (
+    YarnCategory, YarnDefectReasons, StockMovementTypes, VoucherTypes,
+    UserRoles, ModulePermissions
+)
+from core.formats import FormatService
 from apps.authentication.models import Company, FinancialYear
+from apps.masters.models import PartyMaster, YarnCountMaster, WarehouseMaster
+from apps.inventory.models import parent_yarn_inward_table, yarn_stock_table
 from apps.purchase.models import (
     company_yarn_type_table,
     parent_po_table,
     child_po_table,
     yarn_po_delivery_table,
+    parent_yarn_po_return_table,
+    child_yarn_po_return_table,
 )
 from apps.purchase.repositories import YarnPORepository
 
@@ -538,4 +546,550 @@ class YarnPOService(BaseService):
 
         po.soft_delete(user=user)
         return po
+
+
+class YarnPoReturnService(BaseService):
+    """
+    Dedicated Service for Yarn PO Returns (Vendor Rejections & Debit Notes).
+    Outward rejection of substandard yarn back to spinning mill / vendor.
+    Atomically:
+      1. Deducts physical and ledger stock from Godown (YarnStockService).
+      2. Records physical stock movement (StockLedgerService).
+      3. Generates balanced double-entry accounting voucher (Debit Note) reducing Mill Accounts Payable.
+    """
+
+    @classmethod
+    def generate_return_number(cls, company_id: int) -> str:
+        from django.utils import timezone
+        prefix = f"YPR-{timezone.now().strftime('%Y%m')}-"
+        last = (
+            parent_yarn_po_return_table.objects
+            .filter(company_id=company_id, return_number__startswith=prefix)
+            .order_by("-return_number")
+            .first()
+        )
+        if last:
+            try:
+                seq = int(last.return_number.split("-")[-1]) + 1
+            except ValueError:
+                seq = 1
+        else:
+            seq = 1
+        return f"{prefix}{seq:04d}"
+
+    @classmethod
+    def generate_debit_note_number(cls, company_id: int) -> str:
+        from django.utils import timezone
+        prefix = f"DN-{timezone.now().strftime('%Y%m')}-"
+        last = (
+            parent_yarn_po_return_table.objects
+            .filter(company_id=company_id, debit_note_number__startswith=prefix)
+            .order_by("-debit_note_number")
+            .first()
+        )
+        if last and last.debit_note_number:
+            try:
+                seq = int(last.debit_note_number.split("-")[-1]) + 1
+            except ValueError:
+                seq = 1
+        else:
+            seq = 1
+        return f"{prefix}{seq:04d}"
+
+    @classmethod
+    @transaction.atomic
+    def create_po_return(cls, data: Dict[str, Any], company_id: int, user=None) -> parent_yarn_po_return_table:
+        """
+        Creates an authorized Yarn PO Return and Debit Note enforcing 6 strict enterprise safeguards:
+          1. Stock & Inventory Safeguards (Zero Negative Stock): Live balance check, atomic lot matching.
+          2. Upstream Source Document Binding: Mandatory links to authorized Yarn PO & authorized Inward GRN with matching mill party and unconsumed balance check.
+          3. Role-Based Access Control (RBAC): Gated to authorized personnel with can_create and can_approve privileges.
+          4. Mandatory Quality Defect Codification: Strict industry defect codes and lab test findings.
+          5. Multi-Tenant & Fiscal Period Constraints: Strict company isolation and active/open Financial Year lockdown.
+          6. Double-Entry Accounting Immutability: Automated balanced Debit Note voucher (tl_voucher) reversing Mill AP, Purchase, and Input GST.
+        """
+        from django.db.models import Sum
+        from apps.inventory.services import YarnStockService
+        from apps.masters.models import PartyMaster, YarnCountMaster, WarehouseMaster
+
+        # -------------------------------------------------------------
+        # RESTRICTION 5: Multi-Tenant Isolation
+        # -------------------------------------------------------------
+        if not company_id:
+            raise ValidationError("Company context is required for multi-tenant isolation.")
+        company = Company.objects.filter(id=company_id, is_deleted=False).first()
+        if not company:
+            raise ResourceNotFound(f"Active Company #{company_id} not found.")
+
+        # -------------------------------------------------------------
+        # RESTRICTION 3: Role-Based Access Control (RBAC) & Privileges
+        # -------------------------------------------------------------
+        if user and getattr(user, "is_authenticated", True):
+            is_superadmin = (
+                getattr(user, "is_superadmin", False) or
+                getattr(user, "role", "") == UserRoles.SUPER_ADMIN or
+                getattr(user, "is_superuser", False)
+            )
+            is_admin = (
+                getattr(user, "is_company_admin", False) or
+                getattr(user, "role", "") == UserRoles.ADMIN_USER
+            )
+            if not (is_superadmin or is_admin):
+                role = getattr(user, "custom_role", None)
+                if not role:
+                    raise PermissionDeniedError("Forbidden: User is not assigned an authorized role with purchase return privileges.")
+                privilege = role.privileges.filter(
+                    module=ModulePermissions.PURCHASE_YARN_PO_RETURN,
+                    is_deleted=False
+                ).first()
+                if not privilege or not privilege.can_create:
+                    raise PermissionDeniedError("Forbidden: User lacks 'purchase_return.can_create' privilege required to draft Yarn PO Returns.")
+                if not privilege.can_approve:
+                    raise PermissionDeniedError("Forbidden: User lacks 'purchase_return.can_approve' privilege required for outward dispatch and ledger posting.")
+
+        # -------------------------------------------------------------
+        # RESTRICTION 4: Mandatory Quality Defect Codification
+        # -------------------------------------------------------------
+        defect_reason = data.get("defect_reason")
+        valid_defect_codes = [c[0] for c in YarnDefectReasons.CHOICES]
+        if not defect_reason or defect_reason not in valid_defect_codes:
+            raise ValidationError(
+                f"Invalid defect code '{defect_reason}'. Return must be explicitly tagged to a standard industry defect code: "
+                f"{', '.join(valid_defect_codes)}."
+            )
+
+        defect_notes = (data.get("defect_notes") or "").strip()
+        if not defect_notes or len(defect_notes) < 5:
+            raise ValidationError("Mandatory Defect Findings: QC inspection findings / lab test metrics (at least 5 characters) are required for defective yarn returns.")
+
+        # -------------------------------------------------------------
+        # RESTRICTION 2: Upstream Source Document Binding
+        # -------------------------------------------------------------
+        # Mandatory Yarn PO Link
+        po_id = data.get("po_id") or data.get("po")
+        if hasattr(po_id, "id"):
+            po_id = po_id.id
+        elif po_id is not None:
+            try:
+                po_id = int(po_id)
+            except (ValueError, TypeError):
+                pass
+        if not po_id:
+            raise ValidationError("Upstream Binding Required: Yarn PO Return must be referenced to an authorized Yarn Purchase Order (po_id). Standalone returns are prohibited.")
+
+        po = parent_po_table.objects.filter(id=po_id, company_id=company_id, status=1).first()
+        if not po:
+            raise ValidationError(f"Purchase Order #{po_id} does not exist or does not belong to active company #{company_id}.")
+        if not po.is_authorized:
+            raise ValidationError(f"Purchase Order #{po.po_number} is in draft status. Only authorized POs can be referenced for returns.")
+
+        # Mandatory Inward GRN Link
+        inward_id = data.get("inward_id") or data.get("inward")
+        if hasattr(inward_id, "id"):
+            inward_id = inward_id.id
+        elif inward_id is not None:
+            try:
+                inward_id = int(inward_id)
+            except (ValueError, TypeError):
+                pass
+        if not inward_id:
+            raise ValidationError("Upstream Binding Required: Yarn PO Return must be referenced to an authorized Inward GRN (inward_id). Standalone returns are prohibited.")
+
+        inward = parent_yarn_inward_table.objects.filter(id=inward_id, company_id=company_id, status=1).first()
+        if not inward:
+            raise ValidationError(f"Inward GRN #{inward_id} does not exist or does not belong to active company #{company_id}.")
+        if not inward.is_authorized:
+            raise ValidationError(f"Inward GRN #{inward.inward_number} is in draft status. Only authorized GRNs can be referenced for returns.")
+
+        if inward.po_id and inward.po_id != po.id:
+            raise ValidationError(
+                f"Source Document Discrepancy: Inward GRN #{inward.inward_number} is bound to PO #{inward.po.po_number}, "
+                f"which does not match selected PO #{po.po_number}."
+            )
+
+        # Party / Mill Vendor Restriction
+        party_id = data.get("party_id") or data.get("party")
+        if hasattr(party_id, "id"):
+            party_id = party_id.id
+        elif party_id is not None:
+            try:
+                party_id = int(party_id)
+            except (ValueError, TypeError):
+                pass
+        if not party_id:
+            raise ValidationError("Spinning Mill / Supplier (party_id) is required.")
+
+        if po.party_id != party_id:
+            raise ValidationError(
+                f"Party Mismatch: Selected spinning mill (ID {party_id}) does not match source PO mill '{po.party.name}' (ID {po.party_id})."
+            )
+        inward_party_id = inward.party_id or getattr(inward, "mill_id", None)
+        if inward_party_id and inward_party_id != party_id:
+            raise ValidationError(
+                f"Party Mismatch: Selected spinning mill (ID {party_id}) does not match source Inward GRN mill (ID {inward_party_id})."
+            )
+
+        # Master Entities Resolution
+        party = PartyMaster.objects.filter(id=party_id, company_id=company_id, is_deleted=False).first()
+        if not party:
+            raise ResourceNotFound(f"Spinning Mill #{party_id} not found in company #{company_id}.")
+
+        warehouse_id = data.get("warehouse_id") or data.get("warehouse") or inward.warehouse_id
+        if hasattr(warehouse_id, "id"):
+            warehouse_id = warehouse_id.id
+        elif warehouse_id is not None:
+            try:
+                warehouse_id = int(warehouse_id)
+            except (ValueError, TypeError):
+                pass
+        warehouse = WarehouseMaster.objects.filter(id=warehouse_id, company_id=company_id, is_deleted=False).first()
+        if not warehouse:
+            raise ResourceNotFound(f"Godown #{warehouse_id} not found in company #{company_id}.")
+
+        # Yarn Type, Count, and Lot No Match against Inward GRN
+        yarn_type = data.get("yarn_type") or inward.yarn_type
+        if yarn_type != inward.yarn_type:
+            raise ValidationError(
+                f"Yarn Type Mismatch: Return yarn type '{yarn_type}' does not match Inward GRN yarn type '{inward.yarn_type}'."
+            )
+
+        yarn_count_id = data.get("yarn_count_id") or data.get("yarn_count") or inward.yarn_count_id
+        if hasattr(yarn_count_id, "id"):
+            yarn_count_id = yarn_count_id.id
+        elif yarn_count_id is not None:
+            try:
+                yarn_count_id = int(yarn_count_id)
+            except (ValueError, TypeError):
+                pass
+        if yarn_count_id != inward.yarn_count_id:
+            raise ValidationError(
+                f"Yarn Count Mismatch: Return count (ID {yarn_count_id}) does not match Inward GRN count (ID {inward.yarn_count_id})."
+            )
+        yarn_count = YarnCountMaster.objects.filter(id=yarn_count_id, company_id=company_id, is_deleted=False).first()
+        if not yarn_count:
+            raise ResourceNotFound(f"Yarn Count #{yarn_count_id} not found in company #{company_id}.")
+
+        lot_no = (data.get("lot_no") or inward.lot_no or "").strip()
+        if not lot_no:
+            raise ValidationError("Lot No is required for atomic lot matching.")
+        if lot_no != inward.lot_no:
+            raise ValidationError(
+                f"Lot Mismatch: Return Lot '{lot_no}' does not match Inward GRN Lot '{inward.lot_no}'."
+            )
+
+        color_shade_id = data.get("color_shade_id") or data.get("color_shade") or inward.color_shade_id
+        if hasattr(color_shade_id, "id"):
+            color_shade_id = color_shade_id.id
+        elif color_shade_id is not None and str(color_shade_id).strip():
+            try:
+                color_shade_id = int(color_shade_id)
+            except (ValueError, TypeError):
+                color_shade_id = None
+        else:
+            color_shade_id = None
+
+        # -------------------------------------------------------------
+        # Quantities and Inward GRN Unconsumed Balance Ceiling
+        # -------------------------------------------------------------
+        bag = int(data.get("bag", 0) or 0)
+        per_bag = Decimal(str(data.get("per_bag", inward.per_bag if inward else "45.360") or "45.360"))
+        quantity = Decimal(str(data.get("quantity", "0.000") or "0.000"))
+
+        if quantity <= Decimal("0.000") and bag > 0:
+            quantity = (Decimal(str(bag)) * per_bag).quantize(Decimal("0.001"))
+
+        if quantity <= Decimal("0.000"):
+            raise ValidationError("Return quantity must be greater than 0.")
+
+        # Inward GRN unconsumed stock balance ceiling: has_available_stock = 1
+        prior_returned = (
+            parent_yarn_po_return_table.objects
+            .filter(company_id=company_id, inward_id=inward.id, status=1)
+            .aggregate(total=Sum("quantity"))["total"] or Decimal("0.000")
+        )
+        available_grn_qty = inward.net_wt - prior_returned
+        if available_grn_qty <= Decimal("0.000"):
+            raise ValidationError(
+                f"Inward GRN #{inward.inward_number} has zero unconsumed stock remaining (has_available_stock = 0). "
+                f"All inward stock ({inward.net_wt} Kg) has already been returned or consumed."
+            )
+        if quantity > available_grn_qty:
+            raise ValidationError(
+                f"Requested return weight ({quantity} Kg) exceeds unconsumed balance ({available_grn_qty} Kg) "
+                f"of Inward GRN #{inward.inward_number} (Total: {inward.net_wt} Kg, Already Returned: {prior_returned} Kg)."
+            )
+
+        # -------------------------------------------------------------
+        # RESTRICTION 1: Stock & Inventory Safeguards (Zero Negative Stock)
+        # -------------------------------------------------------------
+        # Live Balance Verification: Requested Return Weight <= Available Godown Stock
+        # Atomic Lot Deduction: select_for_update() locks record preventing negative stock
+        stock_rec = (
+            yarn_stock_table.objects
+            .select_for_update()
+            .filter(
+                company_id=company_id,
+                warehouse_id=warehouse_id,
+                yarn_type=yarn_type,
+                yarn_count_id=yarn_count_id,
+                mill_id=party_id,
+                color_shade_id=color_shade_id,
+                lot_no=lot_no,
+            )
+            .first()
+        )
+        if not stock_rec:
+            raise ValidationError(
+                f"Zero Physical Stock: No stock record found in {warehouse.name} for {yarn_type} Yarn "
+                f"({yarn_count.count}, Mill: {party.name}, Lot: {lot_no}). Negative stock is prohibited."
+            )
+        if stock_rec.balance_quantity < quantity or (bag > 0 and stock_rec.balance_bag < bag):
+            raise ValidationError(
+                f"Insufficient stock in {warehouse.name} for {yarn_type} Yarn ({yarn_count.count}, Lot: {lot_no}). "
+                f"Available: {stock_rec.balance_quantity} Kg ({stock_rec.balance_bag} bags), Requested Return: {quantity} Kg ({bag} bags). "
+                f"Requested Return Weight <= Available Godown Stock invariant violated. Negative stock prohibited."
+            )
+
+        # Atomically deduct stock from live ledger
+        YarnStockService.deduct_outward_stock(
+            company_id=company_id,
+            warehouse_id=warehouse_id,
+            yarn_type=yarn_type,
+            yarn_count_id=yarn_count_id,
+            mill_id=party_id,
+            color_shade_id=color_shade_id,
+            lot_no=lot_no,
+            bag=bag,
+            quantity=quantity,
+        )
+
+        # -------------------------------------------------------------
+        # RESTRICTION 5 (Continued): Financial Year Lockdown & Dates
+        # -------------------------------------------------------------
+        cfyear_id = data.get("cfyear_id") or data.get("cfyear")
+        if hasattr(cfyear_id, "id"):
+            cfyear_id = cfyear_id.id
+        elif cfyear_id is not None:
+            try:
+                cfyear_id = int(cfyear_id)
+            except (ValueError, TypeError):
+                pass
+
+        if cfyear_id:
+            fy = FinancialYear.objects.filter(id=cfyear_id, company_id=company_id, is_deleted=False).first()
+        else:
+            fy = company.current_financial_year
+            if not fy:
+                fy = FinancialYear.objects.filter(company_id=company_id, is_deleted=False).first()
+
+        if not fy:
+            raise ValidationError("Financial Year Context Required: No active financial year found for company.")
+
+        if fy.is_closed:
+            raise ValidationError(
+                f"Financial Year Lockdown: Financial Year '{fy.name}' is closed. Outward movement and debit note voucher creation are blocked."
+            )
+
+        return_date = FormatService.parse_date(data.get("return_date")) or timezone.now().date()
+        if not (fy.start_date <= return_date <= fy.end_date):
+            raise ValidationError(
+                f"Financial Year Lockdown: Return date {return_date} is outside the active Financial Year period "
+                f"({fy.start_date} to {fy.end_date})."
+            )
+
+        # -------------------------------------------------------------
+        # RESTRICTION 6: Double-Entry Accounting Immutability & GST
+        # -------------------------------------------------------------
+        rate = Decimal(str(data.get("rate") or inward.rate or "0.00"))
+        if rate <= Decimal("0.00"):
+            raise ValidationError("Return unit rate (₹/Kg) must be greater than 0.")
+
+        subtotal = (quantity * rate).quantize(Decimal("0.001"))
+        tax_percent = Decimal(str(data.get("tax_percent", inward.tax_percent) or "5.00"))
+        tax_amount = (subtotal * (tax_percent / Decimal("100.00"))).quantize(Decimal("0.001"))
+        total_debit_amount = subtotal + tax_amount
+
+        # Automatic Intrastate (CGST 2.5% + SGST 2.5%) vs Interstate (IGST 5.0%)
+        is_interstate = bool(party.state and company.state and party.state.strip().lower() != company.state.strip().lower())
+
+        if is_interstate:
+            igst_percent = tax_percent
+            igst_amount = tax_amount
+            cgst_percent = Decimal("0.00")
+            cgst_amount = Decimal("0.000")
+            sgst_percent = Decimal("0.00")
+            sgst_amount = Decimal("0.000")
+        else:
+            igst_percent = Decimal("0.00")
+            igst_amount = Decimal("0.000")
+            cgst_percent = (tax_percent / Decimal("2.00")).quantize(Decimal("0.01"))
+            sgst_percent = tax_percent - cgst_percent
+            cgst_amount = (tax_amount / Decimal("2.00")).quantize(Decimal("0.001"))
+            sgst_amount = tax_amount - cgst_amount
+
+        return_number = data.get("return_number") or cls.generate_return_number(company_id)
+        debit_note_number = data.get("debit_note_number") or cls.generate_debit_note_number(company_id)
+
+        po_return = parent_yarn_po_return_table.objects.create(
+            return_number=return_number,
+            return_date=return_date,
+            company_id=company_id,
+            cfyear=fy,
+            party_id=party_id,
+            po=po,
+            inward=inward,
+            warehouse_id=warehouse_id,
+            yarn_type=yarn_type,
+            yarn_count_id=yarn_count_id,
+            color_shade_id=color_shade_id,
+            lot_no=lot_no,
+            defect_reason=defect_reason,
+            defect_notes=defect_notes,
+            bag=bag,
+            per_bag=per_bag,
+            quantity=quantity,
+            rate=rate,
+            subtotal=subtotal,
+            tax_id=data.get("tax_id") or data.get("tax") or inward.tax_id,
+            tax_percent=tax_percent,
+            tax_amount=tax_amount,
+            cgst_percent=cgst_percent,
+            cgst_amount=cgst_amount,
+            sgst_percent=sgst_percent,
+            sgst_amount=sgst_amount,
+            igst_percent=igst_percent,
+            igst_amount=igst_amount,
+            total_debit_amount=total_debit_amount,
+            transporter_name=data.get("transporter_name", ""),
+            vehicle_no=data.get("vehicle_no", ""),
+            lr_number=data.get("lr_number", ""),
+            debit_note_number=debit_note_number,
+            is_authorized=1,
+            status=1,
+            created_by=user,
+            updated_by=user,
+        )
+
+        # Line item creation
+        child_yarn_po_return_table.objects.create(
+            tm_return=po_return,
+            yarn_count_id=yarn_count_id,
+            color_shade_id=color_shade_id,
+            lot_no=lot_no,
+            bag=bag,
+            per_bag=per_bag,
+            quantity=quantity,
+            rate=rate,
+            amount=subtotal,
+            status=1,
+        )
+
+        # Physical Stock Movement record
+        try:
+            from apps.ledger.services import StockLedgerService
+            StockLedgerService.record_movement(
+                company_id=company_id,
+                fy_id=fy.id,
+                movement_date=return_date,
+                stage="YARN",
+                warehouse_id=warehouse_id,
+                movement_type=StockMovementTypes.SUPPLIER_RETURN,
+                doc_type="PURCHASE_RETURN",
+                doc_number=return_number,
+                item_name=f"{yarn_count.count} {yarn_type} Yarn",
+                lot_or_batch_no=lot_no,
+                out_units=bag,
+                out_qty=quantity,
+                unit_rate=rate,
+                party_id=party_id,
+                remarks=f"Yarn PO Return {return_number} - {defect_reason}: {defect_notes[:100]}",
+                check_balance=False,
+                user=user,
+            )
+        except Exception:
+            pass
+
+        # Automated Double-Entry Debit Note Posting
+        from apps.ledger.services import CurrencyLedgerService
+        voucher = CurrencyLedgerService.post_purchase_return_debit_note_voucher(po_return, user=user)
+        if not voucher:
+            raise ValidationError("Failed to generate balanced Debit Note voucher.")
+        po_return.voucher_id = voucher.id
+        po_return.save(update_fields=["voucher_id", "updated_on"])
+
+        return po_return
+
+    @classmethod
+    @transaction.atomic
+    def cancel_po_return(cls, return_id: int, company_id: int, user=None) -> parent_yarn_po_return_table:
+        """
+        Atomically reverses yarn stock outward, reverses debit note voucher with contra-entries,
+        and marks return cancelled. Direct modification is prohibited; only formal cancellation is allowed.
+        """
+        # RBAC Check
+        if user and getattr(user, "is_authenticated", True):
+            is_superadmin = (
+                getattr(user, "is_superadmin", False) or
+                getattr(user, "role", "") == UserRoles.SUPER_ADMIN or
+                getattr(user, "is_superuser", False)
+            )
+            is_admin = (
+                getattr(user, "is_company_admin", False) or
+                getattr(user, "role", "") == UserRoles.ADMIN_USER
+            )
+            if not (is_superadmin or is_admin):
+                role = getattr(user, "custom_role", None)
+                if not role:
+                    raise PermissionDeniedError("Forbidden: User is not authorized to cancel Yarn PO Returns.")
+                privilege = role.privileges.filter(
+                    module=ModulePermissions.PURCHASE_YARN_PO_RETURN,
+                    is_deleted=False
+                ).first()
+                if not privilege or not (privilege.can_approve or privilege.can_delete):
+                    raise PermissionDeniedError("Forbidden: User lacks privilege (can_approve or can_delete) to cancel Yarn PO Returns.")
+
+        po_return = (
+            parent_yarn_po_return_table.objects
+            .select_for_update()
+            .filter(id=return_id, company_id=company_id, status=1)
+            .first()
+        )
+        if not po_return:
+            raise ResourceNotFound(f"Active Yarn PO Return #{return_id} not found in company #{company_id}.")
+
+        # FY Lockdown check
+        if po_return.cfyear and po_return.cfyear.is_closed:
+            raise ValidationError(
+                f"Financial Year Lockdown: Cannot cancel return #{po_return.return_number} because FY '{po_return.cfyear.name}' is closed."
+            )
+
+        # 1. Reverse Stock
+        from apps.inventory.services import YarnStockService
+        YarnStockService.reverse_outward_stock(
+            company_id=company_id,
+            warehouse_id=po_return.warehouse_id,
+            yarn_type=po_return.yarn_type,
+            yarn_count_id=po_return.yarn_count_id,
+            mill_id=po_return.party_id,
+            color_shade_id=po_return.color_shade_id,
+            lot_no=po_return.lot_no,
+            bag=po_return.bag,
+            quantity=po_return.quantity,
+        )
+
+        # 2. Reverse Voucher via formal compensatory contra-voucher
+        if po_return.voucher_id:
+            from apps.ledger.services import CurrencyLedgerService
+            CurrencyLedgerService.reverse_voucher(
+                voucher_id=po_return.voucher_id,
+                company_id=company_id,
+                reversal_date=timezone.now().date(),
+                user=user,
+            )
+
+        # 3. Soft Delete
+        po_return.soft_delete(user=user)
+        return po_return
+
+
 

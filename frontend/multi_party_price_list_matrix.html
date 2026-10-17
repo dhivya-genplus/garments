@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Party Price List Comparison Matrix — Garments ERP & CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-subtle: #172033;
+            --bg-input: #1f293d;
+            --border-color: #243049;
+            --border-hover: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --badge-best-bg: rgba(16, 185, 129, 0.16);
+            --badge-best-text: #34d399;
+            --badge-high-bg: rgba(244, 63, 94, 0.16);
+            --badge-high-text: #fb7185;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: #ffffff;
+            font-family: var(--font-heading);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .page-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 24px;
+        }
+
+        /* Header Title & Filter Toolbar */
+        .matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .matrix-title h1 {
+            font-family: var(--font-heading);
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .matrix-title p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .filter-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .filter-select {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: var(--bg-card);
+            color: #ffffff;
+        }
+
+        /* KPI Summary Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .icon-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .icon-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .icon-purple { background: rgba(139, 92, 246, 0.15); color: #c084fc; }
+        .icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .kpi-number {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Matrix Table Card */
+        .matrix-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .matrix-toolbar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: rgba(23, 32, 51, 0.4);
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .matrix-tab {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-tab:hover {
+            color: #ffffff;
+            border-color: var(--accent-primary);
+        }
+
+        .matrix-tab.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(6, 182, 212, 0.25));
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+        }
+
+        .legend-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.best { background: var(--accent-emerald); }
+        .legend-dot.high { background: #f43f5e; }
+
+        /* Multi-Party Comparison Grid */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .matrix-table th {
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .matrix-table th.party-col {
+            background: rgba(31, 41, 61, 0.6);
+            border-left: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .matrix-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .matrix-table tr:hover td {
+            background: rgba(31, 41, 61, 0.35);
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .item-title {
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .item-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .slab-tag {
+            font-family: monospace;
+            font-size: 11px;
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        .party-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .rate-val {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            display: block;
+        }
+
+        .rate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            margin-top: 3px;
+        }
+
+        .badge-best {
+            background: var(--badge-best-bg);
+            color: var(--badge-best-text);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-higher {
+            background: var(--badge-high-bg);
+            color: var(--badge-high-text);
+        }
+
+        .benchmark-cell {
+            background: rgba(245, 158, 11, 0.04);
+            border-left: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .benchmark-rate {
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--accent-amber);
+            font-weight: 600;
+        }
+
+        .action-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .btn-order {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: #ffffff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-order:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="top-navbar">
+        <div class="navbar-brand">
+            <div class="brand-logo">G</div>
+            <div>
+                <div class="brand-title">Garments ERP & CRM</div>
+                <div class="brand-subtitle">Commercial Pricing & Valuation</div>
+            </div>
+        </div>
+        <div style="font-size: 13px; color: var(--text-secondary);">
+            Logged in: <strong style="color: #ffffff;">Commercial Pricing Manager</strong> • <strong>Tirupur Cluster</strong>
+        </div>
+    </header>
+
+    <main class="page-container">
+
+        <!-- Title & Toolbar -->
+        <div class="matrix-header">
+            <div class="matrix-title">
+                <h1>Multi-Party Price List Comparison Matrix (INR ₹)</h1>
+                <p>Cross-vendor and multi-party rate benchmarking across contracted spinning mills, buyers, and job workers.</p>
+            </div>
+
+            <div class="filter-toolbar">
+                <div class="filter-group">
+                    <label>FY Period:</label>
+                    <select class="filter-select">
+                        <option>FY 2026–27 (Active)</option>
+                        <option>FY 2025–26 (Archived)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Category:</label>
+                    <select class="filter-select" id="categoryFilter" onchange="switchMatrixCategory(this.value)">
+                        <option value="yarn_pur">Yarn Procurement (Mills)</option>
+                        <option value="commercial_sales">Commercial Sales (Buyers)</option>
+                        <option value="job_work">Knitting & Dyeing (Job Workers)</option>
+                    </select>
+                </div>
+                <button class="btn-order" style="padding: 9px 16px; font-size: 13px;" onclick="window.print()">
+                    🖨️ Export Matrix Report
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue">🏭</div>
+                <div>
+                    <div class="kpi-number" id="kpiPartyCount">18 Spinning Mills</div>
+                    <div class="kpi-label">Active Contracted Vendors</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-emerald">💎</div>
+                <div>
+                    <div class="kpi-number" id="kpiBestBenchmark">₹258.00 / Kg</div>
+                    <div class="kpi-label">Lowest Benchmark (30s Combed)</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-purple">📈</div>
+                <div>
+                    <div class="kpi-number">6.8% YoY</div>
+                    <div class="kpi-label">Average Contract Cost Savings</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-amber">🛡️</div>
+                <div>
+                    <div class="kpi-number">100% Deterministic</div>
+                    <div class="kpi-label">Rate Resolution Hierarchy Pass</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrix Card -->
+        <div class="matrix-card">
+            <div class="matrix-toolbar">
+                <div class="tabs-container">
+                    <button class="matrix-tab active" id="tabYarn" onclick="switchMatrixCategory('yarn_pur')">Yarn Procurement Mills</button>
+                    <button class="matrix-tab" id="tabSales" onclick="switchMatrixCategory('commercial_sales')">Commercial Sales Buyers</button>
+                    <button class="matrix-tab" id="tabJob" onclick="switchMatrixCategory('job_work')">Subcontract Job Workers</button>
+                </div>
+
+                <div class="legend-bar">
+                    <div class="legend-item">
+                        <span class="legend-dot best"></span>
+                        <span>Best Negotiated Contract Rate</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot high"></span>
+                        <span>Variance Above Benchmark</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="matrix-table" id="matrixTable">
+                    <!-- Populated dynamically -->
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const matrixData = {
+            yarn_pur: {
+                partyCount: '18 Spinning Mills',
+                benchmark: '₹258.00 / Kg',
+                columns: [
+                    'Item / Yarn Count',
+                    'Volume Slab',
+                    'Lakshmi Spinning Mills (#1042)',
+                    'KPR Mill Limited (#1055)',
+                    'Ramco Textiles (#1088)',
+                    'General Benchmark List (`PL-PUR-GEN`)',
+                    'Best Action'
+                ],
+                rows: [
+                    {
+                        item: '30s Combed Cotton Cone Yarn',
+                        spec: 'Yarn Type: GREY | CSP: 3050',
+                        slab: '10,000+ Kg',
+                        p1: { rate: '₹258.00', isBest: true, diff: 'Best Rate' },
+                        p2: { rate: '₹262.50', isBest: false, diff: '+1.7%' },
+                        p3: { rate: '₹264.00', isBest: false, diff: '+2.3%' },
+                        benchmark: '₹268.00',
+                        rec: 'Raise PO &rarr; Lakshmi'
+                    },
+                    {
+                        item: '30s Combed Cotton Cone Yarn',
+                        spec: 'Yarn Type: GREY | Standard Lot',
+                        slab: '0 – 2,000 Kg',
+                        p1: { rate: '₹265.00', isBest: true, diff: 'Best Rate' },
+                        p2: { rate: '₹268.00', isBest: false, diff: '+1.1%' },
+                        p3: { rate: '₹270.00', isBest: false, diff: '+1.9%' },
+                        benchmark: '₹275.00',
+                        rec: 'Raise PO &rarr; Lakshmi'
+                    },
+                    {
+                        item: '34s Carded Hosiery Cone Yarn',
+                        spec: 'Yarn Type: GREY | High Twist',
+                        slab: '5,000+ Kg',
+                        p1: { rate: '₹255.00', isBest: false, diff: '+0.8%' },
+                        p2: { rate: '₹253.00', isBest: true, diff: 'Best Rate' },
+                        p3: { rate: '₹256.50', isBest: false, diff: '+1.4%' },
+                        benchmark: '₹260.00',
+                        rec: 'Raise PO &rarr; KPR Mill'
+                    },
+                    {
+                        item: '40s Combed Compact Cone Yarn',
+                        spec: 'Yarn Type: GREY | Compact Spinning',
+                        slab: '5,000+ Kg',
+                        p1: { rate: '₹298.00', isBest: true, diff: 'Best Rate' },
+                        p2: { rate: '₹302.00', isBest: false, diff: '+1.3%' },
+                        p3: { rate: '₹304.50', isBest: false, diff: '+2.1%' },
+                        benchmark: '₹310.00',
+                        rec: 'Raise PO &rarr; Lakshmi'
+                    },
+                    {
+                        item: '2/40s Wound Combed Yarn',
+                        spec: 'Yarn Type: WOUND | Double Yarn',
+                        slab: 'All Quantities',
+                        p1: { rate: '₹325.00', isBest: false, diff: '+1.6%' },
+                        p2: { rate: '₹320.00', isBest: true, diff: 'Best Rate' },
+                        p3: { rate: '₹322.00', isBest: false, diff: '+0.6%' },
+                        benchmark: '₹330.00',
+                        rec: 'Raise PO &rarr; KPR Mill'
+                    }
+                ]
+            },
+            commercial_sales: {
+                partyCount: '24 Domestic & Export Buyers',
+                benchmark: '₹282.00 / Kg',
+                columns: [
+                    'Item / Product',
+                    'Volume Slab',
+                    'Classic Polo Brands (#2088)',
+                    'Dixcy Textiles (#2104)',
+                    'Rupa Garments (#2119)',
+                    'General Sales Benchmark (`PL-SALES-GEN`)',
+                    'Action'
+                ],
+                rows: [
+                    {
+                        item: '30s Combed Grey Yarn Commercial Sale',
+                        spec: 'Billed to domestic knitwear brands',
+                        slab: '1,000 – 5,000 Kg',
+                        p1: { rate: '₹282.00', isBest: true, diff: 'Contract Rate' },
+                        p2: { rate: '₹285.00', isBest: false, diff: '+₹3.00' },
+                        p3: { rate: '₹288.00', isBest: false, diff: '+₹6.00' },
+                        benchmark: '₹295.00',
+                        rec: 'Generate Commercial Invoice'
+                    },
+                    {
+                        item: '30s Cotton Reactive Dyed Yarn',
+                        spec: 'Dark & Extra Dark Shades',
+                        slab: 'Min 0 Kg',
+                        p1: { rate: '₹345.00', isBest: true, diff: 'Contract Rate' },
+                        p2: { rate: '₹350.00', isBest: false, diff: '+₹5.00' },
+                        p3: { rate: '₹352.00', isBest: false, diff: '+₹7.00' },
+                        benchmark: '₹360.00',
+                        rec: 'Generate Commercial Invoice'
+                    }
+                ]
+            },
+            job_work: {
+                partyCount: '32 Subcontract Units',
+                benchmark: '₹16.00 / Kg',
+                columns: [
+                    'Process Stage & Fabric',
+                    'Technical Spec',
+                    'Annai Knitting Works (#3015)',
+                    'Sri Balaji Knitters (#3022)',
+                    'Vignesh Dyeing Process (#3040)',
+                    'General Benchmark (`PL-JOB-KNIT-GEN`)',
+                    'Job Allocation'
+                ],
+                rows: [
+                    {
+                        item: 'Single Jersey Knitting Conversion',
+                        spec: 'Gauge: 24GG / 28GG | Lycra: +₹3.50',
+                        slab: 'Min 0 Kg',
+                        p1: { rate: '₹16.00', isBest: true, diff: 'Best Rate' },
+                        p2: { rate: '₹17.00', isBest: false, diff: '+₹1.00' },
+                        p3: { rate: '—', isBest: false, diff: 'N/A' },
+                        benchmark: '₹18.00',
+                        rec: 'Issue Job Card &rarr; Annai'
+                    },
+                    {
+                        item: '1x1 Rib & 2x2 Rib Knitting',
+                        spec: 'Gauge: 18GG / 20GG | Lycra: +₹4.00',
+                        slab: 'Min 0 Kg',
+                        p1: { rate: '₹19.50', isBest: true, diff: 'Best Rate' },
+                        p2: { rate: '₹20.50', isBest: false, diff: '+₹1.00' },
+                        p3: { rate: '—', isBest: false, diff: 'N/A' },
+                        benchmark: '₹22.00',
+                        rec: 'Issue Job Card &rarr; Annai'
+                    },
+                    {
+                        item: 'Cotton Soft-Flow Fabric Dyeing (Dark Shade)',
+                        spec: 'Reactive Jet Dyeing | Loss: 4.5%',
+                        slab: 'Batch 500+ Kg',
+                        p1: { rate: '—', isBest: false, diff: 'N/A' },
+                        p2: { rate: '—', isBest: false, diff: 'N/A' },
+                        p3: { rate: '₹62.00', isBest: true, diff: 'Best Rate' },
+                        benchmark: '₹65.00',
+                        rec: 'Issue Process Program &rarr; Vignesh'
+                    }
+                ]
+            }
+        };
+
+        function switchMatrixCategory(catKey) {
+            document.querySelectorAll('.matrix-tab').forEach(t => t.classList.remove('active'));
+            if (catKey === 'yarn_pur') document.getElementById('tabYarn').classList.add('active');
+            if (catKey === 'commercial_sales') document.getElementById('tabSales').classList.add('active');
+            if (catKey === 'job_work') document.getElementById('tabJob').classList.add('active');
+
+            const filterEl = document.getElementById('categoryFilter');
+            if (filterEl.value !== catKey) filterEl.value = catKey;
+
+            const data = matrixData[catKey];
+            document.getElementById('kpiPartyCount').textContent = data.partyCount;
+            document.getElementById('kpiBestBenchmark').textContent = data.benchmark;
+
+            renderMatrixTable(data);
+        }
+
+        function renderMatrixTable(data) {
+            const table = document.getElementById('matrixTable');
+            table.innerHTML = '';
+
+            // Header
+            let theadHtml = '<thead><tr>';
+            data.columns.forEach((col, idx) => {
+                if (idx >= 2 && idx <= 4) {
+                    theadHtml += `<th class="party-col">${col}</th>`;
+                } else if (idx === 5) {
+                    theadHtml += `<th style="text-align: center; background: rgba(245, 158, 11, 0.08);">${col}</th>`;
+                } else {
+                    theadHtml += `<th>${col}</th>`;
+                }
+            });
+            theadHtml += '</tr></thead>';
+
+            // Body
+            let tbodyHtml = '<tbody>';
+            data.rows.forEach(row => {
+                tbodyHtml += `
+                    <tr>
+                        <td>
+                            <div class="item-info">
+                                <span class="item-title">${row.item}</span>
+                                <span class="item-sub">${row.spec}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="slab-tag">${row.slab}</span>
+                        </td>
+                        <td class="party-cell">
+                            <span class="rate-val">${row.p1.rate}</span>
+                            <span class="rate-badge ${row.p1.isBest ? 'badge-best' : 'badge-higher'}">${row.p1.diff}</span>
+                        </td>
+                        <td class="party-cell">
+                            <span class="rate-val">${row.p2.rate}</span>
+                            <span class="rate-badge ${row.p2.isBest ? 'badge-best' : 'badge-higher'}">${row.p2.diff}</span>
+                        </td>
+                        <td class="party-cell">
+                            <span class="rate-val">${row.p3.rate}</span>
+                            <span class="rate-badge ${row.p3.isBest ? 'badge-best' : 'badge-higher'}">${row.p3.diff}</span>
+                        </td>
+                        <td class="benchmark-cell">
+                            <span class="benchmark-rate">${row.benchmark}</span>
+                            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Standard Default</div>
+                        </td>
+                        <td class="action-cell">
+                            <button class="btn-order" onclick="alert('${row.rec} recorded in transaction staging.')">
+                                ${row.rec}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbodyHtml += '</tbody>';
+
+            table.innerHTML = theadHtml + tbodyHtml;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            switchMatrixCategory('yarn_pur');
+        });
+    </script>
+</body>
+</html>

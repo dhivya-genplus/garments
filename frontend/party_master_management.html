@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Master Directory & Enterprise Management — Garments ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-subtle: #172033;
+            --bg-input: #1f293d;
+            --border-color: #243049;
+            --border-hover: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-primary-hover: #2563eb;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --badge-green-bg: rgba(16, 185, 129, 0.14);
+            --badge-green-text: #34d399;
+            --badge-blue-bg: rgba(59, 130, 246, 0.14);
+            --badge-blue-text: #60a5fa;
+            --badge-purple-bg: rgba(139, 92, 246, 0.14);
+            --badge-purple-text: #c084fc;
+            --badge-amber-bg: rgba(245, 158, 11, 0.14);
+            --badge-amber-text: #fbbf24;
+            --badge-rose-bg: rgba(244, 63, 94, 0.14);
+            --badge-rose-text: #fb7185;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navigation Bar */
+        .top-navbar {
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #ffffff;
+            font-family: var(--font-heading);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .company-pill {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .company-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            box-shadow: 0 0 8px var(--accent-emerald);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid transparent;
+            font-family: var(--font-body);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), #2563eb);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-input);
+            border-color: var(--border-hover);
+        }
+
+        .btn-danger-outline {
+            background: transparent;
+            border: 1px solid var(--accent-rose);
+            color: var(--accent-rose);
+        }
+
+        .btn-danger-outline:hover {
+            background: rgba(244, 63, 94, 0.1);
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1540px;
+            margin: 0 auto;
+            padding: 28px 32px;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 4px;
+        }
+
+        .page-desc {
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            max-width: 780px;
+        }
+
+        /* KPI Summary Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-hover);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .kpi-blue::before { background: var(--accent-primary); }
+        .kpi-emerald::before { background: var(--accent-emerald); }
+        .kpi-purple::before { background: var(--accent-purple); }
+        .kpi-amber::before { background: var(--accent-amber); }
+        .kpi-cyan::before { background: var(--accent-cyan); }
+        .kpi-rose::before { background: var(--accent-rose); }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-family: var(--font-heading);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .kpi-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .kpi-positive { color: var(--accent-emerald); font-weight: 600; }
+        .kpi-negative { color: var(--accent-rose); font-weight: 600; }
+
+        /* Taxonomy Tabs */
+        .taxonomy-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .taxonomy-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .taxonomy-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-card-subtle);
+        }
+
+        .taxonomy-tab.active {
+            color: #ffffff;
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .taxonomy-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .tab-count {
+            background: var(--bg-input);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Filter & Search Bar */
+        .filter-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .search-group {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+            max-width: 480px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 9px 14px 9px 38px;
+            color: var(--text-primary);
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .select-filter {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 9px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .select-filter:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Data Table Container */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            font-size: 11.5px;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            vertical-align: middle;
+        }
+
+        .data-table tbody tr {
+            transition: background 0.15s;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(31, 41, 61, 0.45);
+        }
+
+        /* Party Cell Styling */
+        .party-name-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .party-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .party-code-tag {
+            font-family: monospace;
+            background: var(--bg-input);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-color);
+        }
+
+        .party-subtext {
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+
+        /* Role Badges */
+        .role-badge-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-width: 200px;
+        }
+
+        .badge-role {
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .badge-mill { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-knitter { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-dyer { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+        .badge-customer { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-supplier { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .badge-transporter { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .status-active { background: var(--badge-green-bg); color: var(--badge-green-text); }
+        .status-inactive { background: var(--badge-rose-bg); color: var(--badge-rose-text); }
+
+        .gstin-box {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-primary);
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .gstin-copy {
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .gstin-copy:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Ledger Balance Formatting */
+        .balance-receivable {
+            color: var(--accent-emerald);
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .balance-payable {
+            color: var(--accent-rose);
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .balance-nil {
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Price List Indicators */
+        .pl-tag-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pl-tag {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pl-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .pl-yarn { background: var(--accent-cyan); }
+        .pl-fabric { background: var(--accent-purple); }
+        .pl-jobwork { background: var(--accent-emerald); }
+
+        /* Actions Cell */
+        .action-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* Modal Overlay & Modal Window */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(4, 7, 13, 0.82);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 1140px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.97) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card-subtle);
+        }
+
+        .modal-title {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-close-btn:hover {
+            color: #ffffff;
+        }
+
+        /* Modal Tab Navigation */
+        .modal-tabs {
+            display: flex;
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            padding: 0 20px;
+        }
+
+        .modal-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 14px 18px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .modal-tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-tab-btn.active {
+            color: var(--accent-primary);
+        }
+
+        .modal-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-primary);
+        }
+
+        .modal-body {
+            padding: 24px 28px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .modal-footer {
+            padding: 16px 28px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Form Grid & Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 18px;
+        }
+
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-3 { grid-column: span 3; }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-label span.req {
+            color: var(--accent-rose);
+        }
+
+        .form-control {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 9px 13px;
+            color: var(--text-primary);
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .form-helper {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Role Selector Pills */
+        .role-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .role-check-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .role-check-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .role-check-card.checked {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: var(--accent-primary);
+        }
+
+        .role-check-card input[type="checkbox"] {
+            accent-color: var(--accent-primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Dynamic Child Item Tables */
+        .child-table-wrapper {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .child-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        .child-table th {
+            background: var(--bg-card-subtle);
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .child-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn-icon-danger {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 15px;
+        }
+
+        .btn-icon-danger:hover {
+            color: var(--accent-rose);
+        }
+
+        /* Financial Ledger Summary Panel */
+        .financial-summary-card {
+            background: linear-gradient(145deg, #131b2e, #0e1526);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        .fin-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            text-align: center;
+        }
+
+        .fin-stat-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+        }
+
+        .fin-stat-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .fin-stat-number {
+            font-family: monospace;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-emerald);
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+            font-size: 13.5px;
+            animation: slideIn 0.25s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Pagination Controls */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card-subtle);
+            font-size: 12.5px;
+            color: var(--text-secondary);
+        }
+
+        .page-buttons {
+            display: flex;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <a href="#" class="navbar-brand">
+            <div class="brand-logo">G</div>
+            <div>
+                <div class="brand-title">Garments ERP & CRM</div>
+                <div class="brand-subtitle">Textile Manufacturing & Multi-Entity Ledger</div>
+            </div>
+        </a>
+
+        <div class="nav-actions">
+            <div class="company-pill">
+                <div class="company-dot"></div>
+                <span>Tex Garments Mills Ltd (IN-TN)</span>
+            </div>
+            <div class="company-pill">
+                <span>Active FY: <strong>2026-2027</strong></span>
+            </div>
+            <button class="btn btn-primary" onclick="openPartyModal('create')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                Register New Party
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-container">
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Party Master Directory</h1>
+                <p class="page-desc">
+                    Comprehensive centralized registry for Suppliers, Spinning Mills, Knitting Units, Dyeing Houses, Garment Buyers, and Job Workers. 
+                    Maintains unified business profiles, multi-role definitions, GST/PAN compliance, commercial price list linking, textile machine capacities, and live double-entry ledger exposure.
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="exportDirectory()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Export CSV
+                </button>
+                <button class="btn btn-secondary" onclick="openLedgerSummaryModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Ledger Balances
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-label">Total Registered Parties</div>
+                <div class="kpi-value" id="kpi-total-parties">8</div>
+                <div class="kpi-meta">
+                    <span class="kpi-positive">● 8 Active</span> &nbsp;|&nbsp; 0 Suspended
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-emerald">
+                <div class="kpi-label">Textile Job Workers & Mills</div>
+                <div class="kpi-value" id="kpi-textile-units">5</div>
+                <div class="kpi-meta">
+                    2 Mills &nbsp;•&nbsp; 2 Knitters &nbsp;•&nbsp; 1 Dyer
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-amber">
+                <div class="kpi-label">Garment Buyers & Customers</div>
+                <div class="kpi-value" id="kpi-customers">2</div>
+                <div class="kpi-meta">
+                    1 Domestic &nbsp;•&nbsp; 1 Export / Retail
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-label">Total Net Ledger Exposure</div>
+                <div class="kpi-value" id="kpi-ledger-exposure">₹ 14,85,200</div>
+                <div class="kpi-meta">
+                    <span class="kpi-positive">₹ 22.4L Dr</span> &nbsp;|&nbsp; <span class="kpi-negative">₹ 7.5L Cr</span>
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-cyan">
+                <div class="kpi-label">GST Compliance Status</div>
+                <div class="kpi-value">100%</div>
+                <div class="kpi-meta">
+                    7 Regular &nbsp;|&nbsp; 1 Unregistered
+                </div>
+            </div>
+        </div>
+
+        <!-- Taxonomy Navigation Tabs -->
+        <div class="taxonomy-bar">
+            <button class="taxonomy-tab active" onclick="setTaxonomyFilter('ALL', this)">
+                All Parties <span class="tab-count" id="count-all">8</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('MILL', this)">
+                Spinning Mills <span class="tab-count" id="count-mill">2</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('KNITTER', this)">
+                Knitting Units <span class="tab-count" id="count-knitter">2</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('DYER', this)">
+                Dyeing & Processing <span class="tab-count" id="count-dyer">1</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('CUSTOMER', this)">
+                Garment Buyers <span class="tab-count" id="count-customer">2</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('SUPPLIER', this)">
+                Suppliers <span class="tab-count" id="count-supplier">3</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('JOB_WORKER', this)">
+                Job Workers <span class="tab-count" id="count-jobworker">2</span>
+            </button>
+            <button class="taxonomy-tab" onclick="setTaxonomyFilter('TRANSPORTER', this)">
+                Transporters & Logistics <span class="tab-count" id="count-transporter">1</span>
+            </button>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="filter-section">
+            <div class="search-group">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by Party Name, Code, GSTIN, Phone, City..." oninput="handleSearch()">
+            </div>
+
+            <div class="filter-controls">
+                <select class="select-filter" id="filterStatus" onchange="renderPartyTable()">
+                    <option value="">Status: All</option>
+                    <option value="ACTIVE" selected>Status: Active</option>
+                    <option value="INACTIVE">Status: Inactive</option>
+                </select>
+
+                <select class="select-filter" id="filterGstType" onchange="renderPartyTable()">
+                    <option value="">GST: All Types</option>
+                    <option value="REGULAR">Regular Registered</option>
+                    <option value="COMPOSITION">Composition</option>
+                    <option value="UNREGISTERED">Unregistered</option>
+                </select>
+
+                <select class="select-filter" id="filterPriceList" onchange="renderPartyTable()">
+                    <option value="">Price Lists: All</option>
+                    <option value="HAS_YARN">With Yarn Contract</option>
+                    <option value="HAS_FABRIC">With Fabric Contract</option>
+                    <option value="HAS_JOBWORK">With Processing Rate Card</option>
+                </select>
+
+                <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Master Data Table -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox"></th>
+                        <th>Party Code & Legal Name</th>
+                        <th>Business Roles</th>
+                        <th>Primary Contact & Location</th>
+                        <th>GSTIN / PAN</th>
+                        <th>Contract Price Lists</th>
+                        <th>Ledger Outstanding</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="partyTableBody">
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+
+            <!-- Table Pagination -->
+            <div class="pagination-bar">
+                <div id="paginationInfo">Showing 1 to 8 of 8 parties</div>
+                <div class="page-buttons">
+                    <button class="btn btn-secondary btn-sm" disabled>Previous</button>
+                    <button class="btn btn-primary btn-sm">1</button>
+                    <button class="btn btn-secondary btn-sm" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 10-Tab Add / Edit Party Modal -->
+    <div class="modal-overlay" id="partyModal">
+        <div class="modal-card">
+            
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modalTitle">Register New Party Master</div>
+                    <div class="modal-subtitle">Enterprise Profile, Multi-Roles, Statutory GST, Pricing, Textile Capabilities & Ledgers</div>
+                </div>
+                <button class="modal-close-btn" onclick="closePartyModal()">&times;</button>
+            </div>
+
+            <!-- Modal Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" onclick="switchModalTab('tab-basic', this)">1. Basic & Identity</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-roles', this)">2. Business Roles</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-contacts', this)">3. Contacts (Multi)</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-addresses', this)">4. Addresses</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-statutory', this)">5. GST & Statutory</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-pricing', this)">6. Commercial & Pricing</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-textile', this)">7. Textile Capabilities</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-bank', this)">8. Bank Accounts</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-documents', this)">9. Compliance Docs</button>
+                <button class="modal-tab-btn" onclick="switchModalTab('tab-ledger', this)">10. Opening Balance</button>
+            </div>
+
+            <div class="modal-body">
+                
+                <!-- Tab 1: Basic & Identity -->
+                <div class="tab-pane active" id="tab-basic">
+                    <div class="form-grid">
+                        <div class="col-4 form-group">
+                            <label class="form-label">Party Code <span class="req">*</span></label>
+                            <input type="text" id="m_code" class="form-control" placeholder="e.g. MILL-001 or CUST-100" style="text-transform: uppercase;">
+                            <div class="form-helper">Unique company-scoped code</div>
+                        </div>
+
+                        <div class="col-8 form-group">
+                            <label class="form-label">Legal / Registered Business Name <span class="req">*</span></label>
+                            <input type="text" id="m_name" class="form-control" placeholder="e.g. Sri Lakshmi Spinning Mills Private Limited">
+                        </div>
+
+                        <div class="col-6 form-group">
+                            <label class="form-label">Trade / Display Name</label>
+                            <input type="text" id="m_display_name" class="form-control" placeholder="e.g. Sri Lakshmi Mills">
+                        </div>
+
+                        <div class="col-3 form-group">
+                            <label class="form-label">Party Category</label>
+                            <select id="m_party_category" class="form-control">
+                                <option value="PRIVATE_LIMITED">Private Limited Company</option>
+                                <option value="PUBLIC_LIMITED">Public Limited Company</option>
+                                <option value="PARTNERSHIP">Partnership Firm</option>
+                                <option value="PROPRIETORSHIP" selected>Proprietorship</option>
+                                <option value="LLP">Limited Liability Partnership</option>
+                                <option value="INDIVIDUAL">Individual</option>
+                            </select>
+                        </div>
+
+                        <div class="col-3 form-group">
+                            <label class="form-label">Parent Entity (Optional)</label>
+                            <select id="m_parent_party" class="form-control">
+                                <option value="">-- None (Independent) --</option>
+                                <option value="1">Super Spinning Mills Ltd</option>
+                                <option value="4">Classic Polo Apparels</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 form-group">
+                            <label class="form-label">Internal Business Remarks / Notes</label>
+                            <textarea id="m_remarks" class="form-control" rows="2" placeholder="e.g. Key spinning vendor for 30s Combed Cotton. Preferred delivery to Palladam godown."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Multiple Roles -->
+                <div class="tab-pane" id="tab-roles">
+                    <div style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+                        Select all business roles performed by this party. A single legal entity can operate simultaneously in multiple capacities without duplicating party records:
+                    </div>
+
+                    <div class="role-selector-grid">
+                        <label class="role-check-card" id="card_role_MILL">
+                            <input type="checkbox" name="party_role" value="MILL" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Spinning Mill</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Supplies Cotton / Blended Yarn</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_KNITTER">
+                            <input type="checkbox" name="party_role" value="KNITTER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Knitting Unit</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Knitting Job Worker (Greige)</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_DYER">
+                            <input type="checkbox" name="party_role" value="DYER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Dyeing & Finishing</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Yarn & Fabric Dyeing House</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_SUPPLIER">
+                            <input type="checkbox" name="party_role" value="SUPPLIER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Raw Material Supplier</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Dyes, Chemicals, Trims, Spares</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_CUSTOMER">
+                            <input type="checkbox" name="party_role" value="CUSTOMER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Customer / Buyer</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Yarn/Fabric/Garment Buyer</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_JOB_WORKER">
+                            <input type="checkbox" name="party_role" value="JOB_WORKER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">General Job Worker</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Compacting, Printing, Embroidery</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_TRANSPORTER">
+                            <input type="checkbox" name="party_role" value="TRANSPORTER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Transporter / Logistics</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Freight & Goods Carrier</div>
+                            </div>
+                        </label>
+
+                        <label class="role-check-card" id="card_role_BROKER">
+                            <input type="checkbox" name="party_role" value="BROKER" onchange="toggleRoleCard(this)">
+                            <div>
+                                <div style="font-weight: 600; font-size: 13px;">Yarn / Fabric Broker</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Commission Broker</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 18px;" class="form-group">
+                        <label class="form-label">Primary Designation Role <span class="req">*</span></label>
+                        <select id="m_primary_role" class="form-control" style="max-width: 320px;">
+                            <option value="MILL">Spinning Mill</option>
+                            <option value="KNITTER">Knitting Unit</option>
+                            <option value="DYER">Dyeing House</option>
+                            <option value="SUPPLIER">Raw Material Supplier</option>
+                            <option value="CUSTOMER">Customer / Buyer</option>
+                            <option value="JOB_WORKER">Job Worker</option>
+                            <option value="TRANSPORTER">Transporter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Contacts -->
+                <div class="tab-pane" id="tab-contacts">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Manage designated personnel (Purchase, Sales, Accounts, Mill Master, QA):</span>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addContactRow()">+ Add Contact Person</button>
+                    </div>
+
+                    <div class="child-table-wrapper">
+                        <table class="child-table">
+                            <thead>
+                                <tr>
+                                    <th>Primary</th>
+                                    <th>Contact Person Name</th>
+                                    <th>Designation</th>
+                                    <th>Mobile Number</th>
+                                    <th>Email ID</th>
+                                    <th>WhatsApp</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactTableBody">
+                                <tr>
+                                    <td style="text-align: center;"><input type="radio" name="contact_primary" checked></td>
+                                    <td><input type="text" class="form-control" placeholder="e.g. S. Ramasamy" value="K. Vasanthan"></td>
+                                    <td><input type="text" class="form-control" placeholder="e.g. Managing Partner" value="Managing Director"></td>
+                                    <td><input type="text" class="form-control" placeholder="e.g. 9842212345" value="+91 9842211223"></td>
+                                    <td><input type="email" class="form-control" placeholder="e.g. contact@mill.com" value="vasanthan@texmills.com"></td>
+                                    <td><input type="text" class="form-control" placeholder="e.g. 9842211223" value="+91 9842211223"></td>
+                                    <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Addresses -->
+                <div class="tab-pane" id="tab-addresses">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Registered, Billing, Factory/Mill, and Delivery Godown addresses:</span>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addAddressRow()">+ Add Address</button>
+                    </div>
+
+                    <div class="child-table-wrapper">
+                        <table class="child-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Address Line 1 & 2</th>
+                                    <th>City</th>
+                                    <th>State</th>
+                                    <th>Pincode</th>
+                                    <th>State Code</th>
+                                    <th>Default</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="addressTableBody">
+                                <tr>
+                                    <td>
+                                        <select class="form-control">
+                                            <option value="REGISTERED">Registered</option>
+                                            <option value="BILLING">Billing</option>
+                                            <option value="SHIPPING">Shipping</option>
+                                            <option value="FACTORY">Factory / Mill</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="form-control" placeholder="Street / Industrial Area" value="SF No. 124, Avinashi Road, Kangeyam"></td>
+                                    <td><input type="text" class="form-control" placeholder="City" value="Tirupur"></td>
+                                    <td><input type="text" class="form-control" placeholder="State" value="Tamil Nadu"></td>
+                                    <td><input type="text" class="form-control" placeholder="641602" value="641602"></td>
+                                    <td><input type="text" class="form-control" style="width: 50px;" value="33"></td>
+                                    <td style="text-align: center;"><input type="checkbox" checked></td>
+                                    <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 5: GST & Statutory -->
+                <div class="tab-pane" id="tab-statutory">
+                    <div class="form-grid">
+                        <div class="col-4 form-group">
+                            <label class="form-label">GST Registration Type <span class="req">*</span></label>
+                            <select id="m_gst_type" class="form-control" onchange="handleGstTypeChange()">
+                                <option value="REGULAR" selected>Regular Taxpayer (GST Registered)</option>
+                                <option value="COMPOSITION">Composition Scheme</option>
+                                <option value="UNREGISTERED">Unregistered Business</option>
+                                <option value="SEZ">Special Economic Zone (SEZ)</option>
+                                <option value="OVERSEAS">Overseas / Export Entity</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">GSTIN (15 Digits) <span class="req" id="gstin_req_star">*</span></label>
+                            <input type="text" id="m_gstin" class="form-control" placeholder="e.g. 33AABCT1234F1Z8" style="text-transform: uppercase; font-family: monospace;" oninput="autoExtractPan()">
+                            <div class="form-helper">Indian GST Number (Chars 3-12 auto-fills PAN)</div>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">PAN Number (10 Digits)</label>
+                            <input type="text" id="m_pan" class="form-control" placeholder="e.g. AABCT1234F" style="text-transform: uppercase; font-family: monospace;">
+                            <div class="form-helper">Permanent Account Number</div>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">TAN Number (Optional)</label>
+                            <input type="text" id="m_tan" class="form-control" placeholder="e.g. CHEE12345A" style="text-transform: uppercase; font-family: monospace;">
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">MSME / Udyam Registration No.</label>
+                            <input type="text" id="m_msme" class="form-control" placeholder="e.g. UDYAM-TN-28-0012345">
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Tax Deduction / Collection (TDS/TCS)</label>
+                            <select id="m_tax_treatment" class="form-control">
+                                <option value="STANDARD" selected>Standard Applicable (194C / 194Q)</option>
+                                <option value="LOWER_DEDUCTION">Lower Deduction Certificate Held</option>
+                                <option value="EXEMPT">Exempt / Zero Deduction</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 6: Commercial & Pricing -->
+                <div class="tab-pane" id="tab-pricing">
+                    <div class="form-grid">
+                        <div class="col-4 form-group">
+                            <label class="form-label">Default Payment Terms (Days)</label>
+                            <input type="number" id="m_payment_terms" class="form-control" placeholder="e.g. 30" value="30">
+                            <div class="form-helper">Standard credit period from invoice date</div>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Credit Limit (INR ₹)</label>
+                            <input type="number" id="m_credit_limit" class="form-control" placeholder="e.g. 1000000" value="1000000">
+                            <div class="form-helper">Total allowed ledger exposure</div>
+                        </div>
+
+                        <div class="col-4 form-group" style="justify-content: center;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 20px;">
+                                <input type="checkbox" id="m_allow_credit_override" style="width: 16px; height: 16px;">
+                                <span style="font-size: 13px; font-weight: 600;">Allow Dispatch on Credit Override</span>
+                            </label>
+                        </div>
+
+                        <div class="col-6 form-group">
+                            <label class="form-label">Assigned Default Yarn Purchase Price List</label>
+                            <select id="m_pl_yarn" class="form-control">
+                                <option value="">-- No Direct Link (Default Market Rate) --</option>
+                                <option value="1" selected>PL-YARN-2026-Q1 — Super Spinning Mills Yarn Contract</option>
+                                <option value="2">PL-YARN-2026-Q2 — Apex Cotton Yarn Standard</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 form-group">
+                            <label class="form-label">Assigned Default Fabric Purchase / Sales Price List</label>
+                            <select id="m_pl_fabric" class="form-control">
+                                <option value="">-- No Direct Link --</option>
+                                <option value="3">PL-FAB-2026-SUMMER — Single Jersey & Interlock Price List</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 form-group">
+                            <label class="form-label">Assigned Job Work Processing Rate Card</label>
+                            <select id="m_pl_jobwork" class="form-control">
+                                <option value="">-- No Direct Link --</option>
+                                <option value="4">PL-JW-KNIT-2026 — Standard Circular Knitting Rate Card (₹18-24/Kg)</option>
+                                <option value="5">PL-JW-DYE-2026 — Soft Flow Dyeing & Mercerizing Rate Card (₹65-95/Kg)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 form-group">
+                            <label class="form-label">Default Finished Garment Contract Rate Card</label>
+                            <select id="m_pl_garment" class="form-control">
+                                <option value="">-- No Direct Link --</option>
+                                <option value="6">PL-GMT-BUYER-EXPORT — Classic Polo Export PO Rate Matrix</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 7: Textile Capabilities -->
+                <div class="tab-pane" id="tab-textile">
+                    <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--accent-cyan);">
+                        ℹ Textile Capabilities capture machinery gauges, daily outputs, and technical certifications for Knitting, Dyeing, and Processing Partners.
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="col-6 form-group">
+                            <label class="form-label">Machine Specifications & Gauges</label>
+                            <input type="text" id="m_machinery" class="form-control" placeholder="e.g. 24GG 30-inch circular knit machines, soft-flow dyeing vessels (250kg, 500kg)">
+                        </div>
+
+                        <div class="col-3 form-group">
+                            <label class="form-label">Daily Capacity (Quantity)</label>
+                            <input type="number" id="m_daily_capacity" class="form-control" placeholder="e.g. 4500" value="4500">
+                        </div>
+
+                        <div class="col-3 form-group">
+                            <label class="form-label">Capacity UOM</label>
+                            <select id="m_capacity_uom" class="form-control">
+                                <option value="KGS" selected>Kilograms (KGS)</option>
+                                <option value="METERS">Meters (MTR)</option>
+                                <option value="PIECES">Pieces (PCS)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Standard Processing Turnaround (Days)</label>
+                            <input type="number" id="m_turnaround_days" class="form-control" placeholder="e.g. 4" value="4">
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Procurement Lead Time (Days)</label>
+                            <input type="number" id="m_lead_time_days" class="form-control" placeholder="e.g. 7" value="7">
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Quality Certifications</label>
+                            <input type="text" id="m_certifications" class="form-control" placeholder="e.g. GOTS, OEKO-TEX Standard 100, BCI" value="OEKO-TEX Standard 100, GOTS">
+                        </div>
+
+                        <div class="col-12 form-group">
+                            <label class="form-label">Processes Performed</label>
+                            <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox" checked> Single Jersey Circular Knitting</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox" checked> Rib & Interlock Knitting</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox"> Soft-flow Piece Dyeing</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox"> Bio-polishing & Compacting</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox"> Rotary / Screen Printing</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 form-group">
+                            <label class="form-label">Yarn Counts Handled</label>
+                            <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox" checked> 20s Combed Cotton</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox" checked> 30s Combed Cotton</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox" checked> 40s Combed Cotton</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox"> 60s Compact / Modal</label>
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;"><input type="checkbox"> Poly-Cotton Melange</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 8: Bank Accounts -->
+                <div class="tab-pane" id="tab-bank">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Bank accounts for vendor settlement & customer refunds (Encrypted at rest):</span>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addBankRow()">+ Add Bank Account</button>
+                    </div>
+
+                    <div class="child-table-wrapper">
+                        <table class="child-table">
+                            <thead>
+                                <tr>
+                                    <th>Primary</th>
+                                    <th>Bank Name</th>
+                                    <th>Branch</th>
+                                    <th>Account Holder</th>
+                                    <th>Account Number</th>
+                                    <th>IFSC Code</th>
+                                    <th>Payment Mode</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bankTableBody">
+                                <tr>
+                                    <td style="text-align: center;"><input type="radio" name="bank_primary" checked></td>
+                                    <td><input type="text" class="form-control" value="State Bank of India"></td>
+                                    <td><input type="text" class="form-control" value="Kumaran Road, Tirupur"></td>
+                                    <td><input type="text" class="form-control" value="Sri Lakshmi Spinning Mills"></td>
+                                    <td><input type="text" class="form-control" style="font-family: monospace;" value="XXXXXXXX4512"></td>
+                                    <td><input type="text" class="form-control" style="font-family: monospace;" value="SBIN0001234"></td>
+                                    <td>
+                                        <select class="form-control">
+                                            <option value="NEFT_RTGS" selected>NEFT / RTGS</option>
+                                            <option value="CHEQUE">Cheque</option>
+                                            <option value="UPI">UPI</option>
+                                        </select>
+                                    </td>
+                                    <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 9: Compliance Docs -->
+                <div class="tab-pane" id="tab-documents">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 13px; color: var(--text-secondary);">Statutory certificates, cancelled cheques, and signed agreements:</span>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addDocumentRow()">+ Attach Document</button>
+                    </div>
+
+                    <div class="child-table-wrapper">
+                        <table class="child-table">
+                            <thead>
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Document Number</th>
+                                    <th>Expiry Date</th>
+                                    <th>File Attachment</th>
+                                    <th>Verification</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="docTableBody">
+                                <tr>
+                                    <td>
+                                        <select class="form-control">
+                                            <option value="GST_CERTIFICATE" selected>GST Registration Certificate</option>
+                                            <option value="PAN_CARD">PAN Card Copy</option>
+                                            <option value="MSME_CERTIFICATE">MSME / Udyam Certificate</option>
+                                            <option value="CANCELLED_CHEQUE">Cancelled Cheque</option>
+                                            <option value="AGREEMENT">Rate Contract Agreement</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="text" class="form-control" value="33AABCT1234F1Z8"></td>
+                                    <td><input type="date" class="form-control" value="2030-12-31"></td>
+                                    <td><input type="file" class="form-control" style="font-size: 11px;"></td>
+                                    <td><span class="status-pill status-active">Verified</span></td>
+                                    <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 10: Opening Balance & Ledger -->
+                <div class="tab-pane" id="tab-ledger">
+                    <div class="form-grid">
+                        <div class="col-4 form-group">
+                            <label class="form-label">Initial Opening Balance (₹)</label>
+                            <input type="number" id="m_opening_balance" class="form-control" placeholder="0.00" value="0.00" step="0.01">
+                            <div class="form-helper">Balance carried forward at system onboarding</div>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Balance Type</label>
+                            <select id="m_opening_balance_type" class="form-control">
+                                <option value="DR">Debit (DR — Receivable from Party)</option>
+                                <option value="CR" selected>Credit (CR — Payable to Party)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 form-group">
+                            <label class="form-label">Opening Balance As On Date</label>
+                            <input type="date" id="m_opening_balance_date" class="form-control" value="2026-04-01">
+                        </div>
+
+                        <div class="col-12" style="margin-top: 10px;">
+                            <div style="background: var(--bg-card-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px; font-size: 13px; color: var(--text-secondary);">
+                                <strong>Double-Entry Ledger Governance Note:</strong>
+                                <p style="margin-top: 6px;">
+                                    In accordance with financial ledger rules, party balances are computed dynamically from posted vouchers in <code>tl_voucher_line</code>. 
+                                    Subsequent updates to party balances occur strictly through Purchase Invoices, Sales Invoices, and Payment/Receipt Vouchers.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePartyModal()">Cancel</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="saveParty(false)">Save Draft</button>
+                    <button type="button" class="btn btn-primary" onclick="saveParty(true)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Save & Register Party
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Quick Ledger Summary Modal -->
+    <div class="modal-overlay" id="ledgerModal">
+        <div class="modal-card" style="max-width: 820px;">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="ledgerModalTitle">Real-Time Party Ledger Exposure</div>
+                    <div class="modal-subtitle">Direct audit from double-entry accounting entries (tl_voucher_line)</div>
+                </div>
+                <button class="modal-close-btn" onclick="closeLedgerModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="financial-summary-card">
+                    <div class="fin-stat-grid">
+                        <div class="fin-stat-box">
+                            <div class="fin-stat-title">Opening Balance</div>
+                            <div class="fin-stat-number" id="l_op_bal">₹ 0.00</div>
+                        </div>
+                        <div class="fin-stat-box">
+                            <div class="fin-stat-title">Total Debits</div>
+                            <div class="fin-stat-number" style="color: var(--accent-emerald);" id="l_debit">₹ 0.00</div>
+                        </div>
+                        <div class="fin-stat-box">
+                            <div class="fin-stat-title">Total Credits</div>
+                            <div class="fin-stat-number" style="color: var(--accent-rose);" id="l_credit">₹ 0.00</div>
+                        </div>
+                        <div class="fin-stat-box">
+                            <div class="fin-stat-title">Net Outstanding</div>
+                            <div class="fin-stat-number" style="color: var(--accent-cyan);" id="l_net_bal">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Recent Posted Transactions (Live Ledgers):</div>
+                <div class="child-table-wrapper">
+                    <table class="child-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Voucher No</th>
+                                <th>Type</th>
+                                <th>Narration</th>
+                                <th style="text-align: right;">Debit (₹)</th>
+                                <th style="text-align: right;">Credit (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerLinesBody">
+                            <tr>
+                                <td>15/04/2026</td>
+                                <td><span style="font-family: monospace; color: var(--accent-cyan);">VCH-2026-0042</span></td>
+                                <td>YARN_INVOICE</td>
+                                <td>Purchase Inward GRN-YARN-0012 (30s Combed 1,200 Kgs)</td>
+                                <td style="text-align: right; color: var(--text-muted);">-</td>
+                                <td style="text-align: right; font-weight: 700; color: var(--accent-rose);">3,48,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>22/04/2026</td>
+                                <td><span style="font-family: monospace; color: var(--accent-cyan);">VCH-2026-0089</span></td>
+                                <td>PAYMENT</td>
+                                <td>RTGS Payment to SBI A/c XXXXXXXX4512</td>
+                                <td style="text-align: right; font-weight: 700; color: var(--accent-emerald);">3,48,000.00</td>
+                                <td style="text-align: right; color: var(--text-muted);">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeLedgerModal()">Close Statement</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Interactive Client Script -->
+    <script>
+        // Initial Dataset matching existing mx_party records & children
+        let partiesData = [
+            {
+                id: 1,
+                code: "MILL-001",
+                name: "Super Spinning Mills Ltd",
+                display_name: "Super Spinning Mills",
+                party_category: "PUBLIC_LIMITED",
+                roles: ["MILL", "SUPPLIER"],
+                primary_role: "MILL",
+                contact_person: "M. Soundararajan",
+                phone: "+91 9842211001",
+                email: "yarnsales@superspinning.com",
+                city: "Coimbatore",
+                state: "Tamil Nadu",
+                gst_number: "33AABCS1234F1Z1",
+                pan_number: "AABCS1234F",
+                gst_registration_type: "REGULAR",
+                payment_terms: 30,
+                credit_limit: 5000000,
+                yarn_pl: "PL-YARN-2026-Q1",
+                fabric_pl: null,
+                jobwork_pl: null,
+                outstanding_balance: -450000.00, // Payable
+                is_active: true
+            },
+            {
+                id: 2,
+                code: "KNIT-001",
+                name: "Apex Knitting Works",
+                display_name: "Apex Knitters",
+                party_category: "PARTNERSHIP",
+                roles: ["KNITTER", "JOB_WORKER"],
+                primary_role: "KNITTER",
+                contact_person: "R. Chandran",
+                phone: "+91 9842222002",
+                email: "jobwork@apexknitting.in",
+                city: "Tirupur",
+                state: "Tamil Nadu",
+                gst_number: "33AABCA5678B1Z2",
+                pan_number: "AABCA5678B",
+                gst_registration_type: "REGULAR",
+                payment_terms: 15,
+                credit_limit: 800000,
+                yarn_pl: null,
+                fabric_pl: null,
+                jobwork_pl: "PL-JW-KNIT-2026",
+                outstanding_balance: -85200.00,
+                is_active: true
+            },
+            {
+                id: 3,
+                code: "DYE-001",
+                name: "Lotus Dyeing & Processing",
+                display_name: "Lotus Dyeing",
+                party_category: "PRIVATE_LIMITED",
+                roles: ["DYER", "JOB_WORKER"],
+                primary_role: "DYER",
+                contact_person: "S. Murugesan",
+                phone: "+91 9842233003",
+                email: "orders@lotusdyeing.com",
+                city: "Perundurai",
+                state: "Tamil Nadu",
+                gst_number: "33AABCL9999K1Z3",
+                pan_number: "AABCL9999K",
+                gst_registration_type: "REGULAR",
+                payment_terms: 20,
+                credit_limit: 1200000,
+                yarn_pl: null,
+                fabric_pl: null,
+                jobwork_pl: "PL-JW-DYE-2026",
+                outstanding_balance: -214000.00,
+                is_active: true
+            },
+            {
+                id: 4,
+                code: "CUST-001",
+                name: "Classic Polo Apparels",
+                display_name: "Classic Polo",
+                party_category: "PRIVATE_LIMITED",
+                roles: ["CUSTOMER"],
+                primary_role: "CUSTOMER",
+                contact_person: "K. Senthil Kumar",
+                phone: "+91 9842244004",
+                email: "purchase@classicpolo.com",
+                city: "Tirupur",
+                state: "Tamil Nadu",
+                gst_number: "33AABCC1111A1Z4",
+                pan_number: "AABCC1111A",
+                gst_registration_type: "REGULAR",
+                payment_terms: 45,
+                credit_limit: 3500000,
+                yarn_pl: null,
+                fabric_pl: "PL-FAB-2026-SUMMER",
+                jobwork_pl: null,
+                outstanding_balance: 1420000.00, // Receivable
+                is_active: true
+            },
+            {
+                id: 5,
+                code: "SUPP-001",
+                name: "Sri Balaji Cotton Traders",
+                display_name: "Balaji Cotton",
+                party_category: "PROPRIETORSHIP",
+                roles: ["SUPPLIER"],
+                primary_role: "SUPPLIER",
+                contact_person: "B. Balaji",
+                phone: "+91 9842255005",
+                email: "balajicotton@gmail.com",
+                city: "Erode",
+                state: "Tamil Nadu",
+                gst_number: "33AABCB2222C1Z5",
+                pan_number: "AABCB2222C",
+                gst_registration_type: "REGULAR",
+                payment_terms: 15,
+                credit_limit: 2000000,
+                yarn_pl: "PL-YARN-2026-Q2",
+                fabric_pl: null,
+                jobwork_pl: null,
+                outstanding_balance: 0.00,
+                is_active: true
+            },
+            {
+                id: 6,
+                code: "MILL-002",
+                name: "KPR Mill Limited",
+                display_name: "KPR Mills",
+                party_category: "PUBLIC_LIMITED",
+                roles: ["MILL", "SUPPLIER"],
+                primary_role: "MILL",
+                contact_person: "V. Natarajan",
+                phone: "+91 9842266006",
+                email: "sales@kprmill.com",
+                city: "Coimbatore",
+                state: "Tamil Nadu",
+                gst_number: "33AABCK3333D1Z6",
+                pan_number: "AABCK3333D",
+                gst_registration_type: "REGULAR",
+                payment_terms: 30,
+                credit_limit: 8000000,
+                yarn_pl: "PL-YARN-2026-Q1",
+                fabric_pl: null,
+                jobwork_pl: null,
+                outstanding_balance: 820000.00,
+                is_active: true
+            },
+            {
+                id: 7,
+                code: "KNIT-002",
+                name: "Vigneshwar Knitting Mills",
+                display_name: "Vigneshwar Knits",
+                party_category: "PROPRIETORSHIP",
+                roles: ["KNITTER", "JOB_WORKER"],
+                primary_role: "KNITTER",
+                contact_person: "V. Vignesh",
+                phone: "+91 9842277007",
+                email: "vigneshwarknits@yahoo.com",
+                city: "Tirupur",
+                state: "Tamil Nadu",
+                gst_number: "",
+                pan_number: "AABCV7777E",
+                gst_registration_type: "UNREGISTERED",
+                payment_terms: 7,
+                credit_limit: 400000,
+                yarn_pl: null,
+                fabric_pl: null,
+                jobwork_pl: "PL-JW-KNIT-2026",
+                outstanding_balance: -34000.00,
+                is_active: true
+            },
+            {
+                id: 8,
+                code: "CUST-002",
+                name: "Avenue Fashion Brands",
+                display_name: "Avenue Fashion",
+                party_category: "PRIVATE_LIMITED",
+                roles: ["CUSTOMER"],
+                primary_role: "CUSTOMER",
+                contact_person: "A. Robert",
+                phone: "+91 9842288008",
+                email: "orders@avenuefashion.com",
+                city: "Bengaluru",
+                state: "Karnataka",
+                gst_number: "29AABCA8888H1Z8",
+                pan_number: "AABCA8888H",
+                gst_registration_type: "REGULAR",
+                payment_terms: 30,
+                credit_limit: 2500000,
+                yarn_pl: null,
+                fabric_pl: "PL-FAB-2026-SUMMER",
+                jobwork_pl: null,
+                outstanding_balance: 0.00,
+                is_active: true
+            }
+        ];
+
+        let activeTaxonomy = 'ALL';
+        let currentEditingId = null;
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPartyTable();
+            updateTaxonomyCounts();
+        });
+
+        // Set Taxonomy Filter
+        function setTaxonomyFilter(role, tabElement) {
+            activeTaxonomy = role;
+            document.querySelectorAll('.taxonomy-tab').forEach(t => t.classList.remove('active'));
+            tabElement.classList.add('active');
+            renderPartyTable();
+        }
+
+        // Render Master Data Table
+        function renderPartyTable() {
+            const tableBody = document.getElementById('partyTableBody');
+            const searchKeyword = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const gstFilter = document.getElementById('filterGstType').value;
+            const plFilter = document.getElementById('filterPriceList').value;
+
+            let filtered = partiesData.filter(item => {
+                // Taxonomy
+                if (activeTaxonomy !== 'ALL' && !item.roles.includes(activeTaxonomy)) {
+                    return false;
+                }
+                // Status
+                if (statusFilter === 'ACTIVE' && !item.is_active) return false;
+                if (statusFilter === 'INACTIVE' && item.is_active) return false;
+                // GST
+                if (gstFilter && item.gst_registration_type !== gstFilter) return false;
+                // Price Lists
+                if (plFilter === 'HAS_YARN' && !item.yarn_pl) return false;
+                if (plFilter === 'HAS_FABRIC' && !item.fabric_pl) return false;
+                if (plFilter === 'HAS_JOBWORK' && !item.jobwork_pl) return false;
+
+                // Search query
+                if (searchKeyword) {
+                    const matchText = `${item.code} ${item.name} ${item.display_name} ${item.gst_number} ${item.phone} ${item.city} ${item.contact_person}`.toLowerCase();
+                    if (!matchText.includes(searchKeyword)) return false;
+                }
+
+                return true;
+            });
+
+            tableBody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px; opacity: 0.5;"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01"/></svg>
+                            <div>No party records match the current filters.</div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('paginationInfo').innerText = "Showing 0 to 0 of 0 parties";
+                return;
+            }
+
+            filtered.forEach(party => {
+                const tr = document.createElement('tr');
+
+                // Role Badges
+                const roleBadges = party.roles.map(r => {
+                    let cls = 'badge-role ';
+                    if (r === 'MILL') cls += 'badge-mill';
+                    else if (r === 'KNITTER') cls += 'badge-knitter';
+                    else if (r === 'DYER') cls += 'badge-dyer';
+                    else if (r === 'CUSTOMER') cls += 'badge-customer';
+                    else if (r === 'SUPPLIER') cls += 'badge-supplier';
+                    else cls += 'badge-transporter';
+                    return `<span class="${cls}">${r.replace('_', ' ')}</span>`;
+                }).join(' ');
+
+                // Balance Formatting
+                let balanceHtml = '';
+                if (party.outstanding_balance > 0) {
+                    balanceHtml = `<span class="balance-receivable">₹ ${formatIndian(party.outstanding_balance)} Dr</span><div style="font-size: 10.5px; color: var(--text-muted);">Receivable</div>`;
+                } else if (party.outstanding_balance < 0) {
+                    balanceHtml = `<span class="balance-payable">₹ ${formatIndian(Math.abs(party.outstanding_balance))} Cr</span><div style="font-size: 10.5px; color: var(--text-muted);">Payable to Party</div>`;
+                } else {
+                    balanceHtml = `<span class="balance-nil">₹ 0.00 Nil</span>`;
+                }
+
+                // Price lists tags
+                let plTags = [];
+                if (party.yarn_pl) plTags.push(`<span class="pl-tag"><span class="pl-dot pl-yarn"></span> Yarn: ${party.yarn_pl}</span>`);
+                if (party.fabric_pl) plTags.push(`<span class="pl-tag"><span class="pl-dot pl-fabric"></span> Fabric: ${party.fabric_pl}</span>`);
+                if (party.jobwork_pl) plTags.push(`<span class="pl-tag"><span class="pl-dot pl-jobwork"></span> Rate Card: ${party.jobwork_pl}</span>`);
+                const plHtml = plTags.length ? plTags.join('') : '<span style="color: var(--text-muted); font-size: 11px;">Standard Rates</span>';
+
+                // GSTIN Box
+                const gstinHtml = party.gst_number ? `
+                    <div class="gstin-box">
+                        <span>${party.gst_number}</span>
+                        <span class="gstin-copy" title="Copy GSTIN" onclick="copyText('${party.gst_number}')">📋</span>
+                    </div>
+                ` : `<span style="color: var(--text-muted); font-size: 11px;">Unregistered</span>`;
+
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="row-checkbox" value="${party.id}"></td>
+                    <td>
+                        <div class="party-name-cell">
+                            <div class="party-title">
+                                <span class="party-code-tag">${party.code}</span>
+                                <span>${party.display_name || party.name}</span>
+                            </div>
+                            <div class="party-subtext">${party.name} • ${party.party_category.replace('_', ' ')}</div>
+                        </div>
+                    </td>
+                    <td><div class="role-badge-group">${roleBadges}</div></td>
+                    <td>
+                        <div style="font-weight: 600;">${party.contact_person}</div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary);">${party.phone}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${party.city}, ${party.state}</div>
+                    </td>
+                    <td>
+                        ${gstinHtml}
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">PAN: ${party.pan_number || 'N/A'}</div>
+                    </td>
+                    <td><div class="pl-tag-group">${plHtml}</div></td>
+                    <td>${balanceHtml}</td>
+                    <td>
+                        <span class="status-pill ${party.is_active ? 'status-active' : 'status-inactive'}">
+                            ${party.is_active ? '● Active' : '○ Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-cell">
+                            <button class="btn btn-secondary btn-sm" title="Financial Ledger" onclick="viewLedger(${party.id})">Ledger</button>
+                            <button class="btn btn-secondary btn-sm" title="Edit Profile" onclick="openPartyModal('edit', ${party.id})">Edit</button>
+                            <button class="btn btn-danger-outline btn-sm" title="Toggle Status" onclick="togglePartyStatus(${party.id})">${party.is_active ? 'Deactivate' : 'Activate'}</button>
+                        </div>
+                    </td>
+                `;
+
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('paginationInfo').innerText = `Showing 1 to ${filtered.length} of ${partiesData.length} parties`;
+        }
+
+        // Format Indian Number System
+        function formatIndian(val) {
+            return Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Update taxonomy badge counts
+        function updateTaxonomyCounts() {
+            document.getElementById('count-all').innerText = partiesData.length;
+            ['MILL', 'KNITTER', 'DYER', 'CUSTOMER', 'SUPPLIER', 'JOB_WORKER', 'TRANSPORTER'].forEach(role => {
+                const count = partiesData.filter(p => p.roles.includes(role)).length;
+                const el = document.getElementById(`count-${role.toLowerCase()}`);
+                if (el) el.innerText = count;
+            });
+        }
+
+        // Search handler
+        function handleSearch() {
+            renderPartyTable();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterStatus').value = 'ACTIVE';
+            document.getElementById('filterGstType').value = '';
+            document.getElementById('filterPriceList').value = '';
+            renderPartyTable();
+        }
+
+        // Modal Tab Switching
+        function switchModalTab(tabId, btn) {
+            document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Open Add/Edit Modal
+        function openPartyModal(mode, partyId = null) {
+            currentEditingId = partyId;
+            const modal = document.getElementById('partyModal');
+            const title = document.getElementById('modalTitle');
+
+            // Reset modal tabs to tab 1
+            const firstTabBtn = document.querySelector('.modal-tab-btn');
+            switchModalTab('tab-basic', firstTabBtn);
+
+            if (mode === 'edit' && partyId) {
+                const p = partiesData.find(x => x.id === partyId);
+                title.innerText = `Edit Party: ${p.name} (${p.code})`;
+                document.getElementById('m_code').value = p.code;
+                document.getElementById('m_name').value = p.name;
+                document.getElementById('m_display_name').value = p.display_name;
+                document.getElementById('m_party_category').value = p.party_category;
+                document.getElementById('m_gstin').value = p.gst_number || '';
+                document.getElementById('m_pan').value = p.pan_number || '';
+                document.getElementById('m_gst_type').value = p.gst_registration_type;
+                document.getElementById('m_payment_terms').value = p.payment_terms;
+                document.getElementById('m_credit_limit').value = p.credit_limit;
+
+                // Sync roles
+                document.querySelectorAll('input[name="party_role"]').forEach(chk => {
+                    chk.checked = p.roles.includes(chk.value);
+                    toggleRoleCard(chk);
+                });
+                document.getElementById('m_primary_role').value = p.primary_role;
+            } else {
+                title.innerText = "Register New Party Master";
+                document.getElementById('m_code').value = '';
+                document.getElementById('m_name').value = '';
+                document.getElementById('m_display_name').value = '';
+                document.getElementById('m_gstin').value = '';
+                document.getElementById('m_pan').value = '';
+                document.getElementById('m_gst_type').value = 'REGULAR';
+                document.getElementById('m_payment_terms').value = '30';
+                document.getElementById('m_credit_limit').value = '1000000';
+
+                document.querySelectorAll('input[name="party_role"]').forEach(chk => {
+                    chk.checked = (chk.value === 'SUPPLIER');
+                    toggleRoleCard(chk);
+                });
+                document.getElementById('m_primary_role').value = 'SUPPLIER';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closePartyModal() {
+            document.getElementById('partyModal').classList.remove('active');
+        }
+
+        // Toggle card style on checkbox change
+        function toggleRoleCard(chk) {
+            const card = document.getElementById(`card_role_${chk.value}`);
+            if (card) {
+                if (chk.checked) card.classList.add('checked');
+                else card.classList.remove('checked');
+            }
+        }
+
+        // Auto extract PAN from GSTIN
+        function autoExtractPan() {
+            const gstin = (document.getElementById('m_gstin').value || '').toUpperCase().trim();
+            if (gstin.length >= 12) {
+                const pan = gstin.substring(2, 12);
+                document.getElementById('m_pan').value = pan;
+            }
+        }
+
+        function handleGstTypeChange() {
+            const gstType = document.getElementById('m_gst_type').value;
+            const star = document.getElementById('gstin_req_star');
+            if (gstType === 'UNREGISTERED') {
+                star.style.display = 'none';
+            } else {
+                star.style.display = 'inline';
+            }
+        }
+
+        // Add dynamic rows
+        function addContactRow() {
+            const tbody = document.getElementById('contactTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center;"><input type="radio" name="contact_primary"></td>
+                <td><input type="text" class="form-control" placeholder="Contact Name"></td>
+                <td><input type="text" class="form-control" placeholder="Designation"></td>
+                <td><input type="text" class="form-control" placeholder="+91 98422..."></td>
+                <td><input type="email" class="form-control" placeholder="email@domain.com"></td>
+                <td><input type="text" class="form-control" placeholder="WhatsApp"></td>
+                <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function addAddressRow() {
+            const tbody = document.getElementById('addressTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <select class="form-control">
+                        <option value="REGISTERED">Registered</option>
+                        <option value="BILLING">Billing</option>
+                        <option value="SHIPPING">Shipping</option>
+                        <option value="FACTORY">Factory / Mill</option>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control" placeholder="Street / Industrial Area"></td>
+                <td><input type="text" class="form-control" placeholder="City" value="Tirupur"></td>
+                <td><input type="text" class="form-control" placeholder="State" value="Tamil Nadu"></td>
+                <td><input type="text" class="form-control" placeholder="Pincode" value="641602"></td>
+                <td><input type="text" class="form-control" style="width: 50px;" value="33"></td>
+                <td style="text-align: center;"><input type="checkbox"></td>
+                <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function addBankRow() {
+            const tbody = document.getElementById('bankTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center;"><input type="radio" name="bank_primary"></td>
+                <td><input type="text" class="form-control" placeholder="Bank Name"></td>
+                <td><input type="text" class="form-control" placeholder="Branch"></td>
+                <td><input type="text" class="form-control" placeholder="Account Holder"></td>
+                <td><input type="text" class="form-control" placeholder="Account Number" style="font-family: monospace;"></td>
+                <td><input type="text" class="form-control" placeholder="IFSC Code" style="font-family: monospace;"></td>
+                <td>
+                    <select class="form-control">
+                        <option value="NEFT_RTGS" selected>NEFT / RTGS</option>
+                        <option value="CHEQUE">Cheque</option>
+                        <option value="UPI">UPI</option>
+                    </select>
+                </td>
+                <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function addDocumentRow() {
+            const tbody = document.getElementById('docTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <select class="form-control">
+                        <option value="GST_CERTIFICATE">GST Certificate</option>
+                        <option value="PAN_CARD">PAN Card Copy</option>
+                        <option value="MSME_CERTIFICATE">MSME Certificate</option>
+                        <option value="CANCELLED_CHEQUE">Cancelled Cheque</option>
+                        <option value="AGREEMENT">Rate Contract Agreement</option>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control" placeholder="Document Ref #"></td>
+                <td><input type="date" class="form-control"></td>
+                <td><input type="file" class="form-control" style="font-size: 11px;"></td>
+                <td><span class="status-pill status-active">Uploaded</span></td>
+                <td><button type="button" class="btn-icon-danger" onclick="removeRow(this)">&times;</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeRow(btn) {
+            btn.closest('tr').remove();
+        }
+
+        // Save Party
+        function saveParty(isFinal) {
+            const code = (document.getElementById('m_code').value || '').toUpperCase().trim();
+            const name = (document.getElementById('m_name').value || '').trim();
+            const gstin = (document.getElementById('m_gstin').value || '').toUpperCase().trim();
+            const gstType = document.getElementById('m_gst_type').value;
+
+            if (!code) {
+                showToast("Please specify a unique Party Code.", "error");
+                return;
+            }
+            if (!name) {
+                showToast("Please provide the legal Party Name.", "error");
+                return;
+            }
+
+            if (gstType !== 'UNREGISTERED' && gstin) {
+                const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+                if (!gstinRegex.test(gstin)) {
+                    showToast("Invalid Indian GSTIN format. Expected 15 characters (e.g. 33AABCT1234F1Z8).", "error");
+                    return;
+                }
+            }
+
+            // Gather chosen roles
+            const roles = [];
+            document.querySelectorAll('input[name="party_role"]:checked').forEach(c => roles.push(c.value));
+            if (roles.length === 0) roles.push(document.getElementById('m_primary_role').value);
+
+            if (currentEditingId) {
+                const existing = partiesData.find(x => x.id === currentEditingId);
+                existing.code = code;
+                existing.name = name;
+                existing.display_name = document.getElementById('m_display_name').value || name;
+                existing.party_category = document.getElementById('m_party_category').value;
+                existing.gst_number = gstin;
+                existing.pan_number = document.getElementById('m_pan').value;
+                existing.gst_registration_type = gstType;
+                existing.payment_terms = parseInt(document.getElementById('m_payment_terms').value) || 30;
+                existing.credit_limit = parseFloat(document.getElementById('m_credit_limit').value) || 0;
+                existing.roles = roles;
+                existing.primary_role = document.getElementById('m_primary_role').value;
+                showToast(`Party profile '${code}' updated successfully.`);
+            } else {
+                const newParty = {
+                    id: partiesData.length + 1,
+                    code: code,
+                    name: name,
+                    display_name: document.getElementById('m_display_name').value || name,
+                    party_category: document.getElementById('m_party_category').value,
+                    roles: roles,
+                    primary_role: document.getElementById('m_primary_role').value,
+                    contact_person: "Operations Desk",
+                    phone: "+91 9842200000",
+                    email: "info@domain.com",
+                    city: "Tirupur",
+                    state: "Tamil Nadu",
+                    gst_number: gstin,
+                    pan_number: document.getElementById('m_pan').value,
+                    gst_registration_type: gstType,
+                    payment_terms: parseInt(document.getElementById('m_payment_terms').value) || 30,
+                    credit_limit: parseFloat(document.getElementById('m_credit_limit').value) || 0,
+                    yarn_pl: null,
+                    fabric_pl: null,
+                    jobwork_pl: null,
+                    outstanding_balance: 0.00,
+                    is_active: true
+                };
+                partiesData.unshift(newParty);
+                showToast(`New party '${code} - ${name}' registered successfully.`);
+            }
+
+            closePartyModal();
+            renderPartyTable();
+            updateTaxonomyCounts();
+        }
+
+        // Toggle party active / inactive status
+        function togglePartyStatus(partyId) {
+            const party = partiesData.find(x => x.id === partyId);
+            if (party) {
+                party.is_active = !party.is_active;
+                showToast(`Party ${party.code} is now ${party.is_active ? 'Active' : 'Inactive'}.`);
+                renderPartyTable();
+            }
+        }
+
+        // Quick Ledger View Modal
+        function viewLedger(partyId) {
+            const party = partiesData.find(x => x.id === partyId);
+            if (!party) return;
+
+            document.getElementById('ledgerModalTitle').innerText = `Live Financial Ledger: ${party.name} (${party.code})`;
+            document.getElementById('l_op_bal').innerText = "₹ 0.00";
+            document.getElementById('l_debit').innerText = "₹ 3,48,000.00";
+            document.getElementById('l_credit').innerText = "₹ 3,48,000.00";
+            
+            const net = party.outstanding_balance;
+            if (net > 0) {
+                document.getElementById('l_net_bal').innerText = `₹ ${formatIndian(net)} Dr (Receivable)`;
+                document.getElementById('l_net_bal').style.color = "var(--accent-emerald)";
+            } else if (net < 0) {
+                document.getElementById('l_net_bal').innerText = `₹ ${formatIndian(Math.abs(net))} Cr (Payable)`;
+                document.getElementById('l_net_bal').style.color = "var(--accent-rose)";
+            } else {
+                document.getElementById('l_net_bal').innerText = "₹ 0.00 Nil";
+                document.getElementById('l_net_bal').style.color = "var(--text-muted)";
+            }
+
+            document.getElementById('ledgerModal').classList.add('active');
+        }
+
+        function openLedgerSummaryModal() {
+            document.getElementById('ledgerModalTitle').innerText = "Consolidated Double-Entry Ledger Summary";
+            document.getElementById('l_op_bal').innerText = "₹ 2,50,000.00 Dr";
+            document.getElementById('l_debit').innerText = "₹ 22,40,000.00";
+            document.getElementById('l_credit').innerText = "₹ 7,54,800.00";
+            document.getElementById('l_net_bal').innerText = "₹ 14,85,200.00 Dr";
+            document.getElementById('ledgerModal').classList.add('active');
+        }
+
+        function closeLedgerModal() {
+            document.getElementById('ledgerModal').classList.remove('active');
+        }
+
+        // Export CSV
+        function exportDirectory() {
+            let csv = "Party Code,Party Name,Category,Roles,Primary Contact,Phone,City,State,GSTIN,PAN,Outstanding Balance,Status\n";
+            partiesData.forEach(p => {
+                csv += `"${p.code}","${p.name}","${p.party_category}","${p.roles.join(';')}",` +
+                       `"${p.contact_person}","${p.phone}","${p.city}","${p.state}","${p.gst_number || ''}",` +
+                       `"${p.pan_number || ''}","${p.outstanding_balance}","${p.is_active ? 'ACTIVE' : 'INACTIVE'}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Party_Master_Directory_${new Date().toISOString().slice(0, 10)}.csv`);
+            a.click();
+            showToast("Party directory CSV export downloaded.");
+        }
+
+        // Copy Text Helper
+        function copyText(txt) {
+            navigator.clipboard.writeText(txt).then(() => {
+                showToast(`Copied '${txt}' to clipboard.`);
+            });
+        }
+
+        // Toast feedback
+        function showToast(msg, type = "success") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (type === 'error') toast.style.borderLeftColor = 'var(--accent-rose)';
+
+            toast.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${type === 'error' ? 'var(--accent-rose)' : 'var(--accent-emerald)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>${msg}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 250);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

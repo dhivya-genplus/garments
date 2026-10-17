@@ -16,12 +16,14 @@ This document serves as the authoritative, centralized tracking register for all
 > **Standard Guidelines**: All screen specifications and development workflows follow the mandatory standards in [UI_SPECIFICATION_AND_DEVELOPMENT_GUIDELINES.md](UI_SPECIFICATION_AND_DEVELOPMENT_GUIDELINES.md).
 
 ### 1.1 Progress Metrics at a Glance```
-TOTAL IDENTIFIED SCREENS      : 40 Screens across 10 Enterprise Modules
-SPECIFICATIONS COMPLETED       : 40 Screens (100% Complete) [All 10 Enterprise Modules 100% Defined & Ready for Dev]
+
+TOTAL IDENTIFIED SCREENS      : 43 Screens across 10 Enterprise Modules
+SPECIFICATIONS COMPLETED       : 43 Screens (100% Complete) [All 10 Enterprise Modules 100% Defined & Ready for Dev]
 SPECIFICATIONS IN PROGRESS     : 0 Screens (0.0%)
 SPECIFICATIONS PLANNED         : 0 Screens (0.0%)
 BACKEND REST APIS DEPLOYED     : 100% Deployed & Tested (Django 5 + DRF LTS)
-VISUAL MOCKUP BLUEPRINTS       : 7 Generated & Stored in docs/assets/ui/
+VISUAL MOCKUP BLUEPRINTS       : 9 Generated & Stored in docs/assets/ui/ & brain artifacts
+
 ```
 
 ### 1.2 Module-by-Module Specification Progress
@@ -30,13 +32,13 @@ VISUAL MOCKUP BLUEPRINTS       : 7 Generated & Stored in docs/assets/ui/
 [Module 0] Foundation & Multi-Tenancy     : [████████████████████] 100% (2/2 Screens) - READY FOR DEV
 [Module 1] Authentication & RBAC           : [████████████████████] 100% (2/2 Screens) - READY FOR DEV
 [Module 2] Master Data Governance          : [████████████████████] 100% (3/3 Screens) - READY FOR DEV
-[Module 3] Procurement (Yarn PO)           : [████████████████████] 100% (4/4 Screens) - READY FOR DEV
+[Module 3] Procurement (Yarn PO & Returns) : [████████████████████] 100% (5/5 Screens) - READY FOR DEV
 [Module 4] Inventory & Stock Ledgers      : [████████████████████] 100% (10/10 Screens) - READY FOR DEV
 [Module 5] Commercial Sales & Invoicing    : [████████████████████] 100% (8/8 Screens) - READY FOR DEV
 [Module 6] Knitting & Fabric Production    : [████████████████████] 100% (3/3 Screens) - READY FOR DEV
 [Module 7] Production Process Engine       : [████████████████████] 100% (1/1 Screens) - READY FOR DEV
 [Module 8] Ledgers & Financial Accounting  : [████████████████████] 100% (2/2 Screens) - READY FOR DEV
-[Module 9] Commercial Pricing Engine       : [████████████████████] 100% (5/5 Screens) - READY FOR DEV
+[Module 9] Commercial Pricing Engine       : [████████████████████] 100% (7/7 Screens) - READY FOR DEV
 ```
 
 ### 1.3 Stage-by-Stage / Transactional Suite Progress Breakdown
@@ -46,6 +48,7 @@ VISUAL MOCKUP BLUEPRINTS       : 7 Generated & Stored in docs/assets/ui/
 STAGE / WORKFLOW SUITE                          BREAKDOWN (Add / Edit / List / Print)          PROGRESS    STATUS
 ========================================================================================================================
 Stage 1: Yarn Purchase Order (PO) Suite         Add [✅] | Edit [✅] | List [✅] | Print [✅]    4/4 (100%)  READY FOR DEV
+Stage 1B: Yarn PO Return & Debit Note Suite     Add [✅] (Separate Workflow & Service)         1/1 (100%)  READY FOR DEV
 Stage 2: Yarn Inward (GRN) Suite                Add [✅] | Edit [✅] | List [✅] | Print [✅]    4/4 (100%)  READY FOR DEV
 Stage 3: Yarn Outward (DC) Suite                Add [✅] | Edit [✅] | List [✅] | Print [✅]    4/4 (100%)  READY FOR DEV
 Stage 4: Live Godown & Party Stock Ledgers      Godown Ledger [✅] | Party Reconciliation [✅]   2/2 (100%)  READY FOR DEV
@@ -53,6 +56,8 @@ Stage 5: Commercial Yarn Sales Tax Invoice      Add [✅] | Edit [✅] | List [�
 Stage 6: Customer Yarn Sales Return (Credit)    Add [✅] | Edit [✅] | List [✅] | Print [✅]    4/4 (100%)  READY FOR DEV
 Stage 7: Commercial Pricing & Rate Cards        Add [✅] | Edit [✅] | List [✅] | Print [✅]    4/4 (100%)  READY FOR DEV
          Job Work Subcontract Conversion Matrix Rule Matrix [✅ Complete]                      1/1 (100%)  READY FOR DEV
+         Party Price List Contract Screen & Sandbox [✅ Complete]                              1/1 (100%)  READY FOR DEV
+         Multi-Party Price List Comparison Matrix [✅ Complete]                                1/1 (100%)  READY FOR DEV
 Stage 8: Foundation & Authentication Setup      Login [✅] | Company Profile [✅] | Dash [✅]    4/4 (100%)  READY FOR DEV
                                                 Password Recovery [✅]
 Stage 9: Master Data Governance Registry        Party [✅] | Yarn Catalog [✅] | Godowns [✅]    3/3 (100%)  READY FOR DEV
@@ -60,7 +65,7 @@ Stage 10: Knitting & Fabric Production          Job Card [✅] | Print [✅] | G
 Stage 11: Production Process Engine Routing     Dynamic Process Routing [✅ Complete]          1/1 (100%)  READY FOR DEV
 Stage 12: Financial Accounting & Ledgers        Party Fin Ledger [✅] | Trial Balance [✅]       2/2 (100%)  READY FOR DEV
 ========================================================================================================================
-TOTAL ENTERPRISE SUITE READINESS                40 / 40 SCREENS FULLY SPECIFIED               100.0%      READY FOR DEV
+TOTAL ENTERPRISE SUITE READINESS                43 / 43 SCREENS FULLY SPECIFIED               100.0%      READY FOR DEV
 ========================================================================================================================
 ```
 
@@ -87,6 +92,7 @@ Status Legend:
 | **`SCR-PROC-001-EDIT`**| Mod 3 | **Yarn Purchase Order (PO) Edit Screen** | `/procurement/yarn-po/[id]/edit` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [04_YARN_PO_EDIT_WORKFLOW_SPECIFICATION.md](ui/04_YARN_PO_EDIT_WORKFLOW_SPECIFICATION.md) | §4.2 |
 | **`SCR-PROC-001-LIST`**| Mod 3 | **Yarn Purchase Order Register & List** | `/procurement/yarn-po` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [05_YARN_PO_LIST_WORKFLOW_SPECIFICATION.md](ui/05_YARN_PO_LIST_WORKFLOW_SPECIFICATION.md) | §4.2 |
 | **`SCR-PROC-001-PRINT`**|Mod 3 | **Yarn Purchase Order Print / PDF Sheet**| `/procurement/yarn-po/[id]/print` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [06_YARN_PO_PRINT_DOCUMENT_SPECIFICATION.md](ui/06_YARN_PO_PRINT_DOCUMENT_SPECIFICATION.md) | §4.2 |
+| **`SCR-PROC-002-ADD`** | Mod 3 | **Yarn PO Return & Debit Note Add Screen**| `/procurement/yarn-po-returns/new` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [43_YARN_PO_RETURN_ADD_WORKFLOW_SPECIFICATION.md](ui/43_YARN_PO_RETURN_ADD_WORKFLOW_SPECIFICATION.md) | §4.2 |
 | **`SCR-INVN-001-ADD`** | Mod 4 | **Yarn Inward (GRN) Add Workflow** | `/inventory/yarn-inward/new` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [07_YARN_INWARD_ADD_WORKFLOW_SPECIFICATION.md](ui/07_YARN_INWARD_ADD_WORKFLOW_SPECIFICATION.md) | §4.3 |
 | **`SCR-INVN-001-EDIT`**| Mod 4 | **Yarn Inward (GRN) Edit Screen** | `/inventory/yarn-inward/[id]/edit` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [08_YARN_INWARD_EDIT_WORKFLOW_SPECIFICATION.md](ui/08_YARN_INWARD_EDIT_WORKFLOW_SPECIFICATION.md) | §4.3 |
 | **`SCR-INVN-001-LIST`**| Mod 4 | **Yarn Inward Register & List View** | `/inventory/yarn-inward` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [09_YARN_INWARD_LIST_WORKFLOW_SPECIFICATION.md](ui/09_YARN_INWARD_LIST_WORKFLOW_SPECIFICATION.md) | §4.3 |
@@ -113,6 +119,8 @@ Status Legend:
 | **`SCR-PRIC-001-LIST`**| Mod 9 | **Yarn Price List Register & Management**| `/pricing/yarn-price-lists` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [25_YARN_PRICE_LIST_LIST_WORKFLOW_SPECIFICATION.md](ui/25_YARN_PRICE_LIST_LIST_WORKFLOW_SPECIFICATION.md) | §4.5 |
 | **`SCR-PRIC-001-PRINT`**|Mod 9 | **Yarn Price List (Rate Card) Print**| `/pricing/yarn-price-lists/[id]/print` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [26_YARN_PRICE_LIST_PRINT_DOCUMENT_SPECIFICATION.md](ui/26_YARN_PRICE_LIST_PRINT_DOCUMENT_SPECIFICATION.md) | §4.5 |
 | **`SCR-PRIC-002`** | Mod 9 | **Job Work Subcontract Conversion Matrix**| `/pricing/job-work-rules` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [37_JOB_WORK_MATRIX_UI_SPECIFICATION.md](ui/37_JOB_WORK_MATRIX_UI_SPECIFICATION.md) | §4.5 |
+| **`SCR-PRIC-003`** | Mod 9 | **Party Price List Contract & Rate Sandbox** | `/pricing/party-price-lists/[id]` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md](ui/41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md) | §4.5 |
+| **`SCR-PRIC-004`** | Mod 9 | **Multi-Party Price List Comparison Matrix** | `/pricing/party-comparison-matrix` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md](ui/42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md) | §4.5 |
 | **`SCR-PRCS-001`** | Mod 7 | **Production Process Routing & Tracking** | `/production/process-routing` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [34_PROCESS_ROUTING_UI_SPECIFICATION.md](ui/34_PROCESS_ROUTING_UI_SPECIFICATION.md) | §4.5 |
 | **`SCR-FINL-001`** | Mod 8 | **Party Financial Ledger & Reconciliation**| `/ledgers/party-ledger` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [35_PARTY_FINANCIAL_LEDGER_UI_SPECIFICATION.md](ui/35_PARTY_FINANCIAL_LEDGER_UI_SPECIFICATION.md) | §4.6 |
 | **`SCR-FINL-002`** | Mod 8 | **General Ledger & Multi-Period Trial Balance**| `/ledgers/trial-balance` | ✅ Complete | 🎨 Mockup Ready | ✅ Deployed | [36_TRIAL_BALANCE_UI_SPECIFICATION.md](ui/36_TRIAL_BALANCE_UI_SPECIFICATION.md) | §4.6 |

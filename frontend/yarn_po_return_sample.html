@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yarn PO Return & Mill Debit Note — Garments ERP & CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-subtle: #172033;
+            --bg-input: #1f293d;
+            --border-color: #243049;
+            --border-hover: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            padding-bottom: 60px;
+        }
+
+        .top-navbar {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #ef4444, #f59e0b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: #ffffff;
+            font-family: var(--font-heading);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .page-container {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px 24px;
+        }
+
+        /* Header Card */
+        .header-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6);
+        }
+
+        .badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-return {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-debit {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .screen-title {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .screen-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-control, .form-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 9px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-rose);
+        }
+
+        /* Table Card */
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(23, 32, 51, 0.5);
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--bg-card-subtle);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .table-input {
+            width: 90px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: #ffffff;
+            padding: 6px 8px;
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 13px;
+            text-align: right;
+            outline: none;
+        }
+
+        .table-input:focus {
+            border-color: var(--accent-rose);
+        }
+
+        /* Stock Safety Banner */
+        .stock-banner {
+            padding: 12px 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-top: 1px solid rgba(16, 185, 129, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .stock-safe {
+            color: var(--accent-emerald);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stock-danger {
+            color: var(--accent-rose);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Summary Split Grid */
+        .summary-split {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+        }
+
+        @media (max-width: 960px) {
+            .summary-split {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .debit-card {
+            background: linear-gradient(135deg, rgba(31, 41, 61, 0.7), rgba(17, 24, 39, 0.95));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .debit-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-amber);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .debit-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        .debit-row.total {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: none;
+            padding-top: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .debit-val {
+            font-family: monospace;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .btn-dispatch {
+            background: linear-gradient(135deg, #ef4444, #f59e0b);
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-dispatch:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="top-navbar">
+        <div class="navbar-brand">
+            <div class="brand-logo">R</div>
+            <div>
+                <div class="brand-title">Garments ERP & CRM</div>
+                <div class="brand-subtitle">Procurement & Mill Returns (Debit Notes)</div>
+            </div>
+        </div>
+        <div style="font-size: 13px; color: var(--text-secondary);">
+            Document: <strong style="color: #ffffff;">SCR-PROC-002-ADD</strong> • FY 2026–27
+        </div>
+    </header>
+
+    <main class="page-container">
+
+        <!-- Header Card -->
+        <div class="header-card">
+            <div class="badge-row">
+                <span class="badge badge-return">Outward Return to Mill</span>
+                <span class="badge badge-debit">Generates Accounts Payable Debit Note</span>
+                <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">Module 3: Procurement</span>
+            </div>
+            <h1 class="screen-title">Create Yarn PO Return (Debit Note Outward Challan)</h1>
+            <p class="screen-desc">Return rejected or defective yarn back to the spinning mill, deduct stock from godown, and post an atomic Debit Note.</p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Return Doc No</label>
+                    <input type="text" class="form-control" value="YPR-202610-0018" readonly style="color: var(--accent-cyan); font-family: monospace; font-weight: 700;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Return Date</label>
+                    <input type="date" class="form-control" value="2026-10-17">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target Spinning Mill</label>
+                    <select class="form-select" id="millSelect" onchange="updateInwardDetails()">
+                        <option value="1042">Lakshmi Spinning Mills Ltd (V-1042)</option>
+                        <option value="1055">KPR Mill Limited (V-1055)</option>
+                        <option value="1088">Ramco Textiles Ltd (V-1088)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Source PO Reference</label>
+                    <select class="form-select" id="poSelect">
+                        <option value="1012">PO-202610-0012 — 30s Combed Cotton (15,000 Kg)</option>
+                        <option value="1015">PO-202610-0015 — 40s Compact Grey (10,000 Kg)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Source Inward GRN</label>
+                    <select class="form-select" id="grnSelect">
+                        <option value="2042">YIN-202610-0042 (Lot: L-8802 | Inward Date: 12/10/2026)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Return Godown Location</label>
+                    <select class="form-select">
+                        <option>Central Yarn Godown (Bin A-12)</option>
+                        <option>Main Factory Staging Floor</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Mill Defect Reason Code</label>
+                    <select class="form-select" id="defectReason">
+                        <option value="LOW_CSP">LOW_CSP — Count Strength Product (CSP: 2450) below contractual minimum of 3000</option>
+                        <option value="COUNT_VARIATION">COUNT_VARIATION — Actual count 28.2s deviates beyond tolerance of 30s</option>
+                        <option value="HIGH_HAIRINESS">HIGH_HAIRINESS — Uster hairiness index H > 6.4 causing excessive fuzzing</option>
+                        <option value="COLOR_SHADE_DEFECT">COLOR_SHADE_DEFECT — Lot variation / patchiness in dyed cones (Delta E > 1.2)</option>
+                        <option value="DAMAGED_CONES">DAMAGED_CONES — Crushed paper cones, oil stains, or transit moisture damage</option>
+                        <option value="EXCESS_MOISTURE">EXCESS_MOISTURE — Moisture regain > 9.2% exceeding statutory 8.5% standard</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Defective Lines Grid -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    Defective Yarn Return Line Items
+                </div>
+                <span style="font-size: 12px; color: var(--text-muted);">
+                    Godown Stock Balance: <strong style="color: #ffffff;">42 Bags (1,905.120 Kg)</strong>
+                </span>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Yarn Count</th>
+                        <th>Lot No</th>
+                        <th>Inward Bags</th>
+                        <th>Return Bags*</th>
+                        <th>Nominal Wt/Bag</th>
+                        <th>Return Wt (Kg)</th>
+                        <th>Inward Rate (₹)</th>
+                        <th>GST %</th>
+                        <th>Debit Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>
+                            <strong style="color: #ffffff;">30s Combed Cotton</strong><br>
+                            <span style="font-size: 11px; color: var(--text-muted);">Yarn Type: GREY | Cone Form</span>
+                        </td>
+                        <td><span style="font-family: monospace; background: var(--bg-input); padding: 2px 6px; border-radius: 4px;">L-8802</span></td>
+                        <td>40 Bags</td>
+                        <td>
+                            <input type="number" class="table-input" id="returnBags" value="20" min="1" max="42" oninput="calculateReturnMath()">
+                        </td>
+                        <td>45.360 Kg</td>
+                        <td><span class="table-val" id="returnWeight" style="font-family: monospace; font-weight: 700; color: #ffffff;">907.200 Kg</span></td>
+                        <td>₹ 265.00</td>
+                        <td>5.0%</td>
+                        <td><span class="table-val" id="rowDebitTotal" style="font-family: monospace; font-weight: 700; color: #ffffff;">₹ 2,52,428.40</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="stock-banner" id="stockBanner">
+                <span class="stock-safe" id="stockStatusText">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Stock Verification Passed: Return 907.200 Kg is safely within available Godown balance (1,905.120 Kg)
+                </span>
+                <span style="color: var(--text-muted); font-size: 11px;">Validation: Prevents Negative Stock</span>
+            </div>
+        </div>
+
+        <!-- Summary & Transporter Split -->
+        <div class="summary-split">
+            <!-- Left: Transporter & Dispatch Details -->
+            <div class="panel-card" style="padding: 20px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 14px; text-transform: uppercase;">
+                    Outward Logistics & Dispatch Details
+                </h3>
+                <div class="form-grid" style="margin-top: 0; padding-top: 0; border: none; grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label class="form-label">Transporter Name</label>
+                        <input type="text" class="form-control" value="VRL Logistics Ltd">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Registration No</label>
+                        <input type="text" class="form-control" value="TN-39-BZ-1290">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LR / Lorry Bilty No</label>
+                        <input type="text" class="form-control" value="LR-998821034">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Driver Contact Phone</label>
+                        <input type="text" class="form-control" value="+91 98421 55678">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Inspection & QC Notes</label>
+                        <textarea class="form-control" rows="2">Yarn count test report #QC-8819 confirms CSP drop to 2450. Cones dispatched back to mill premises as per return authorization agreement.</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Debit Note Summary -->
+            <div class="debit-card">
+                <div class="debit-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                    Mill Debit Note Summary (Ledger Reversal)
+                </div>
+
+                <div class="debit-row">
+                    <span>Total Bags Returned:</span>
+                    <span class="debit-val" id="summaryBags">20 Bags</span>
+                </div>
+                <div class="debit-row">
+                    <span>Total Net Weight:</span>
+                    <span class="debit-val" id="summaryWeight">907.200 Kg</span>
+                </div>
+                <div class="debit-row">
+                    <span>Taxable Return Value:</span>
+                    <span class="debit-val" id="summaryTaxable">₹ 2,40,408.00</span>
+                </div>
+                <div class="debit-row">
+                    <span>CGST Input Reversal (2.5%):</span>
+                    <span class="debit-val" id="summaryCgst">₹ 6,010.20</span>
+                </div>
+                <div class="debit-row">
+                    <span>SGST Input Reversal (2.5%):</span>
+                    <span class="debit-val" id="summarySgst">₹ 6,010.20</span>
+                </div>
+                <div class="debit-row total">
+                    <span>Total Mill Debit Note:</span>
+                    <span class="debit-val" id="summaryTotalDebit" style="color: #fbbf24;">₹ 2,52,428.40</span>
+                </div>
+
+                <button class="btn-dispatch" onclick="alert('Yarn PO Return #YPR-202610-0018 posted! Atomic stock deducted from Godown and Debit Note posted to Accounts Payable ledger.')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    SAVE & DISPATCH RETURN OUTWARD
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const bagWeight = 45.360;
+        const ratePerKg = 265.00;
+        const availableStockKg = 1905.120;
+
+        function calculateReturnMath() {
+            const bags = parseInt(document.getElementById('returnBags').value) || 0;
+            const netWeight = bags * bagWeight;
+            const taxable = netWeight * ratePerKg;
+            const cgst = taxable * 0.025;
+            const sgst = taxable * 0.025;
+            const total = taxable + cgst + sgst;
+
+            document.getElementById('returnWeight').textContent = `${netWeight.toFixed(3)} Kg`;
+            document.getElementById('rowDebitTotal').textContent = `₹ ${total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            document.getElementById('summaryBags').textContent = `${bags} Bags`;
+            document.getElementById('summaryWeight').textContent = `${netWeight.toFixed(3)} Kg`;
+            document.getElementById('summaryTaxable').textContent = `₹ ${taxable.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('summaryCgst').textContent = `₹ ${cgst.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('summarySgst').textContent = `₹ ${sgst.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('summaryTotalDebit').textContent = `₹ ${total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            // Stock Check
+            const banner = document.getElementById('stockBanner');
+            const statusText = document.getElementById('stockStatusText');
+            if (netWeight > availableStockKg) {
+                statusText.className = 'stock-danger';
+                statusText.innerHTML = `⚠️ ERROR: Return weight (${netWeight.toFixed(3)} Kg) exceeds available stock (${availableStockKg.toFixed(3)} Kg). Return blocked.`;
+            } else {
+                statusText.className = 'stock-safe';
+                statusText.innerHTML = `✓ Stock Verification Passed: Return ${netWeight.toFixed(3)} Kg is safely within available Godown balance (${availableStockKg.toFixed(3)} Kg)`;
+            }
+        }
+
+        function updateInwardDetails() {
+            calculateReturnMath();
+        }
+    </script>
+</body>
+</html>

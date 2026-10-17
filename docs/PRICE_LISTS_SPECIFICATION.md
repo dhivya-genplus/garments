@@ -122,6 +122,23 @@ Governs conversion rates paid to external subcontracted process units (Job Worke
 
 Textile manufacturing requires specialized parameter matching. The tables below specify the exact parameter matrices used in rate evaluation:
 
+### 3.0. Yarn Category, Knitting Process Routing & Production Pipeline Matrix
+
+Every yarn purchase or sales price list links directly to downstream knitting machine setups, resulting fabric stages, and finishing pipelines:
+
+| Input Yarn Category | Intended Knitting Usage / End Fabric Output | Knitting Process / Machine Setup | Inward Stage Received (Output from Knitting) | Next Production Stage / Pipeline |
+|---|---|---|---|---|
+| **Grey Yarn** *(Raw / Ecru Cotton, Blends)* | Solid-color T-shirts, tops, and basic apparel | Circular single jersey machines (plain knit) | **Grey Fabric (`GREY_FABRIC`)** *(Greige rolls / thans)* | Sent to dye house for scouring, bleaching, and batch/piece dyeing (soft-flow) |
+| **Grey Yarn** *(Raw / Ecru)* | Stretch T-shirts, leggings, activewear | Single jersey machines with elastane attachment (e.g., 20D/40D Lycra) | **Grey Fabric (`GREY_FABRIC`)** *(Greige Lycra single jersey)* | Sent for heat-setting (stenter), scouring, and piece dyeing |
+| **Grey Yarn** *(Raw / Ecru)* | Polo shirt bodies, tennis tees | Pique / honeycomb / Lacoste circular machines | **Grey Fabric (`GREY_FABRIC`)** *(Greige pique rolls)* | Batch dyeing, bio-polishing, compacting |
+| **Grey Yarn** *(Raw / Ecru)* | Winter hoodies, sweatshirts, joggers | 2-thread or 3-thread fleece machines (face, tie, and loop yarn) | **Grey Fabric (`GREY_FABRIC`)** *(Greige fleece rolls)* | Scouring, dyeing, loop raising/brushing (fleece nap) |
+| **Grey Yarn** *(Raw / Ecru)* | Premium tees, babywear, double-sided knitwear | Interlock circular knitting machines | **Grey Fabric (`GREY_FABRIC`)** *(Greige interlock rolls)* | Batch dyeing, softening, compacting |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Horizontal striped T-shirts, rugby shirts | Circular machines with multiple feeders alternating colored yarn cones (feeder stripe) | **Yarn-Dyed Fabric (`DYED_FABRIC`)** *(Striped rolls ready without batch dyeing)* | Direct scouring, tentering/stenter finishing, and compacting (no piece dyeing required) |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Branded polo bodies with custom chest bands | Auto-striper circular knitting machines with programmable finger selectors (engineered stripes) | **Yarn-Dyed Fabric (`DYED_FABRIC`)** *(Engineered stripe rolls)* | Slitting, finishing, stenter, compacting |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Polo neck collars and sleeve cuffs with tipping lines | Flatbed knitting machines (e.g., Shima Seiki, Stoll) | **Flat Knit Trims / Collars (`TRIM` / `FABRIC`)** *(Pieces or collar strips)* | Ironing, cutting, inspection, directly attached during garment stitching |
+| **Dyed Yarn** *(Package/Cone-Dyed)* | Multi-color textured patterns, knit cardigans, sweaters | Electronic jacquard circular or flat knitting machines | **Jacquard Knit Fabric (`DYED_FABRIC`)** *(Patterned rolls / panels)* | Steam relaxing, washing/softening, compacting |
+| **Melange Yarn** *(Fibre-dyed blend)* | Heather grey athletic T-shirts, joggers, gym wear | Circular single jersey, fleece, or French terry machines | **Melange Fabric (`DYED_FABRIC`)** *(Grey/color heather rolls)* | Scouring, softening, compacting (no piece-dye bath needed) |
+
 ### 3.1. Knitting Job Work Rate Matrix
 | Fabric Structure | Yarn Count | Machine Gauge | Lycra Plated? | Standard Rate (INR/Kg) | Planned Loss % |
 |---|---|---|---|---|---|
@@ -742,3 +759,17 @@ $$\neg (\text{start}_A \le \text{end}_B \land \text{end}_A \ge \text{start}_B)$$
 4. **Sprint 4 (Frontend UI Components)**:
    - Build Price List Master UI (General & Party-Specific management).
    - Integrate auto-fetch badges and rate override modals into PO and Invoicing screens.
+
+---
+
+## 10. Front-End User Interface Specifications & Reference Assets
+
+Comprehensive screen-by-screen specifications following the **STD-UI-001** 21-section standard have been established:
+
+| Screen ID | Screen Name | Route | Specification Document | Reference Implementation |
+|---|---|---|---|---|
+| **`SCR-PRIC-001`** | **Yarn Price List Suite (Add, Edit, List, Print)** | `/pricing/yarn-price-lists` | [`docs/ui/23_...` to `26_...`](file:///d:/Codebase/Garments/docs/ui/23_YARN_PRICE_LIST_ADD_WORKFLOW_SPECIFICATION.md) | Standard 4-Screen Suite |
+| **`SCR-PRIC-002`** | **Job Work Subcontract Conversion Matrix** | `/pricing/job-work-rules` | [`docs/ui/37_JOB_WORK_MATRIX_UI_SPECIFICATION.md`](file:///d:/Codebase/Garments/docs/ui/37_JOB_WORK_MATRIX_UI_SPECIFICATION.md) | Conversion Engine Cockpit |
+| **`SCR-PRIC-003`** | **Party Price List Contract & Rate Sandbox** | `/pricing/party-price-lists/[id]` | [`docs/ui/41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md`](file:///d:/Codebase/Garments/docs/ui/41_PARTY_PRICE_LIST_CONTRACT_SPECIFICATION.md) | [`frontend/party_price_list_sample.html`](file:///d:/Codebase/Garments/frontend/party_price_list_sample.html) |
+| **`SCR-PRIC-004`** | **Multi-Party Price List Comparison Matrix** | `/pricing/party-comparison-matrix` | [`docs/ui/42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md`](file:///d:/Codebase/Garments/docs/ui/42_MULTI_PARTY_PRICE_LIST_MATRIX_SPECIFICATION.md) | [`frontend/multi_party_price_list_matrix.html`](file:///d:/Codebase/Garments/frontend/multi_party_price_list_matrix.html) |
+

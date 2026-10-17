@@ -892,3 +892,101 @@ class CurrencyLedgerService(BaseService):
             narration=f"Yarn Inward GRN #{inward.inward_number} from {party_name}",
             user=user,
         )
+
+    @classmethod
+    @transaction.atomic
+    def post_purchase_return_debit_note_voucher(cls, po_return, user=None) -> tl_voucher:
+        """
+        Automatically posts a balanced Purchase Return (Debit Note) voucher against the spinning mill / supplier.
+        Debit: Supplier / Mill Payable (total_debit_amount) -> Reduces supplier liability
+        Credit: Yarn Purchase Return / Material Reversal (subtotal)
+        Credit: GST Input Tax Credit Reversal (tax_amount)
+        """
+        from apps.authentication.models import FinancialYear
+
+        subtotal = Decimal(str(po_return.subtotal or 0)).quantize(Decimal("0.01"))
+        tax_amount = Decimal(str(po_return.tax_amount or 0)).quantize(Decimal("0.01"))
+        total_debit_amount = Decimal(str(po_return.total_debit_amount or (subtotal + tax_amount))).quantize(Decimal("0.01"))
+
+        if total_debit_amount <= Decimal("0.00"):
+            return None
+
+        fy_id = getattr(po_return, "cfyear_id", None) or getattr(po_return.company.current_financial_year, "id", None)
+        if not fy_id:
+            fy = FinancialYear.objects.filter(company_id=po_return.company_id).first()
+            fy_id = fy.id if fy else None
+
+        party = po_return.party
+        party_name = party.name if party else "Spinning Mill / Supplier"
+        party_id = party.id if party else None
+
+        lines = [
+            {
+                "account_code": "2001",
+                "account_name": f"{party_name} (Supplier Payable)",
+                "party_id": party_id,
+                "debit": total_debit_amount,
+                "credit": Decimal("0.00"),
+                "narration": f"Debit Note #{po_return.return_number} against {party_name}",
+            },
+            {
+                "account_code": "5002",
+                "account_name": "Yarn Purchase Rejection Returns",
+                "party_id": None,
+                "debit": Decimal("0.00"),
+                "credit": subtotal,
+                "narration": f"Purchase Return #{po_return.return_number} Material Reversal",
+            },
+        ]
+
+        igst = Decimal(str(getattr(po_return, "igst_amount", 0) or 0)).quantize(Decimal("0.01"))
+        cgst = Decimal(str(getattr(po_return, "cgst_amount", 0) or 0)).quantize(Decimal("0.01"))
+        sgst = Decimal(str(getattr(po_return, "sgst_amount", 0) or 0)).quantize(Decimal("0.01"))
+
+        if igst > Decimal("0.00"):
+            lines.append({
+                "account_code": "1008",
+                "account_name": "IGST Input Tax Reversal (Interstate Return)",
+                "party_id": None,
+                "debit": Decimal("0.00"),
+                "credit": igst,
+                "narration": f"IGST Reversal on PO Return #{po_return.return_number}",
+            })
+        else:
+            if cgst <= Decimal("0.00") and sgst <= Decimal("0.00") and tax_amount > Decimal("0.00"):
+                cgst = (tax_amount / Decimal("2.00")).quantize(Decimal("0.01"))
+                sgst = (tax_amount - cgst).quantize(Decimal("0.01"))
+            if cgst > Decimal("0.00"):
+                lines.append({
+                    "account_code": "1006",
+                    "account_name": "CGST Input Tax Reversal (Intrastate Return)",
+                    "party_id": None,
+                    "debit": Decimal("0.00"),
+                    "credit": cgst,
+                    "narration": f"CGST Reversal on PO Return #{po_return.return_number}",
+                })
+            if sgst > Decimal("0.00"):
+                lines.append({
+                    "account_code": "1007",
+                    "account_name": "SGST Input Tax Reversal (Intrastate Return)",
+                    "party_id": None,
+                    "debit": Decimal("0.00"),
+                    "credit": sgst,
+                    "narration": f"SGST Reversal on PO Return #{po_return.return_number}",
+                })
+
+        return cls.post_voucher(
+            company_id=po_return.company_id,
+            fy_id=fy_id,
+            voucher_date=po_return.return_date,
+            voucher_type=VoucherTypes.DEBIT_NOTE,
+            stage="YARN",
+            lines=lines,
+            party_id=party_id,
+            reference_type="PURCHASE_RETURN",
+            reference_no=po_return.return_number,
+            reference_id=po_return.id,
+            narration=f"Yarn PO Return & Debit Note #{po_return.return_number} to {party_name}",
+            user=user,
+        )
+
